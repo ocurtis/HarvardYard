@@ -66,20 +66,31 @@ export interface TouristState {
   pos: Vec;
   tile: Vec; // tile being walked toward
   phase: TouristPhase;
-  timer: number; // guide: ticks of patience left while confused
   stepsLeft: number; // guide: tiles still to walk while entering
   rank: number; // follower: position in line, 1 = right behind the guide
-  pathIndex: number; // follower: index into the group's path
+  pathIndex: number; // follower: position along the group's path, in half-tiles
   facing: Vec;
   variant: number; // head * colors + group color
   photo: number; // ticks left in the photo pose (followers)
-  wet: number; // ticks soaked by sprinklers; past a threshold the member gives up
+  wet: number; // ticks of sprinkler slow remaining
 }
 
 export interface GroupState {
   path: Vec[]; // tiles the guide has stood on, in order; followers replay it
   guideGone: boolean;
   color: number; // shirt color index shared by the group
+  value: number; // dollars the group is currently worth; ticks down while the guide is confused
+  maxValue: number;
+  locked: boolean; // true once a brochure is handed over: value stops moving
+}
+
+// Short-lived floating text for the renderer: "+$40", "-$10". Pure data; pruned by the sim.
+export interface Popup {
+  id: number;
+  text: string;
+  pos: Vec;
+  tick: number;
+  kind: 'gain' | 'loss';
 }
 
 export interface WaveState {
@@ -117,6 +128,7 @@ export interface GameState {
   statueHp: number;
   money: number;
   notice: { text: string; tick: number } | null; // last shop result, for the HUD
+  popups: Popup[];
   wave: WaveState;
 }
 

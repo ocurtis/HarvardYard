@@ -1,7 +1,7 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
+import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
 import { PALETTE } from '../config/palette';
 import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
@@ -42,7 +42,7 @@ interface TouristView {
   body: Phaser.GameObjects.Rectangle | null;
   hat: Phaser.GameObjects.Rectangle | null;
   flag: Phaser.GameObjects.Rectangle | null;
-  bar: Phaser.GameObjects.Rectangle;
+  label: Phaser.GameObjects.Text | null; // the guide's "$40", ticking down
   anim: string;
   moving: boolean;
   lastPos: { x: number; y: number };
@@ -63,6 +63,7 @@ export class YardScene extends Phaser.Scene {
   private atlas: Atlas = {};
   private touristViews = new Map<number, TouristView>();
   private towerViews = new Map<number, Phaser.GameObjects.Rectangle>();
+  private popupViews = new Map<number, Phaser.GameObjects.Text>();
   private boneViews = new Map<number, Phaser.GameObjects.Rectangle>();
   private rings!: Phaser.GameObjects.Graphics;
   private cursor!: Phaser.GameObjects.Graphics;
@@ -145,6 +146,7 @@ export class YardScene extends Phaser.Scene {
     this.syncBros(s.bros);
     this.syncTourists(s.tourists);
     this.syncTowers();
+    this.syncPopups();
     this.drawFx(s.bros, s.players);
     // Draw order: whoever's feet are lower on screen draws in front. Tiles and fx stay at the back.
     this.world.sort('depth');
@@ -217,7 +219,6 @@ export class YardScene extends Phaser.Scene {
         // Stagger: the stagger frame plus a flash so the hit reads.
         v.sprite.setTint(b.phase === 'stagger' && Math.floor(this.time.now / 60) % 2 === 0 ? 0xffffff : 0xffffff);
         v.sprite.setAlpha(b.slow > 0 && Math.floor(this.time.now / 80) % 2 === 0 ? 0.6 : 1);
-        v.bar.setPosition(x - (TILE - 4) / 2, feet - 24 - 2).setDepth(feet + 0.1);
       } else {
         v.body!.setPosition(x, y).setDepth(feet);
         v.cup!.setPosition(x + b.facing.x * 5, y + b.facing.y * 4).setDepth(feet + 0.1);
@@ -245,8 +246,14 @@ export class YardScene extends Phaser.Scene {
       let v = this.touristViews.get(t.id);
       if (!v) {
         const key = variantKey(this.atlas, 'tourist', t.variant);
-        const bar = this.add.rectangle(0, 0, TILE - 4, 2, PALETTE.touristTimer).setOrigin(0, 0.5);
-        this.world.add(bar);
+        let label: Phaser.GameObjects.Text | null = null;
+        if (t.guide) {
+          label = this.add
+            .text(0, 0, '', { fontFamily: 'monospace', fontSize: '7px', color: '#e8ea4a', backgroundColor: '#202040' })
+            .setOrigin(0.5, 1)
+            .setResolution(1);
+          this.world.add(label);
+        }
         if (key) {
           const sprite = this.add.sprite(0, 0, key, 0).setOrigin(0.5, 1);
           this.world.add(sprite);
@@ -261,7 +268,7 @@ export class YardScene extends Phaser.Scene {
             flash = this.add.sprite(0, 0, 'flash', 0).setOrigin(0.5, 0.5).setVisible(false);
             this.world.add(flash);
           }
-          v = { sprite, flagSprite, flash, body: null, hat: null, flag: null, bar, anim: '', moving: false, lastPos: { ...t.pos } };
+          v = { sprite, flagSprite, flash, body: null, hat: null, flag: null, label, anim: '', moving: false, lastPos: { ...t.pos } };
         } else {
           const body = this.add.rectangle(0, 0, TILE - 4, TILE - 2, PALETTE.tourist).setOrigin(0.5);
           const hat = this.add.rectangle(0, 0, TILE - 2, 3, PALETTE.touristPamphlet).setOrigin(0.5);
@@ -269,7 +276,7 @@ export class YardScene extends Phaser.Scene {
           this.world.add(body);
           this.world.add(hat);
           this.world.add(flag);
-          v = { sprite: null, flagSprite: null, flash: null, body, hat, flag, bar, anim: '', moving: false, lastPos: { ...t.pos } };
+          v = { sprite: null, flagSprite: null, flash: null, body, hat, flag, label, anim: '', moving: false, lastPos: { ...t.pos } };
         }
         this.touristViews.set(t.id, v);
       }
@@ -307,17 +314,28 @@ export class YardScene extends Phaser.Scene {
             if (!v.flash.anims.isPlaying) v.flash.play('flash:flash');
           } else if (v.flash.anims.isPlaying) v.flash.stop();
         }
-        v.bar.setPosition(x - (TILE - 4) / 2, feet - 24 - 2).setDepth(feet + 0.1);
       } else {
         v.body!.setPosition(x, y).setDepth(feet);
         v.hat!.setPosition(x, y - TILE / 2 + 1).setDepth(feet + 0.1);
         v.body!.setFillStyle(confused ? PALETTE.touristConfused : t.guide ? PALETTE.touristGuide : PALETTE.tourist);
         v.hat!.setVisible(t.guide && pamphleted);
         v.flag!.setPosition(x + 5, y - TILE / 2 - 2).setDepth(feet + 0.2);
-        v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1).setDepth(feet + 0.1);
       }
-      v.bar.setVisible(t.guide && t.phase === 'confused');
-      v.bar.width = Math.max(0, (TILE - 4) * (t.timer / TOURIST.confusedTicks));
+      if (v.label) {
+        // The group's value, from the moment they're on the map until they leave the foot.
+        const g = state.groups[t.group];
+        const show = !!g && (t.phase === 'entering' || t.phase === 'confused' || t.phase === 'pamphleted');
+        v.label.setVisible(show);
+        if (show && g) {
+          const val = Math.max(0, Math.ceil(g.value));
+          v.label.setText(` $${val} `);
+          // Locked (brochure handed over) reads white; draining reads yellow; nearly gone reads red.
+          const frac = g.maxValue > 0 ? g.value / g.maxValue : 0;
+          v.label.setColor(g.locked ? '#ffffff' : frac < 0.3 ? '#fe626e' : '#e8ea4a');
+          const top = v.sprite ? feet - 24 : y - TILE / 2;
+          v.label.setPosition(x, top - 1).setDepth(feet + 50);
+        }
+      }
     }
     for (const [id, v] of this.touristViews) {
       if (!seen.has(id)) {
@@ -327,8 +345,35 @@ export class YardScene extends Phaser.Scene {
         v.body?.destroy();
         v.hat?.destroy();
         v.flag?.destroy();
-        v.bar.destroy();
+        v.label?.destroy();
         this.touristViews.delete(id);
+      }
+    }
+  }
+
+  // Floating "+$40" / "-$10" over where it happened, rising and fading.
+  private syncPopups(): void {
+    const s = this.loop.state;
+    const seen = new Set<number>();
+    for (const p of s.popups) {
+      seen.add(p.id);
+      let t = this.popupViews.get(p.id);
+      if (!t) {
+        t = this.add
+          .text(0, 0, p.text, { fontFamily: 'monospace', fontSize: '8px', color: p.kind === 'gain' ? '#a4f022' : '#fe626e', backgroundColor: '#202040' })
+          .setOrigin(0.5, 1)
+          .setResolution(1);
+        this.world.add(t);
+        this.popupViews.set(p.id, t);
+      }
+      const age = s.tick - p.tick;
+      t.setPosition(Math.round(p.pos.x), Math.round(p.pos.y) - 12 - Math.floor(age / 5)).setDepth(10000);
+      t.setAlpha(age > POPUP_TICKS - 20 ? (POPUP_TICKS - age) / 20 : 1);
+    }
+    for (const [id, t] of this.popupViews) {
+      if (!seen.has(id)) {
+        t.destroy();
+        this.popupViews.delete(id);
       }
     }
   }
@@ -406,18 +451,6 @@ export class YardScene extends Phaser.Scene {
       g.fillStyle(PALETTE.shout, 0.35);
       g.slice(Math.round(p.pos.x), Math.round(p.pos.y), shoutRange(p), a - half, a + half, false);
       g.fillPath();
-    }
-    for (const t of this.loop.state.tourists) {
-      if (!t.guide || t.phase !== 'confused') continue;
-      // A question mark above the guide's head.
-      const x = Math.round(t.pos.x);
-      const y = Math.round(t.pos.y) + TILE / 2 - 24 - 6;
-      g.fillStyle(PALETTE.touristTimer, 1);
-      g.fillRect(x - 2, y - 4, 4, 1);
-      g.fillRect(x + 2, y - 3, 1, 2);
-      g.fillRect(x, y - 1, 2, 1);
-      g.fillRect(x, y, 1, 1);
-      g.fillRect(x, y + 2, 1, 1);
     }
     for (const b of bros) {
       if (b.phase === 'windup') {

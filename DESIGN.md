@@ -35,17 +35,18 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Bro. Paths gate -> statue. On reaching the statue: 1s wind-up, then a visible stream dealing statue damage per second until he's staggered or sober. Staggered: stumbles back, resumes. Never attacks the player or towers.
 
 ## Tourists
-- Travel in groups of 3-5 with one guide. Groups spawn from random gates in every wave, interleaved with bros. Followers trail the guide's path a tile apart.
-- The guide walks a few tiles in (6 in v1), then stops, confused, with a visible patience timer (7s). Followers bunch up behind.
-- Brochure: a player within touching distance of the GUIDE hands it over for the whole group; touching a follower does nothing. No button.
-- Pamphleted: the guide leads the group to the foot; on arrival the group pays a flat amount per member still with it, then leaves by the nearest exit. (Routing around tower rings: session 5.)
-- Timer runs out: the guide leads them back out the way they came. No payout.
-- Towers do not discriminate (session 5): a bone-struck tourist is hauled off, reducing the group's payout; a sprinkled group scatters.
+- Travel in groups of 3-5 behind a guide, huddled half a tile apart. Groups spawn from random gates in every wave, interleaved with bros.
+- A group is worth $10 a head, shown over the guide from the moment it enters. The guide walks a few tiles in (6 in v1) and stops, confused; from then the value ticks down to $0 over 7 seconds, whatever the group size.
+- Brochure: a player within touching distance of the GUIDE hands it over for the whole group and LOCKS the value. No button. (Standing next to a huddle usually counts; the guide is in front.)
+- Pamphleted: the guide leads the group to the foot; on arrival the group pays the locked value ("+$N" pops), then leaves by the nearest exit.
+- At $0 the group storms out the way it came, and "-$10" pops: a flat penalty, bank floors at zero.
+- The shout spooks: every tick a guide is in the cone knocks $0.50 off an unlocked group (30/s). This is the ONLY way the player loses tourist money by action; towers never touch tourists.
+- Sprinklers soak tourists: a soaked tourist walks at 60% for a moment. Nothing worse.
 - Look (approved 2026-10-16): short and loaded against the bros' tall and slim. Crimson hats and a crimson flag on every group (Harvard tour groups); shirts in orange, yellow or purple per group (cyan, magenta and green were cut for colliding with the bro's shirts and the grass). Followers snap photos with a flash while the group is stopped. Rule: bros tall, tourists short.
 
 ## Towers (v1: two, one in-place upgrade each)
-- Archaeology Dig ($30). A student in a pit lobbing bones. Single target, nearest-first within 3 tiles, a bone every 0.75s sobering 18. Hits tourists too: a bone-struck tourist is hauled off; if it was the guide, the group has nobody to follow and walks out unpaid. Upgrade ($40): longer range, faster, harder.
-- Sprinkler ($20). Area, 1.6 tiles. Bros inside slow and sober slowly (8/s). Tourists inside get wet; after 1.5s of soaking a member gives up and leaves the group. Upgrade ($25): wider, wetter.
+- Archaeology Dig ($30). A student in a pit lobbing bones. Single target, nearest bro within 3 tiles, a bone every 0.75s sobering 18. Never targets tourists. Upgrade ($40): longer range, faster, harder.
+- Sprinkler ($20). Area, 1.6 tiles. Bros inside slow and sober slowly (8/s). Tourists inside get wet and walk slower for a moment; no other cost. Upgrade ($25): wider, wetter.
 - Range rings are always visible, and the tile under the player shows a build cursor with the Dig's range previewed.
 - Placement: walk to a grass tile, press 1 (Dig) or 2 (Sprinkler). U upgrades the tower you're standing on. Anytime, mid-wave included. No selling, no moving. Towers have no HP and don't block the player.
 - Self-upgrades, same money: 3 shout strength, 4 shout range, 5 move speed; three levels each at $25/$40/$60.
@@ -101,6 +102,9 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - Death-spiral check: does losing tourists early make the level unwinnable?
 - Wave count: 15 provisionally; match whatever Rock On!'s early levels do.
 
+## Playtest log
+- 2026-10-16, Owen, 7 waves with towers: fun; towers worked; lost a tourist to his own Dig and it felt like the game's fault; never truly lost; never had to choose between a guide and a bro because missing a tourist cost nothing. Led to: towers neutral, countdown dollars, and the balance pass next.
+
 ## Decisions log
 - 2026-10-16: Solo first, online later, but sim/render split, command input, and serializable state from commit one. Reason: online is a relay later instead of a rewrite.
 - 2026-10-16: 2 towers, 1 enemy, 1 level. Reason: get a finished game in weeks.
@@ -119,7 +123,11 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16: The shout is hold-to-use with no cooldown or resource. Reason: Rock On! throws bones on a cooldown; a sustained cone instead keeps the player standing in the lane, which is where towers can't be. Revisit if it makes the player a turret.
 - 2026-10-16: Art is produced by a panel: parallel artist agents with distinct briefs, an art-director agent's critique, Owen's pick. Sprites are text grids compiled by art/build.py; characters are 16x24 with a parts system for variants. Reason: the panel's first run (the bro) beat a single draft; parts solve crowd sameness in the pipeline instead of by hand.
 - 2026-10-16: Tourists walk in a few tiles and stop confused on a timer; a touch hands them the brochure. Reason: Owen's call; makes each tourist a race the player can see, instead of herding. Replaces the earlier wander-and-leave idea.
-- 2026-10-16: Sprinkler 'scatter' is implemented as soaking: 1.5s in range and a tourist leaves the group. Reason: tourists are on rails, so pushing them is meaningless; a timer is readable and tunable.
+- 2026-10-16: Sprinkler 'scatter' is implemented as soaking: 1.5s in range and a tourist leaves the group. Reason: tourists are on rails, so pushing them is meaningless; a timer is readable and tunable. (Superseded the same evening: towers neutral.)
+- 2026-10-16 (evening): Towers never hurt tourists; only the player's shout can. Reason: Owen's playtest; a tower picking a tourist felt like the game's fault, a shout that spooks a group is the player's own call. Superseded 'towers hurt tourists'.
+- 2026-10-16 (evening): A group's value ($10/head) ticks down over 7s while the guide is confused, locks on the brochure, pays at the foot, and storms out at $0 for a flat -$10. Replaces the patience bar and the question mark. Reason: Owen's idea; one visible number is the timer, the reward and the penalty, and a missed group finally costs something.
+- 2026-10-16 (evening): The shout spooks guides for dollars, not seconds. Reason: same currency everywhere.
+- 2026-10-16 (evening): Followers huddle half a tile apart. Reason: with towers neutral the spacing is cosmetic, and a clump reads better than a conga line.
 - 2026-10-16: Towers don't block the player and the shop is key-driven (1/2/U/3/4/5), no menu. Reason: Rock On! pacing; a menu would stop the action.
 - 2026-10-16: Tourists travel in groups of 3-5 behind a guide; the timer and the brochure belong to the guide. Reason: a clump vs a lone figure is the strongest possible read against bros, and one hand-off per group keeps it from being five chores.
 - 2026-10-16: Tour-group identity (caps, flag, loud colors), not nationality, is the tourist variety axis. Reason: avoids a parade of stereotypes; reads just as well at 1x.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BRO, SHOUT, STATUE, TILE } from '../src/config/game';
+import { BRO, SHOUT, STATUE, TILE, TOURIST } from '../src/config/game';
+import { groupValue, spawnGroup } from '../src/sim/tourists';
 import { spawnBro, tileCenter } from '../src/sim/bros';
 import { inCone } from '../src/sim/shout';
 import { createState, step } from '../src/sim/sim';
@@ -84,6 +85,21 @@ describe('shout', () => {
     // After the stagger he winds up again, not straight back to pissing.
     run(s, 2, idle);
     expect(b.phase).toBe('windup');
+  });
+
+  it('shouting at a guide knocks dollars off the group, not time', () => {
+    const s = createState({ seed: 1, playerCount: 1 });
+    const p = s.players[0]!;
+    const guide = spawnGroup(s);
+    guide.phase = 'confused';
+    guide.pos = { x: p.pos.x + p.facing.x * TILE, y: p.pos.y + p.facing.y * TILE };
+    const before = groupValue(s, guide.group);
+    // Move the player away first so proximity doesn't hand over a brochure.
+    p.pos = { x: guide.pos.x - p.facing.x * (TILE + 4), y: guide.pos.y - p.facing.y * (TILE + 4) };
+    run(s, 10, shout);
+    const drained = before - groupValue(s, guide.group);
+    // More than the timer alone would take off in 10 ticks.
+    expect(drained).toBeGreaterThan(Math.ceil((before / TOURIST.confusedTicks) * 10));
   });
 
   it('a shouted walker slows but keeps walking', () => {

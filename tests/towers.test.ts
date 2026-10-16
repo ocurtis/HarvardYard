@@ -85,13 +85,12 @@ describe('dig', () => {
     expect(b.drunk).toBeLessThan(BRO.drunk);
   });
 
-  it('hits a tourist if the tourist is nearer, hauling them off', () => {
+  it('never targets tourists, even when they are nearer', () => {
     const s = createState({ seed: 1, playerCount: 1 });
     const grass = grassNextTo(s, s.map.foot);
     standOn(s, grass);
     s.money = 100;
     step(s, cmd(s, { type: 'build', kind: 'dig' }));
-    // Park a group on the foot (nearer) and a bro two tiles away along row.
     const guide = spawnGroup(s);
     const size = s.tourists.filter((t) => t.group === guide.group).length;
     for (const t of s.tourists) {
@@ -99,20 +98,19 @@ describe('dig', () => {
       t.pos = tileCenter(t.tile);
     }
     guide.phase = 'confused';
-    guide.timer = 10000;
     const b = spawnBro(s);
     b.tile = { x: s.map.foot.x - 2, y: s.map.foot.y };
     b.pos = tileCenter(b.tile);
     b.phase = 'windup';
     b.timer = 100000;
     run(s, TOWERS.dig.levels[0]!.fireTicks + 30);
-    expect(s.tourists.filter((t) => t.group === guide.group).length).toBeLessThan(size);
-    expect(b.drunk).toBe(BRO.drunk);
+    expect(s.tourists.filter((t) => t.group === guide.group).length).toBe(size);
+    expect(b.drunk).toBeLessThan(BRO.drunk);
   });
 });
 
 describe('sprinkler', () => {
-  it('slows and slowly sobers bros in range; soaked tourists leave the group', () => {
+  it('slows and slowly sobers bros in range; soaked tourists only walk slower', () => {
     const s = createState({ seed: 1, playerCount: 1 });
     const grass = grassNextTo(s, s.map.foot);
     standOn(s, grass);
@@ -130,10 +128,10 @@ describe('sprinkler', () => {
       t.pos = tileCenter(t.tile);
     }
     guide.phase = 'confused';
-    guide.timer = 100000;
-    run(s, SPRINKLER.scatterTicks + 5);
+    run(s, SPRINKLER.wetTicks + 5);
     expect(b.drunk).toBeLessThan(BRO.drunk);
-    expect(s.tourists.filter((t) => t.group === guide.group).length).toBeLessThan(size);
+    expect(s.tourists.filter((t) => t.group === guide.group).length).toBe(size);
+    expect(s.tourists.some((t) => t.wet > 0)).toBe(true);
   });
 });
 

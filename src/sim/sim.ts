@@ -2,7 +2,7 @@
 // Advance it only through step(). Mutates state in place for speed;
 // snapshot() gives you an exact copy.
 
-import { GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, STATUE, TILE } from '../config/game';
+import { GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, POPUP_TICKS, STATUE, TILE } from '../config/game';
 import { YARD_MAP } from '../config/maps/yard';
 import { updateBros } from './bros';
 import { applyShout } from './shout';
@@ -49,6 +49,7 @@ export function createState(config: SimConfig): GameState {
     statueHp: STATUE.hp,
     money: 0,
     notice: null,
+    popups: [],
     wave: { index: -1, toSpawn: 0, nextSpawnTick: 0, groupsToSpawn: 0, nextTouristTick: 0, active: false },
   };
 }
@@ -95,6 +96,7 @@ export function step(state: GameState, commands: Command[]): void {
     updateBros(state);
     updateTourists(state);
     updateTowers(state);
+    state.popups = state.popups.filter((p) => state.tick - p.tick < POPUP_TICKS);
   }
 
   state.tick++;

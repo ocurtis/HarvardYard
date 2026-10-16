@@ -3,6 +3,7 @@
 
 import { SHOUT } from '../config/game';
 import { discipline, sober } from './bros';
+import { spook } from './tourists';
 import { shoutMult, shoutRangeAdd } from './towers';
 import type { BroState, GameState, PlayerState, Vec } from './types';
 
@@ -15,6 +16,12 @@ export function applyShout(state: GameState, player: PlayerState): void {
       sober(b, amount);
       discipline(b);
     }
+  }
+  // Tourists in the cone get spooked: dollars off their group's value. This
+  // is the only way the player loses tourists, so it's always their call.
+  for (const t of state.tourists) {
+    if (!t.guide) continue;
+    if (inCone(player.pos, player.facing, t.pos, range)) spook(state, t, SHOUT.spookPerTick);
   }
 }
 

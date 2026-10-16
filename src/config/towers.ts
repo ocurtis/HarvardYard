@@ -44,8 +44,9 @@ export const BONE = {
 
 export const SPRINKLER = {
   slowTicks: 10, // re-applied every tick in range, so the slow lingers briefly after leaving
-  // Tourists: ticks of soaking before a member gives up and leaves the group.
-  scatterTicks: 90,
+  // Tourists: a soaked tourist walks slower for this long after leaving the water. Nothing worse.
+  wetTicks: 45,
+  wetSpeedFactor: 0.6,
 };
 
 // Player self-upgrades: three stats, three levels each, same price ladder.

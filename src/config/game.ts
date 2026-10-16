@@ -43,6 +43,7 @@ export const SHOUT = {
   rangePx: 30, // just under two tiles
   halfAngleDeg: 40, // cone half-width; 40 = an 80-degree cone
   soberPerTick: 24 / 60, // 24/s: a lone bro takes ~4s of shouting to sober. Towers are the real damage.
+  spookPerTick: 30 / 60, // dollars knocked off a group's value per tick its guide is in the cone (30/s)
   // Hold-to-use, no resource. Rock On! throws bones on a cooldown; the shout
   // instead trades burst for needing to stand there, which keeps the player
   // in the lane where towers can't be.
@@ -52,13 +53,16 @@ export const TOURIST = {
   speedPxPerTick: 0.5, // 30 px/s; slower than a bro, they're looking around
   wanderTiles: 6, // how far in along the route before they stop, confused
   confusedTicks: 420, // 7s to reach them with a brochure before they give up
-  payout: 10, // currency per group member when the guide reaches the foot
+  valuePerHead: 10, // a group's starting value; it ticks down to 0 over confusedTicks once the guide stops
+  stormOutPenalty: 10, // what a group that reaches $0 costs you on the way out (bank floors at 0)
   touchRadiusPx: 10, // player-to-guide distance that counts as handing over a brochure
   groupMin: 3, // group size including the guide
   groupMax: 5,
-  followSpacingTiles: 1, // each follower stays this many tiles behind the one ahead
+  followSpacingHalfTiles: 1, // followers huddle half a tile apart
   heads: 3, // head stamps in the art pipeline
   colors: 3, // group shirt colors; a whole group shares one
   photoChancePerTick: 1 / 90, // a standing follower snaps a photo about every 1.5s
   photoTicks: 24, // how long the photo pose lasts; the flash is the first third
 };
+
+export const POPUP_TICKS = 75; // how long a floating "+$40" lives
