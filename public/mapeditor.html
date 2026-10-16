@@ -7,7 +7,7 @@
   :root { color-scheme: dark; }
   body { margin: 0; background: #202040; color: #e8e8f0; font: 13px/1.4 ui-monospace, Menlo, monospace; display: flex; gap: 16px; padding: 16px; }
   #left { display: flex; flex-direction: column; gap: 10px; }
-  canvas { image-rendering: pixelated; background: #000; cursor: crosshair; border: 2px solid #4430ba; }
+  canvas { image-rendering: pixelated; background: #000; cursor: crosshair; border: 2px solid #4430ba; align-self: flex-start; }
   .tools { display: flex; flex-wrap: wrap; gap: 6px; }
   .tool { padding: 6px 10px; border: 2px solid #4430ba; background: #340058; cursor: pointer; user-select: none; }
   .tool.active { background: #4430ba; border-color: #fe48de; }
@@ -115,6 +115,10 @@ function render() {
     ctx.fillStyle = 'rgba(254,72,222,0.35)';
     for (const [x, y] of route.cells) ctx.fillRect(x * PX + 8, y * PX + 8, PX - 17, PX - 17);
   }
+  if (hover) {
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+    ctx.strokeRect(hover[0] * PX + 1, hover[1] * PX + 1, PX - 3, PX - 3);
+  }
   // Grid coords for row 0 / col 0 help.
   ctx.fillStyle = '#fff'; ctx.font = '10px monospace';
   for (let x = 0; x < W; x++) ctx.fillText(x, x * PX + 2, 10);
@@ -199,10 +203,18 @@ function showReport(r) {
   report.innerHTML = lines.join('\n');
 }
 
-function paintAt(e, ch) {
+let hover = null;
+function cellFromEvent(e) {
   const rect = canvas.getBoundingClientRect();
-  const x = Math.floor((e.clientX - rect.left) / PX), y = Math.floor((e.clientY - rect.top) / PX);
-  if (x < 0 || y < 0 || x >= W || y >= H) return;
+  // Scale-proof: map CSS pixels to canvas pixels even if the canvas is resized by layout.
+  const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+  const x = Math.floor((e.clientX - rect.left) * sx / PX), y = Math.floor((e.clientY - rect.top) * sy / PX);
+  if (x < 0 || y < 0 || x >= W || y >= H) return null;
+  return [x, y];
+}
+function paintAt(e, ch) {
+  const cell = cellFromEvent(e); if (!cell) return;
+  const [x, y] = cell;
   if (ch === 'S') {
     if (x + 1 >= W || y + 1 >= H) return;
     for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) if (grid[yy][xx] === 'S') grid[yy][xx] = '.';
@@ -213,7 +225,14 @@ function paintAt(e, ch) {
 
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('mousedown', e => { painting = true; paintAt(e, e.button === 2 ? '.' : tool); });
-canvas.addEventListener('mousemove', e => { if (painting && tool !== 'S') paintAt(e, (e.buttons & 2) ? '.' : tool); });
+canvas.addEventListener('mousemove', e => {
+  const cell = cellFromEvent(e);
+  const changed = !hover || !cell || hover[0] !== cell[0] || hover[1] !== cell[1];
+  hover = cell;
+  if (painting && tool !== 'S') paintAt(e, (e.buttons & 2) ? '.' : tool);
+  else if (changed) render();
+});
+canvas.addEventListener('mouseleave', () => { hover = null; render(); });
 addEventListener('mouseup', () => painting = false);
 addEventListener('keydown', e => { const k = KINDS.find(k => k.key === e.key.toLowerCase()); if (k) setTool(k.ch); });
 
