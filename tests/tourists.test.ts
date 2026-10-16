@@ -125,6 +125,20 @@ describe('tourist groups', () => {
     expect(guide.phase).toBe('confused');
   });
 
+  it('spawns a group at the gate farthest from the player', () => {
+    const s = createState({ seed: 3, playerCount: 1 });
+    // Stand on the left gate; the group must not appear there.
+    const left = s.map.gates.reduce((a, b) => (a.x < b.x ? a : b));
+    s.players[0]!.pos = { x: left.x * TILE + TILE / 2, y: left.y * TILE + TILE / 2 };
+    const guide = spawnGroup(s);
+    expect(guide.tile).not.toEqual(left);
+    const dLeft = Math.hypot(guide.pos.x - s.players[0]!.pos.x, guide.pos.y - s.players[0]!.pos.y);
+    for (const g of s.map.gates) {
+      const d = Math.hypot(g.x * TILE + TILE / 2 - s.players[0]!.pos.x, g.y * TILE + TILE / 2 - s.players[0]!.pos.y);
+      expect(d).toBeLessThanOrEqual(dLeft + 0.5);
+    }
+  });
+
   it('stays deterministic with groups in play', () => {
     const a = createState({ seed: 21, playerCount: 2 });
     const b = createState({ seed: 21, playerCount: 2 });

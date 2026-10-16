@@ -12,8 +12,27 @@ import { nextTileToward } from './path';
 import { nextInt } from './rng';
 import type { GameState, Popup, TouristState, Vec } from './types';
 
+// Groups appear at the gate farthest from the nearest player (ties broken by
+// the seeded RNG), so a new group is never where you already are. Bros stay
+// random; the squeeze comes from tourists pulling you away from them.
+function farthestGate(state: GameState): Vec {
+  const gates = state.map.gates;
+  let best: Vec[] = [];
+  let bestD = -1;
+  for (const g of gates) {
+    const c = tileCenter(g);
+    let d = Infinity;
+    for (const p of state.players) d = Math.min(d, Math.hypot(p.pos.x - c.x, p.pos.y - c.y));
+    if (d > bestD + 0.5) {
+      bestD = d;
+      best = [g];
+    } else if (Math.abs(d - bestD) <= 0.5) best.push(g);
+  }
+  return best[nextInt(state, best.length)]!;
+}
+
 export function spawnGroup(state: GameState): TouristState {
-  const gate = state.map.gates[nextInt(state, state.map.gates.length)]!;
+  const gate = farthestGate(state);
   const size = TOURIST.groupMin + nextInt(state, TOURIST.groupMax - TOURIST.groupMin + 1);
   const group = state.nextGroupId++;
   const color = nextInt(state, TOURIST.colors);

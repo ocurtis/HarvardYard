@@ -35,7 +35,7 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Bro. Paths gate -> statue. On reaching the statue: 1s wind-up, then a visible stream dealing statue damage per second until he's staggered or sober. Staggered: stumbles back, resumes. Never attacks the player or towers.
 
 ## Tourists
-- Travel in groups of 3-5 behind a guide, huddled half a tile apart. Groups spawn from random gates in every wave, interleaved with bros.
+- Travel in groups of 3-5 behind a guide, huddled half a tile apart. Groups spawn in every wave, interleaved with bros, at the gate farthest from the nearest player: a new group is never where you already are.
 - A group is worth $10 a head, shown over the guide from the moment it enters. The guide walks a few tiles in (6 in v1) and stops, confused; from then the value ticks down to $0 over 7 seconds, whatever the group size.
 - Brochure: a player within touching distance of the GUIDE hands it over for the whole group and LOCKS the value. No button. (Standing next to a huddle usually counts; the guide is in front.)
 - Pamphleted: the guide leads the group to the foot; on arrival the group pays the locked value ("+$N" pops), then leaves by the nearest exit.
@@ -127,6 +127,7 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16 (evening): Towers never hurt tourists; only the player's shout can. Reason: Owen's playtest; a tower picking a tourist felt like the game's fault, a shout that spooks a group is the player's own call. Superseded 'towers hurt tourists'.
 - 2026-10-16 (evening): A group's value ($10/head) ticks down over 7s while the guide is confused, locks on the brochure, pays at the foot, and storms out at $0 for a flat -$10. Replaces the patience bar and the question mark. Reason: Owen's idea; one visible number is the timer, the reward and the penalty, and a missed group finally costs something.
 - 2026-10-16 (evening): The shout spooks guides for dollars, not seconds. Reason: same currency everywhere.
+- 2026-10-16 (evening): Tourist groups spawn at the gate farthest from the nearest player; bros stay random. Reason: the guide-or-bro choice only exists if the group is somewhere else.
 - 2026-10-16 (evening): Followers huddle half a tile apart. Reason: with towers neutral the spacing is cosmetic, and a clump reads better than a conga line.
 - 2026-10-16: Towers don't block the player and the shop is key-driven (1/2/U/3/4/5), no menu. Reason: Rock On! pacing; a menu would stop the action.
 - 2026-10-16: Tourists travel in groups of 3-5 behind a guide; the timer and the brochure belong to the guide. Reason: a clump vs a lone figure is the strongest possible read against bros, and one hand-off per group keeps it from being five chores.
