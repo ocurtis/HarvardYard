@@ -93,7 +93,8 @@ export class YardScene extends Phaser.Scene {
     this.world.add(this.fx);
 
     for (const p of this.loop.state.players) {
-      const rect = this.add.rectangle(p.pos.x, p.pos.y, TILE - 2, TILE - 2, PALETTE.player);
+      // Placeholder until the player has a sprite: a hollow outline, so it never looks like a backdrop.
+      const rect = this.add.rectangle(p.pos.x, p.pos.y, TILE - 4, TILE - 4, PALETTE.player, 0.15).setStrokeStyle(1, PALETTE.player);
       rect.setOrigin(0.5);
       rect.setDepth(p.pos.y);
       this.world.add(rect);
