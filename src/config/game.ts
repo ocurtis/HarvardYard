@@ -44,8 +44,8 @@ export const BRO = {
 // everything in between. He shakes the whole way in because he has to go.
 export const LONGSHOT = {
   speedPxPerTick: 0.95, // 57 px/s, about 1.6x a bro
-  drunk: 45,
-  rangePx: 56, // 3.5 tiles from the statue's center; he stops on the first lane tile inside it
+  drunk: 34, // 25% under the first cut of 45
+  rangePx: 104, // 6.5 tiles from the statue's center: the bottoms of both inner loops are in range; he stops on the first lane tile inside it
   windupTicks: 40,
   pissPerTick: 5 / 60, // a little weaker than a bro's point-blank stream
   shakePx: 1, // sprite jitter amplitude while walking and winding up

@@ -33,7 +33,7 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 
 ## Enemies (v1: two)
 - Bro. Paths gate -> statue. On reaching the statue: 1s wind-up, then a visible stream dealing statue damage per second until he's staggered or sober. Staggered: stumbles back, resumes. Never attacks the player or towers.
-- Longshot Bro (from wave 3). Crimson shirt, about 1.6x a bro's speed, less drunk (45). Shakes the whole way in. Stops on the first lane tile within 3.5 tiles of the statue, winds up (0.7s), and arcs a stream over everything between him and the statue; the arc passes over the player. Slightly weaker stream than point-blank. Exists so the alleys and the last corridor aren't the only places that matter.
+- Longshot Bro (from wave 3). Crimson shirt, about 1.6x a bro's speed, much less drunk (34). Shakes the whole way in. Stops on the first lane tile within 6.5 tiles of the statue (the bottoms of both inner loops are in range), winds up (0.7s), and arcs a stream over everything between him and the statue; the arc passes over the player. Slightly weaker stream than point-blank. Exists so the alleys and the last corridor aren't the only places that matter.
 
 ## Tourists
 - Travel in groups of 3-5 behind a guide, huddled half a tile apart. Groups spawn in every wave, interleaved with bros, at the gate farthest from the nearest player: a new group is never where you already are.
