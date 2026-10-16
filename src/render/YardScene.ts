@@ -711,6 +711,6 @@ function tileFrame(anims: Record<string, { frames: number[] }>, kind: TileKind, 
     case 'exit':
       return f('exit');
     case 'guide':
-      return f('guide');
+      return f(['path', 'path_b', 'path_c', 'path_d'][tileHash(x, y) % 4]!); // a lane tile; the old flag marker meant nothing
   }
 }

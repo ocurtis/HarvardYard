@@ -72,9 +72,9 @@ export const CUP = {
   catchRadiusPx: 10, // player-to-cup-shadow distance that counts as a catch
 };
 
-// What a bro pays when he sobers out, by kind. Small next to a tourist group
-// so the group is still the thing you drop everything for.
-export const BOUNTY: Record<'bro' | 'longshot' | 'chucker', number> = { bro: 2, longshot: 3, chucker: 4 };
+// What a bro pays when he sobers out. A dollar, whoever he is: tourists are the
+// economy, kills are pocket change.
+export const BOUNTY: Record<'bro' | 'longshot' | 'chucker', number> = { bro: 1, longshot: 1, chucker: 1 };
 
 export const SHOUT = {
   rangePx: 30, // just under two tiles
