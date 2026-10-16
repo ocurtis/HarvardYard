@@ -107,8 +107,12 @@ def render(sprite):
 
 
 # Shirt swaps for part-built characters: (fill, shade) pairs replacing keys L and Q.
+TOURIST_GROUP_COLORS = [("#fe7000", "#ca4a00"), ("#e8ea4a", "#a3a324"), ("#27badb", "#006ab4"), ("#fe48de", "#9600dc"), ("#63b31d", "#008456")]
 SHIRTS = {
     "bro": [("#27badb", "#006ab4"), ("#ffffff", "#c8c8c8"), ("#fe626e", "#d10f4c")],
+    "tourist": TOURIST_GROUP_COLORS,
+    "tourist_a": TOURIST_GROUP_COLORS,
+    "tourist_b": TOURIST_GROUP_COLORS,
 }
 
 
