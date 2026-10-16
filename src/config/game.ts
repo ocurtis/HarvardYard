@@ -31,6 +31,7 @@ export const BRO = {
   drunk: 60, // the health bar: sobering it to 0 is the kill
   windupTicks: 60, // 1s from reaching the statue to the stream starting
   pissPerTick: 6 / 60, // statue damage per tick while the stream is on (6/s)
+  variants: 9, // how many looks the art pipeline produces (3 heads x 3 shirts); picked at spawn
   staggerTicks: 30, // how long a shout interrupts a wind-up or a piss
   slowFactor: 0.4, // walking speed multiplier while being shouted at
   slowTicks: 12, // how long the slow lingers after the shout stops touching him

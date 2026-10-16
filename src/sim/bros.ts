@@ -22,6 +22,7 @@ export function spawnBro(state: GameState): BroState {
     timer: 0,
     slow: 0,
     facing: { x: 0, y: 1 },
+    variant: nextInt(state, BRO.variants),
   };
   state.bros.push(bro);
   return bro;

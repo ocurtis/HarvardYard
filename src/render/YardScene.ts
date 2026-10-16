@@ -7,6 +7,7 @@ import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
 import type { BroState, MapData, PlayerState, TileKind, TouristState } from '../sim/types';
 import { canStartWave } from '../sim/waves';
+import { variantKey, type Atlas } from './assets';
 
 const TILE_COLOR: Record<TileKind, number> = {
   grass: PALETTE.grass,
@@ -22,9 +23,12 @@ const TILE_COLOR: Record<TileKind, number> = {
 };
 
 interface BroView {
-  body: Phaser.GameObjects.Rectangle;
-  cup: Phaser.GameObjects.Rectangle;
+  // Either an animated sprite (when the atlas has the bro) or placeholder rectangles.
+  sprite: Phaser.GameObjects.Sprite | null;
+  body: Phaser.GameObjects.Rectangle | null;
+  cup: Phaser.GameObjects.Rectangle | null;
   bar: Phaser.GameObjects.Rectangle;
+  anim: string;
 }
 
 interface TouristView {
@@ -44,6 +48,7 @@ export class YardScene extends Phaser.Scene {
   private fpsSamples: number[] = [];
   private world!: Phaser.GameObjects.Container;
   private broViews = new Map<number, BroView>();
+  private atlas: Atlas = {};
   private touristViews = new Map<number, TouristView>();
 
   constructor(private readonly loop: GameLoop) {
@@ -51,6 +56,7 @@ export class YardScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.atlas = (this.registry.get('atlas') as Atlas | undefined) ?? {};
     this.cameras.main.setBackgroundColor(PALETTE.bg);
     // Everything in the map lives in a container offset by the HUD column,
     // so sim coordinates stay map-relative.
@@ -58,12 +64,13 @@ export class YardScene extends Phaser.Scene {
     this.drawMap(this.loop.state.map);
 
     // Dynamic per-frame drawing (shout cone, piss streams) goes here, above tiles, below sprites.
-    this.fx = this.add.graphics();
+    this.fx = this.add.graphics().setDepth(-1);
     this.world.add(this.fx);
 
     for (const p of this.loop.state.players) {
       const rect = this.add.rectangle(p.pos.x, p.pos.y, TILE - 2, TILE - 2, PALETTE.player);
       rect.setOrigin(0.5);
+      rect.setDepth(p.pos.y);
       this.world.add(rect);
       this.players.push(rect);
       const dot = this.add.rectangle(p.pos.x, p.pos.y, 3, 3, PALETTE.playerFacing);
@@ -104,13 +111,15 @@ export class YardScene extends Phaser.Scene {
       // Round to whole pixels so the sprite sits on the pixel grid.
       const x = Math.round(p.pos.x);
       const y = Math.round(p.pos.y);
-      this.players[i]?.setPosition(x, y);
-      this.facingDots[i]?.setPosition(x + p.facing.x * 5, y + p.facing.y * 5);
+      this.players[i]?.setPosition(x, y).setDepth(y + TILE / 2);
+      this.facingDots[i]?.setPosition(x + p.facing.x * 5, y + p.facing.y * 5).setDepth(y + TILE / 2 + 0.5);
     });
 
     this.syncBros(s.bros);
     this.syncTourists(s.tourists);
     this.drawFx(s.bros, s.players);
+    // Draw order: whoever's feet are lower on screen draws in front. Tiles and fx stay at the back.
+    this.world.sort('depth');
 
     // HUD.
     this.hpFill.width = Math.max(0, (HUD_W - 4) * (s.statueHp / STATUE.hp));
@@ -139,27 +148,49 @@ export class YardScene extends Phaser.Scene {
       seen.add(b.id);
       let v = this.broViews.get(b.id);
       if (!v) {
-        const body = this.add.rectangle(0, 0, TILE - 4, TILE - 2, PALETTE.bro).setOrigin(0.5);
-        const cup = this.add.rectangle(0, 0, 3, 3, PALETTE.broCup).setOrigin(0.5);
+        const key = variantKey(this.atlas, 'bro', b.variant);
         const bar = this.add.rectangle(0, 0, TILE - 4, 2, PALETTE.broBar).setOrigin(0, 0.5);
-        this.world.add(body);
-        this.world.add(cup);
         this.world.add(bar);
-        v = { body, cup, bar };
+        if (key) {
+          const sprite = this.add.sprite(0, 0, key, 0).setOrigin(0.5, 1);
+          this.world.add(sprite);
+          v = { sprite, body: null, cup: null, bar, anim: '' };
+        } else {
+          const body = this.add.rectangle(0, 0, TILE - 4, TILE - 2, PALETTE.bro).setOrigin(0.5);
+          const cup = this.add.rectangle(0, 0, 3, 3, PALETTE.broCup).setOrigin(0.5);
+          this.world.add(body);
+          this.world.add(cup);
+          v = { sprite: null, body, cup, bar, anim: '' };
+        }
         this.broViews.set(b.id, v);
       }
       const x = Math.round(b.pos.x);
       const y = Math.round(b.pos.y);
-      v.body.setPosition(x, y);
-      v.cup.setPosition(x + b.facing.x * 5, y + b.facing.y * 4);
-      v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1);
+      const feet = y + TILE / 2; // sim pos is the tile center; sprites stand on the tile's bottom edge
+      if (v.sprite) {
+        v.sprite.setPosition(x, feet).setDepth(feet);
+        const anim = broAnim(b);
+        if (anim !== v.anim) {
+          v.anim = anim;
+          v.sprite.play(`${v.sprite.texture.key}:${anim}`, true);
+        }
+        // Stagger: the stagger frame plus a flash so the hit reads.
+        v.sprite.setTint(b.phase === 'stagger' && Math.floor(this.time.now / 60) % 2 === 0 ? 0xffffff : 0xffffff);
+        v.sprite.setAlpha(b.slow > 0 && Math.floor(this.time.now / 80) % 2 === 0 ? 0.6 : 1);
+        v.bar.setPosition(x - (TILE - 4) / 2, feet - 24 - 2).setDepth(feet + 0.1);
+      } else {
+        v.body!.setPosition(x, y).setDepth(feet);
+        v.cup!.setPosition(x + b.facing.x * 5, y + b.facing.y * 4).setDepth(feet + 0.1);
+        v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1).setDepth(feet + 0.1);
+        v.body!.setFillStyle(b.phase === 'stagger' || b.slow > 0 ? PALETTE.broStagger : PALETTE.bro);
+      }
       v.bar.width = Math.max(0, (TILE - 4) * (b.drunk / BRO.drunk));
-      v.body.setFillStyle(b.phase === 'stagger' || b.slow > 0 ? PALETTE.broStagger : PALETTE.bro);
     }
     for (const [id, v] of this.broViews) {
       if (!seen.has(id)) {
-        v.body.destroy();
-        v.cup.destroy();
+        v.sprite?.destroy();
+        v.body?.destroy();
+        v.cup?.destroy();
         v.bar.destroy();
         this.broViews.delete(id);
       }
@@ -183,14 +214,14 @@ export class YardScene extends Phaser.Scene {
       }
       const x = Math.round(t.pos.x);
       const y = Math.round(t.pos.y);
-      v.body.setPosition(x, y);
-      v.hat.setPosition(x, y - TILE / 2 + 1);
+      v.body.setPosition(x, y).setDepth(y + TILE / 2);
+      v.hat.setPosition(x, y - TILE / 2 + 1).setDepth(y + TILE / 2 + 0.1);
       v.body.setFillStyle(t.phase === 'confused' ? PALETTE.touristConfused : PALETTE.tourist);
       // Pamphleted tourists carry a white brochure (the hat stripe turns solid); the
       // patience bar only shows while confused.
       v.hat.setVisible(t.phase === 'pamphleted');
       v.bar.setVisible(t.phase === 'confused');
-      v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1);
+      v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1).setDepth(y + TILE / 2 + 0.1);
       v.bar.width = Math.max(0, (TILE - 4) * (t.timer / TOURIST.confusedTicks));
     }
     for (const [id, v] of this.touristViews) {
@@ -251,7 +282,7 @@ export class YardScene extends Phaser.Scene {
   }
 
   private drawMap(map: MapData): void {
-    const g = this.add.graphics();
+    const g = this.add.graphics().setDepth(-2);
     this.world.add(g);
     for (let y = 0; y < GRID_H; y++) {
       for (let x = 0; x < GRID_W; x++) {
@@ -265,5 +296,20 @@ export class YardScene extends Phaser.Scene {
     // Statue outline so the 2x2 reads as one object.
     g.lineStyle(1, 0x000000, 1);
     g.strokeRect(map.statue.x * TILE + 0.5, map.statue.y * TILE + 0.5, TILE * 2 - 1, TILE * 2 - 1);
+  }
+}
+
+function broAnim(b: BroState): string {
+  switch (b.phase) {
+    case 'walking':
+      return 'walk';
+    case 'windup':
+      return 'windup';
+    case 'pissing':
+      return 'piss';
+    case 'stagger':
+      return 'stagger';
+    case 'leaving':
+      return 'sober';
   }
 }

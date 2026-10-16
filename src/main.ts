@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { LOGICAL_H, LOGICAL_W, PLAYER_COUNT_DEFAULT } from './config/game';
 import { GameLoop } from './loop';
 import { KeyboardInput } from './render/keyboard';
+import { BootScene } from './render/BootScene';
 import { YardScene } from './render/YardScene';
 
 const params = new URLSearchParams(location.search);
@@ -30,7 +31,7 @@ const game = new Phaser.Game({
     zoom: integerZoom(),
   },
   fps: { target: 60 },
-  scene: [new YardScene(loop)],
+  scene: [new BootScene(), new YardScene(loop)],
 });
 
 addEventListener('resize', () => game.scale.setZoom(integerZoom()));

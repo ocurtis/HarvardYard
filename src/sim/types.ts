@@ -37,6 +37,7 @@ export interface BroState {
   timer: number; // ticks left in windup/stagger
   slow: number; // ticks of slow remaining (shout on a walker)
   facing: Vec;
+  variant: number; // which look; the renderer maps it to a sprite variant
 }
 
 export type TouristPhase = 'entering' | 'confused' | 'pamphleted' | 'leaving';
