@@ -35,3 +35,12 @@ export const BRO = {
   // How close (px) to the center of the next tile before snapping to it.
   arriveEpsilon: 0.75,
 };
+
+export const SHOUT = {
+  rangePx: 30, // just under two tiles
+  halfAngleDeg: 40, // cone half-width; 40 = an 80-degree cone
+  soberPerTick: 24 / 60, // 24/s: a lone bro takes ~4s of shouting to sober. Towers are the real damage.
+  // Hold-to-use, no resource. Rock On! throws bones on a cooldown; the shout
+  // instead trades burst for needing to stand there, which keeps the player
+  // in the lane where towers can't be.
+};

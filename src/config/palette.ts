@@ -20,6 +20,7 @@ export const PALETTE = {
   broCup: 0xffffff,
   broBar: 0xcc68e4,
   piss: 0xe8ea4a,
+  shout: 0xffffff,
   playerFacing: 0xff4d6d,
   hud: 0x000000,
   hudText: 0xffffff,

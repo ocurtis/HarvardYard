@@ -23,6 +23,7 @@ export interface PlayerState {
   pos: Vec; // pixel coords, center of the player
   facing: Vec; // unit-ish direction, last non-zero move
   moving: boolean;
+  shouting: boolean; // true on ticks a shout command was applied (for render)
 }
 
 export type BroPhase = 'walking' | 'windup' | 'pissing' | 'stagger' | 'leaving';
@@ -68,7 +69,8 @@ export interface GameState {
 // a relay will produce them later for online play.
 export type Command =
   | { playerId: number; tick: number; type: 'move'; dx: -1 | 0 | 1; dy: -1 | 0 | 1 }
-  | { playerId: number; tick: number; type: 'startWave' };
+  | { playerId: number; tick: number; type: 'startWave' }
+  | { playerId: number; tick: number; type: 'shout' };
 
 export interface SimConfig {
   playerCount: number;

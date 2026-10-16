@@ -1,11 +1,11 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, STATUE, TILE } from '../config/game';
+import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, SHOUT, STATUE, TILE } from '../config/game';
 import { PALETTE } from '../config/palette';
 import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
-import type { BroState, MapData, TileKind } from '../sim/types';
+import type { BroState, MapData, PlayerState, TileKind } from '../sim/types';
 import { canStartWave } from '../sim/waves';
 
 const TILE_COLOR: Record<TileKind, number> = {
@@ -50,7 +50,7 @@ export class YardScene extends Phaser.Scene {
     this.world = this.add.container(HUD_W, 0);
     this.drawMap(this.loop.state.map);
 
-    // Dynamic per-frame drawing (piss streams, etc.) goes here, above tiles, below sprites.
+    // Dynamic per-frame drawing (shout cone, piss streams) goes here, above tiles, below sprites.
     this.fx = this.add.graphics();
     this.world.add(this.fx);
 
@@ -102,7 +102,7 @@ export class YardScene extends Phaser.Scene {
     });
 
     this.syncBros(s.bros);
-    this.drawFx(s.bros);
+    this.drawFx(s.bros, s.players);
 
     // HUD.
     this.hpFill.width = Math.max(0, (HUD_W - 4) * (s.statueHp / STATUE.hp));
@@ -110,7 +110,7 @@ export class YardScene extends Phaser.Scene {
     if (this.fpsSamples.length > 30) this.fpsSamples.shift();
     const avg = this.fpsSamples.reduce((a, b) => a + b, 0) / this.fpsSamples.length;
     const waveLabel = s.wave.index < 0 ? '-' : `${s.wave.index + 1}/${WAVES.length}`;
-    const prompt = canStartWave(s) ? '\nSPACE\nnext\nwave' : '';
+    const prompt = canStartWave(s) ? '\nSPACE\nnext\nwave' : '\nJ/X\nshout';
     this.hudText.setText(`HP\n${Math.ceil(s.statueHp)}\n\nWAVE\n${waveLabel}\n\nbros\n${s.bros.length}${prompt}\n\n${(1000 / avg).toFixed(0)}fps`);
 
     if (s.phase !== 'playing') {
@@ -156,9 +156,19 @@ export class YardScene extends Phaser.Scene {
     }
   }
 
-  private drawFx(bros: BroState[]): void {
+  private drawFx(bros: BroState[], players: PlayerState[]): void {
     const g = this.fx;
     g.clear();
+    for (const p of players) {
+      if (!p.shouting) continue;
+      // The shout cone, drawn as a translucent wedge so range and width are readable.
+      const fl = Math.hypot(p.facing.x, p.facing.y) || 1;
+      const a = Math.atan2(p.facing.y / fl, p.facing.x / fl);
+      const half = (SHOUT.halfAngleDeg * Math.PI) / 180;
+      g.fillStyle(PALETTE.shout, 0.35);
+      g.slice(Math.round(p.pos.x), Math.round(p.pos.y), SHOUT.rangePx, a - half, a + half, false);
+      g.fillPath();
+    }
     for (const b of bros) {
       if (b.phase === 'windup') {
         // Small exclamation above the head while he unzips.

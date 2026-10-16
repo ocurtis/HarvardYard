@@ -27,6 +27,10 @@ export class KeyboardInput implements InputSource {
     }
     this.pressed = [];
 
+    if (this.held.has('j') || this.held.has('x') || this.held.has('shift')) {
+      out.push({ playerId: this.playerId, tick, type: 'shout' });
+    }
+
     let dx: -1 | 0 | 1 = 0;
     let dy: -1 | 0 | 1 = 0;
     if (this.held.has('a') || this.held.has('arrowleft')) dx = -1;
@@ -40,5 +44,5 @@ export class KeyboardInput implements InputSource {
 
 function isGameKey(key: string): boolean {
   const k = key.toLowerCase();
-  return k === 'w' || k === 'a' || k === 's' || k === 'd' || k.startsWith('arrow') || k === ' ' || k === 'enter';
+  return k === 'w' || k === 'a' || k === 's' || k === 'd' || k.startsWith('arrow') || k === ' ' || k === 'enter' || k === 'j' || k === 'x';
 }

@@ -5,6 +5,7 @@
 import { GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, STATUE, TILE } from '../config/game';
 import { YARD_MAP } from '../config/maps/yard';
 import { updateBros } from './bros';
+import { applyShout } from './shout';
 import { blocksMovement, parseMap, tileAt } from './map';
 import { computeDistToStatue } from './path';
 import { seedRng } from './rng';
@@ -21,6 +22,7 @@ export function createState(config: SimConfig): GameState {
       pos: spawnPoint(map, i),
       facing: { x: 0, y: 1 },
       moving: false,
+      shouting: false,
     });
   }
   return {
@@ -49,7 +51,10 @@ function spawnPoint(map: MapData, index: number): Vec {
 }
 
 export function step(state: GameState, commands: Command[]): void {
-  for (const p of state.players) p.moving = false;
+  for (const p of state.players) {
+    p.moving = false;
+    p.shouting = false;
+  }
 
   for (const cmd of commands) {
     if (cmd.tick !== state.tick) continue; // stale or early command; ignore
@@ -57,6 +62,7 @@ export function step(state: GameState, commands: Command[]): void {
     if (!player) continue;
     if (cmd.type === 'move') applyMove(state.map, player, cmd.dx, cmd.dy);
     if (cmd.type === 'startWave') startWave(state);
+    if (cmd.type === 'shout') applyShout(state, player);
   }
 
   if (state.phase === 'playing') {

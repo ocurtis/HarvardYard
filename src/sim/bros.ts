@@ -76,9 +76,16 @@ function updateBro(state: GameState, b: BroState): void {
     case 'stagger': {
       b.timer--;
       if (b.timer <= 0) {
-        // Resume: he's still adjacent, so wind up again.
-        b.phase = 'windup';
-        b.timer = BRO.windupTicks;
+        // Resume. If he's adjacent to the statue, wind up again; otherwise keep walking.
+        const atStatue =
+          Math.hypot(tileCenter(b.tile).x - b.pos.x, tileCenter(b.tile).y - b.pos.y) <= BRO.arriveEpsilon &&
+          nextTileToward(state.map, state.distToStatue, b.tile) === null;
+        if (atStatue) {
+          b.phase = 'windup';
+          b.timer = BRO.windupTicks;
+        } else {
+          b.phase = 'walking';
+        }
       }
       return;
     }
@@ -92,11 +99,11 @@ export function sober(b: BroState, amount: number): void {
   b.drunk = Math.max(0, b.drunk - amount);
 }
 
+// Interrupts whatever he's doing (walking, winding up, pissing) for a moment.
 export function stagger(b: BroState): void {
-  if (b.phase === 'windup' || b.phase === 'pissing' || b.phase === 'stagger') {
-    b.phase = 'stagger';
-    b.timer = BRO.staggerTicks;
-  }
+  if (b.phase === 'leaving') return;
+  b.phase = 'stagger';
+  b.timer = BRO.staggerTicks;
 }
 
 function faceStatue(state: GameState, tile: Vec): Vec {
