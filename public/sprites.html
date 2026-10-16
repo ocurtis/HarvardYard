@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Sprite review</title>
+<style>
+  body { margin: 0; background: #202040; color: #e8e8f0; font: 13px/1.4 ui-monospace, Menlo, monospace; padding: 16px; }
+  h1 { font-size: 14px; margin: 0 0 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .card { background: #340058; border: 2px solid #4430ba; padding: 8px; }
+  .card h2 { font-size: 12px; margin: 0 0 6px; color: #fe48de; }
+  canvas { image-rendering: pixelated; display: block; background: #000; }
+  .anims { display: flex; gap: 10px; flex-wrap: wrap; }
+  .anim { text-align: center; }
+  .anim small { display: block; color: #a48080; }
+  label { margin-right: 12px; }
+  input[type=number] { width: 44px; background: #000; color: #fff; border: 1px solid #4430ba; }
+  #ref img { image-rendering: pixelated; max-height: 220px; border: 2px solid #4430ba; }
+</style>
+</head>
+<body>
+<h1>Sprite review</h1>
+<p>
+  <label>Atlas <select id="src"><option value="sprites">public/sprites (approved)</option><option value="candidates">public/candidates (panel)</option></select></label>
+  <label>Zoom <input id="zoom" type="number" value="4" min="1" max="10"></label>
+  <label><input id="grass" type="checkbox" checked> on grass</label>
+  <label><input id="grid" type="checkbox"> grid</label>
+</p>
+<div id="ref" style="margin-bottom:12px"><img src="/reference/rock_on_island.png" alt="Rock On! Island reference" onerror="this.style.display='none'"></div>
+<div id="cards" class="row"></div>
+<script>
+const GRASS = ['#63b31d', '#a4f022'];
+const cards = document.getElementById('cards');
+let atlas = {}, images = {}, zoom = 4, srcDir = 'sprites';
+
+async function load() {
+  srcDir = document.getElementById('src').value;
+  cards.innerHTML = '';
+  try {
+    atlas = await (await fetch(`/${srcDir}/atlas.json?${Date.now()}`)).json();
+  } catch { cards.textContent = `no ${srcDir}/atlas.json yet. Run: python3 art/build.py`; return; }
+  images = {};
+  await Promise.all(Object.entries(atlas).map(([name, a]) => new Promise(res => {
+    const img = new Image(); img.onload = () => { images[name] = img; res(); }; img.onerror = res;
+    img.src = `/${srcDir}/${a.file}?${Date.now()}`;
+  })));
+  for (const [name, a] of Object.entries(atlas)) {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${name} <small>${a.w}x${a.h}, ${a.frames} frames</small></h2>`;
+    const anims = document.createElement('div'); anims.className = 'anims';
+    // All frames as a strip, then each animation playing.
+    anims.appendChild(makeAnim(name, a, { frames: [...Array(a.frames).keys()], fps: 0 }, 'frames'));
+    for (const [an, def] of Object.entries(a.anims)) anims.appendChild(makeAnim(name, a, def, an));
+    card.appendChild(anims);
+    cards.appendChild(card);
+  }
+}
+
+function makeAnim(name, a, def, label) {
+  const wrap = document.createElement('div'); wrap.className = 'anim';
+  const c = document.createElement('canvas');
+  const isStrip = def.fps === 0;
+  const cells = isStrip ? def.frames.length : 1;
+  const pad = 4;
+  c.width = (a.w + pad * 2) * cells * zoom; c.height = (a.h + pad * 2) * zoom;
+  wrap.appendChild(c);
+  const s = document.createElement('small'); s.textContent = isStrip ? 'all frames' : `${label} @${def.fps}`;
+  wrap.appendChild(s);
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  let t0 = performance.now();
+  function draw(now) {
+    const grass = document.getElementById('grass').checked, grid = document.getElementById('grid').checked;
+    ctx.clearRect(0, 0, c.width, c.height);
+    for (let i = 0; i < cells; i++) {
+      const ox = i * (a.w + pad * 2), oy = 0;
+      if (grass) {
+        for (let y = 0; y < a.h + pad * 2; y++) for (let x = 0; x < a.w + pad * 2; x++) {
+          ctx.fillStyle = ((x * 7 + y * 3) % 11 === 0) ? GRASS[1] : GRASS[0];
+          ctx.fillRect((ox + x) * zoom, (oy + y) * zoom, zoom, zoom);
+        }
+      }
+      let f;
+      if (isStrip) f = def.frames[i];
+      else { const idx = Math.floor(((now - t0) / 1000) * def.fps) % def.frames.length; f = def.frames[idx]; }
+      const img = images[name];
+      if (img) ctx.drawImage(img, f * a.w, 0, a.w, a.h, (ox + pad) * zoom, (oy + pad) * zoom, a.w * zoom, a.h * zoom);
+      if (grid) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        for (let x = 0; x <= a.w; x++) { ctx.beginPath(); ctx.moveTo((ox + pad + x) * zoom, (oy + pad) * zoom); ctx.lineTo((ox + pad + x) * zoom, (oy + pad + a.h) * zoom); ctx.stroke(); }
+        for (let y = 0; y <= a.h; y++) { ctx.beginPath(); ctx.moveTo((ox + pad) * zoom, (oy + pad + y) * zoom); ctx.lineTo((ox + pad + a.w) * zoom, (oy + pad + y) * zoom); ctx.stroke(); }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+  return wrap;
+}
+
+document.getElementById('src').onchange = load;
+document.getElementById('zoom').onchange = e => { zoom = +e.target.value; load(); };
+load();
+</script>
+</body>
+</html>
