@@ -99,17 +99,28 @@ def check_waist(path, frames):
     """A character's torso and legs must share a center in every walk frame. A 1px
     'sway' drawn as a shear reads as a broken waist at 1x; refuse it at build time."""
     def center(rows):
-        xs = [x for r in rows for x, ch in enumerate(r) if ch != "."]
+        # Center of the body's own run of pixels (the one through the middle column),
+        # so a held-out cup or brochure doesn't count.
+        xs = []
+        for r in rows:
+            mid = len(r) // 2
+            if r[mid] == ".":
+                continue
+            lo = mid
+            while lo > 0 and r[lo - 1] != ".":
+                lo -= 1
+            hi = mid
+            while hi < len(r) - 1 and r[hi + 1] != ".":
+                hi += 1
+            xs += [lo, hi]
         return (min(xs) + max(xs)) / 2 if xs else None
-    ref = None
     for i, fr in enumerate(frames[:4]):  # the walk cycle is frames 0-3 by convention
+        hips = center(fr[16:19])  # the hip rows, below the arms and the cup
         legs = center(fr[19:23])
-        if legs is None:
+        if hips is None or legs is None:
             continue
-        if ref is None:
-            ref = legs
-        elif abs(legs - ref) > 1.0:
-            raise ValueError(f"{path}: frame {i} legs are offset {legs - ref:+.1f}px from frame 0; keep the waist aligned")
+        if abs(legs - hips) > 0.5:
+            raise ValueError(f"{path}: frame {i} legs are {legs - hips:+.1f}px off the hips; keep the waist aligned")
 
 
 def render(sprite):
