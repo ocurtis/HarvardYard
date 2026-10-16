@@ -3,14 +3,14 @@
 export const TICK_RATE = 60; // sim ticks per second
 export const TICK_MS = 1000 / TICK_RATE;
 
-// UFO 50's logical resolution, integer-scaled by the renderer.
-export const LOGICAL_W = 384;
-export const LOGICAL_H = 216;
-
+// Logical resolution, integer-scaled by the renderer. 4:3 like the NES
+// (UFO 50 is 384x216; we trade its 16:9 for a taller map).
 export const TILE = 16;
-export const GRID_W = 24; // 24 * 16 = 384
-export const GRID_H = 13; // 13 * 16 = 208; the remaining 8px is the HUD strip
-export const HUD_H = LOGICAL_H - GRID_H * TILE; // 8
+export const HUD_W = 2 * TILE; // left sidebar, Rock On! style
+export const GRID_W = 24;
+export const GRID_H = 18;
+export const LOGICAL_W = HUD_W + GRID_W * TILE; // 416
+export const LOGICAL_H = GRID_H * TILE; // 288
 
 export const PLAYER_COUNT_DEFAULT = 1;
 export const PLAYER_COUNT_MAX = 4;

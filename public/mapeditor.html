@@ -27,8 +27,8 @@
   <div class="tools" id="tools"></div>
   <canvas id="c"></canvas>
   <div>
-    <label>W <input id="w" type="number" value="22" min="8" max="40"></label>
-    <label>H <input id="h" type="number" value="13" min="6" max="30"></label>
+    <label>W <input id="w" type="number" value="24" min="8" max="40"></label>
+    <label>H <input id="h" type="number" value="18" min="6" max="30"></label>
     <button id="resize">Resize (keeps content)</button>
     <button id="clear">Clear to grass</button>
     <small>Paint: click/drag. Right-click: grass. Keys: . = T B S F G Y X. S paints a 2x2.</small>
@@ -57,7 +57,7 @@ const KINDS = [
   { ch: 'X', name: 'stone (unbuildable)', color: '#ffffff', key: 'x' },
 ];
 const WALK = new Set(['=', 'F', 'G', 'Y']); // tiles enemies/tourists path over
-const PX = 28;
+const PX = 24;
 
 const DEFAULT = `
 TBBBBBT...G...TBBBBBT.TT
@@ -69,13 +69,18 @@ TBBB.=.......==========G
 TBBB.=........==.......T
 T....==........==..BBB.T
 T.BBB.=.........=..BBB.T
-T.BBB.=======F===..BBB.T
-T.BBB......=SS=..Y..BBBT
-T..........=SS=.....BBBT
+T.BBB.=.........=..BBB.T
+T.BBB.=.........=..BBB.T
+T.....=.........=....T.T
+T.....=.........=......T
+T.....=.........=.....TT
+T.....=======F===..BBB.T
+T..........=SS=..Y.BBB.T
+T..........=SS=....BBB.T
 TTTTTBBBBBBBBBBBBBBTTTTT
 `;
 
-let W = 22, H = 13;
+let W = 24, H = 18;
 let grid = [];
 let tool = '=';
 let painting = false;

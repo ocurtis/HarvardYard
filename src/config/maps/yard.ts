@@ -1,4 +1,4 @@
-// Harvard Yard (the Old Yard), 24x13 tiles, rotated so the John Harvard
+// Harvard Yard (the Old Yard), 24x18 tiles, rotated so the John Harvard
 // statue sits at the bottom facing up into the Yard. University Hall is the
 // bottom wall. Johnston Gate is the top entrance; a north gate is on the right.
 //
@@ -27,8 +27,13 @@ TBBB.=.......==========G
 TBBB.=........==.......T
 T....==........==..BBB.T
 T.BBB.=.........=..BBB.T
-T.BBB.=======F===..BBB.T
-T.BBB......=SS=..Y..BBBT
-T..........=SS=.....BBBT
+T.BBB.=.........=..BBB.T
+T.BBB.=.........=..BBB.T
+T.....=.........=....T.T
+T.....=.........=......T
+T.....=.........=.....TT
+T.....=======F===..BBB.T
+T..........=SS=..Y.BBB.T
+T..........=SS=....BBB.T
 TTTTTBBBBBBBBBBBBBBTTTTT
 `;

@@ -47,7 +47,7 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Adjacency: a tower next to the Tour Guide tile (fixed map feature) gets a buff. Tests the idea without a third tower.
 
 ## Map
-One map: the Old Yard, rotated so the John Harvard statue sits at the bottom of the screen facing up into the Yard, with University Hall as the bottom wall. Modeled on the real path network but cut down to three routes: two from Johnston Gate (top) that split around the central lawn and rejoin at the foot, and one from a north gate (right) that merges into the right-hand route. Buildings as blocking blocks: Massachusetts Hall, Harvard Hall, Stoughton, Hollis, Thayer, Weld, Matthews. Trees fill the perimeter. Statue is 2x2 with the foot tile on the Yard side; narrow path alleys on both sides of the statue let bros reach its flanks. Whole map fits on one screen; no camera. Map lives in `src/config/maps/yard.ts` as a 24x13 text block.
+One map: the Old Yard, rotated so the John Harvard statue sits at the bottom of the screen facing up into the Yard, with University Hall as the bottom wall. Modeled on the real path network but cut down to three routes: two from Johnston Gate (top) that split around the central lawn and rejoin at the foot, and one from a north gate (right) that merges into the right-hand route. Buildings as blocking blocks: Massachusetts Hall, Harvard Hall, Stoughton, Hollis, Thayer, Weld, Matthews. Trees fill the perimeter. Statue is 2x2 with the foot tile on the Yard side; narrow path alleys on both sides of the statue let bros reach its flanks. Whole map fits on one screen; no camera. Map lives in `src/config/maps/yard.ts` as a 24x18 text block; draw it in `public/mapeditor.html`. Routes should wind: Rock On!'s long routes are 40-60 tiles; under 25 is a straight shot.
 
 Bros and tourists walk only on path tiles; the player walks anywhere not blocked; towers go on grass. (Pathing: session 2.)
 
@@ -65,7 +65,7 @@ Statue HP 100, no regen. Loss on zero. Win on clearing the last wave. Score = st
 - Co-op: shared screen, shared currency. (Online: v2.)
 
 ## Art spec
-Pure UFO 50 look. Logical resolution 384x216 (UFO 50's), nearest-neighbor integer scaling (2x = 768x432, 3x = 1152x648, 5x = 1920x1080). Their shared 32-color palette; we pick a subset. 16px tiles: a 24x13 grid with an 8px HUD strip. Every sprite ships with anchor point and frame count. Placeholders are colored rectangles with final names and dimensions; finals swap one-to-one.
+UFO 50 look: their shared 32-color palette (`art/palette.py`, `src/config/palette.ts`), 16px tiles, chunky shapes, selective dark outlines, no anti-aliasing. Logical resolution 416x288 (2-tile HUD column on the left + a 24x18 map), nearest-neighbor integer scaling (3x = 1248x864). This trades UFO 50's 16:9 for a 4:3 NES shape so the map can be tall enough for winding routes. Every sprite ships with anchor point and frame count. Placeholders are colored rectangles with final names and dimensions; finals swap one-to-one. `art/sprites.py` holds sprites as pixel grids; `public/mapeditor.html` is the map tool.
 
 Priority order for final art: statue, bro, player, tourist, dig, sprinkler, ground tiles, HUD.
 
@@ -106,4 +106,5 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16: Shout disciplines, doesn't scare. Reason: a fleeing bro resets the lane and leaves tower range; a staggered one stays in the kill zone.
 - 2026-10-16: Archaeology Dig as tower 1. Reason: real Yard thing, Rock On! bone nod.
 - 2026-10-16: Player identity deferred. Reason: nothing mechanical depends on it yet.
+- 2026-10-16: Grid is 24x18 with a left HUD column (416x288 logical, 4:3). Reason: room for winding routes; HUD on the left matches Rock On!.
 - 2026-10-16: Map is the real Old Yard rotated (statue at bottom), simplified to three routes. Reason: the real network has too many intersections to defend; Rock On! has one route, this gets one more than that plus a merge.

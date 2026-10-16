@@ -1,7 +1,7 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { GRID_H, GRID_W, HUD_H, LOGICAL_W, TILE } from '../config/game';
+import { GRID_H, GRID_W, HUD_W, LOGICAL_H, TILE } from '../config/game';
 import { PALETTE } from '../config/palette';
 import type { GameLoop } from '../loop';
 import type { MapData, TileKind } from '../sim/types';
@@ -23,6 +23,7 @@ export class YardScene extends Phaser.Scene {
   private facingDots: Phaser.GameObjects.Rectangle[] = [];
   private hudText!: Phaser.GameObjects.Text;
   private fpsSamples: number[] = [];
+  private world!: Phaser.GameObjects.Container;
 
   constructor(private readonly loop: GameLoop) {
     super('yard');
@@ -30,21 +31,26 @@ export class YardScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor(PALETTE.bg);
+    // Everything in the map lives in a container offset by the HUD column,
+    // so sim coordinates stay map-relative.
+    this.world = this.add.container(HUD_W, 0);
     this.drawMap(this.loop.state.map);
 
     for (const p of this.loop.state.players) {
       const rect = this.add.rectangle(p.pos.x, p.pos.y, TILE - 2, TILE - 2, PALETTE.player);
       rect.setOrigin(0.5);
+      this.world.add(rect);
       this.players.push(rect);
       const dot = this.add.rectangle(p.pos.x, p.pos.y, 3, 3, PALETTE.playerFacing);
       dot.setOrigin(0.5);
+      this.world.add(dot);
       this.facingDots.push(dot);
     }
 
-    // HUD strip at the bottom. Placeholder until the real HUD in session 5.
-    this.add.rectangle(0, GRID_H * TILE, LOGICAL_W, HUD_H, PALETTE.hud).setOrigin(0);
+    // HUD column on the left. Placeholder until the real HUD in session 5.
+    this.add.rectangle(0, 0, HUD_W, LOGICAL_H, PALETTE.hud).setOrigin(0);
     this.hudText = this.add
-      .text(2, GRID_H * TILE, '', { fontFamily: 'monospace', fontSize: '7px', color: '#ffffff' })
+      .text(1, 2, '', { fontFamily: 'monospace', fontSize: '7px', color: '#ffffff', wordWrap: { width: HUD_W - 2 } })
       .setOrigin(0)
       .setResolution(1);
   }
@@ -66,12 +72,13 @@ export class YardScene extends Phaser.Scene {
     const avg = this.fpsSamples.reduce((a, b) => a + b, 0) / this.fpsSamples.length;
     const p0 = s.players[0];
     this.hudText.setText(
-      `tick ${s.tick}  fps ${(1000 / avg).toFixed(0)}  pos ${p0 ? `${p0.pos.x.toFixed(0)},${p0.pos.y.toFixed(0)}` : '-'}`,
+      `t${s.tick}\n${(1000 / avg).toFixed(0)}fps\n${p0 ? `${p0.pos.x.toFixed(0)}\n${p0.pos.y.toFixed(0)}` : '-'}`,
     );
   }
 
   private drawMap(map: MapData): void {
     const g = this.add.graphics();
+    this.world.add(g);
     for (let y = 0; y < GRID_H; y++) {
       for (let x = 0; x < GRID_W; x++) {
         const kind = map.tiles[y * GRID_W + x]!;
