@@ -1,4 +1,5 @@
-import type { MapData, TileKind, Vec } from './types';
+import type { BuildingDef } from '../config/maps/yard';
+import type { BuildingData, MapData, TileKind, Vec } from './types';
 
 const LEGEND: Record<string, TileKind> = {
   '.': 'grass',
@@ -13,7 +14,7 @@ const LEGEND: Record<string, TileKind> = {
   Y: 'guide',
 };
 
-export function parseMap(text: string, expectedW: number, expectedH: number): MapData {
+export function parseMap(text: string, expectedW: number, expectedH: number, buildingDefs: BuildingDef[] = []): MapData {
   const rows = text
     .split('\n')
     .map((r) => r.trimEnd())
@@ -51,7 +52,32 @@ export function parseMap(text: string, expectedW: number, expectedH: number): Ma
   if (!foot) throw new Error('map has no foot tile');
   if (gates.length === 0) throw new Error('map has no gates');
 
-  return { w: expectedW, h: expectedH, tiles, gates, exits, statue, foot, guide };
+  const map: MapData = { w: expectedW, h: expectedH, tiles, gates, exits, statue, foot, guide, buildings: [] };
+  for (const b of buildingDefs) {
+    const box = { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 };
+    map.buildings.push({ name: b.name, short: b.short, box, spot: b.destination ? nearestLaneTile(map, box) : null });
+  }
+  return map;
+}
+
+// The lane tile closest to a building's center: where a group stands to take its photos.
+function nearestLaneTile(map: MapData, box: { x0: number; y0: number; x1: number; y1: number }): Vec | null {
+  const cx = (box.x0 + box.x1 + 1) / 2;
+  const cy = (box.y0 + box.y1 + 1) / 2;
+  let best: Vec | null = null;
+  let bestD = Infinity;
+  for (let y = 0; y < map.h; y++) {
+    for (let x = 0; x < map.w; x++) {
+      const k = map.tiles[y * map.w + x];
+      if (k !== 'path' && k !== 'guide') continue; // not gates or exits: nobody poses in a doorway
+      const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+      if (d < bestD) {
+        bestD = d;
+        best = { x, y };
+      }
+    }
+  }
+  return best;
 }
 
 export function tileAt(map: MapData, tx: number, ty: number): TileKind | null {

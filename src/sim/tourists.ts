@@ -31,13 +31,41 @@ function farthestGate(state: GameState): Vec {
   return best[nextInt(state, best.length)]!;
 }
 
+// What a group wants: the statue (premium) or one of the named buildings.
+function pickDestination(state: GameState): number {
+  const spots = state.map.buildings.map((b, i) => (b.spot ? i : -1)).filter((i) => i >= 0);
+  if (spots.length === 0) return -1;
+  // statueShare of groups want the statue; the rest spread over the buildings.
+  if (nextInt(state, 100) < Math.round(TOURIST.statueShare * 100)) return -1;
+  return spots[nextInt(state, spots.length)]!;
+}
+
+export function destinationTile(state: GameState, dest: number): Vec {
+  if (dest < 0) return state.map.foot;
+  return state.map.buildings[dest]?.spot ?? state.map.foot;
+}
+
+export function destinationShort(state: GameState, dest: number): string {
+  return dest < 0 ? 'JOHN' : (state.map.buildings[dest]?.short ?? '?');
+}
+
 export function spawnGroup(state: GameState): TouristState {
   const gate = farthestGate(state);
   const size = TOURIST.groupMin + nextInt(state, TOURIST.groupMax - TOURIST.groupMin + 1);
   const group = state.nextGroupId++;
   const color = nextInt(state, TOURIST.colors);
-  const value = TOURIST.valuePerHead * size;
-  state.groups[group] = { path: [{ ...gate }], guideGone: false, color, value, maxValue: value, locked: false };
+  const dest = pickDestination(state);
+  const value = (dest < 0 ? TOURIST.valuePerHead : TOURIST.buildingValuePerHead) * size;
+  state.groups[group] = {
+    path: [{ ...gate }],
+    guideGone: false,
+    color,
+    value,
+    maxValue: value,
+    locked: false,
+    dest,
+    poseTimer: 0,
+  };
   const guide = makeTourist(state, group, gate, true, 0);
   guide.phase = 'entering';
   guide.stepsLeft = TOURIST.wanderTiles;
@@ -96,7 +124,12 @@ export function updateTourists(state: GameState): void {
       if (Math.hypot(p.pos.x - t.pos.x, p.pos.y - t.pos.y) <= TOURIST.touchRadiusPx) {
         t.phase = 'pamphleted';
         const g = state.groups[t.group];
-        if (g) g.locked = true;
+        if (g) {
+          g.locked = true;
+          // Point at where they're headed: a popup on the destination.
+          const target = tileCenter(destinationTile(state, g.dest));
+          pushPopup(state, destinationShort(state, g.dest), target, 'info');
+        }
         break;
       }
     }
@@ -148,19 +181,28 @@ function updateGuide(state: GameState, t: TouristState): boolean {
     }
     case 'pamphleted': {
       if (!walkToward(t, tileCenter(t.tile))) return true;
-      if (t.tile.x === state.map.foot.x && t.tile.y === state.map.foot.y) {
+      const target = destinationTile(state, g.dest);
+      if (t.tile.x === target.x && t.tile.y === target.y) {
+        // Arrived: pay, then pose for photos a while before leaving.
         const pay = groupValue(state, t.group);
         state.money += pay;
         if (pay > 0) pushPopup(state, `+$${pay}`, t.pos, 'gain');
-        t.phase = 'leaving';
+        t.phase = 'posing';
+        g.poseTimer = TOURIST.poseTicks;
         return true;
       }
-      const next = nextTileToward(state.map, state.distToFoot, t.tile);
+      const field = g.dest < 0 ? state.distToFoot : state.distToSpot[g.dest]!;
+      const next = nextTileToward(state.map, field, t.tile);
       if (next === null) {
         t.phase = 'leaving';
         return true;
       }
       advance(t, next, g.path);
+      return true;
+    }
+    case 'posing': {
+      g.poseTimer--;
+      if (g.poseTimer <= 0) t.phase = 'leaving';
       return true;
     }
     case 'leaving': {

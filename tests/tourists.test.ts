@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TILE, TOURIST } from '../src/config/game';
 import { createState, serialize, step } from '../src/sim/sim';
-import { groupSize, groupValue, spawnGroup } from '../src/sim/tourists';
+import { destinationTile, groupSize, groupValue, spawnGroup } from '../src/sim/tourists';
 import type { Command, GameState } from '../src/sim/types';
 
 const idle = (): Command[] => [];
@@ -44,20 +44,21 @@ describe('tourist groups', () => {
     }
   });
 
-  it('a group is worth $10 a head and its value drains only while the guide is confused', () => {
+  it('a group is worth its per-head rate and its value drains only while the guide is confused', () => {
     const s = createState({ seed: 2, playerCount: 1 });
     s.players[0]!.pos = { x: 1, y: 1 };
     const guide = spawnGroup(s);
     const size = groupSize(s, guide.group);
-    expect(groupValue(s, guide.group)).toBe(TOURIST.valuePerHead * size);
+    const perHead = s.groups[guide.group]!.dest < 0 ? TOURIST.valuePerHead : TOURIST.buildingValuePerHead;
+    expect(groupValue(s, guide.group)).toBe(perHead * size);
     run(s, 30);
     expect(guide.phase).toBe('entering');
-    expect(groupValue(s, guide.group)).toBe(TOURIST.valuePerHead * size);
+    expect(groupValue(s, guide.group)).toBe(perHead * size);
     while (guide.phase === 'entering') step(s, []);
     expect(guide.phase).toBe('confused');
     run(s, Math.floor(TOURIST.confusedTicks / 2));
     const half = groupValue(s, guide.group);
-    expect(half).toBeLessThan(TOURIST.valuePerHead * size);
+    expect(half).toBeLessThan(perHead * size);
     expect(half).toBeGreaterThan(0);
   });
 
@@ -90,11 +91,16 @@ describe('tourist groups', () => {
     s.players[0]!.pos = { x: 1, y: 1 };
     run(s, 60);
     expect(groupValue(s, guide.group)).toBe(locked); // no more draining
-    const dist = s.distToFoot[guide.tile.y * s.map.w + guide.tile.x]!;
+    expect(s.popups.some((p) => p.kind === 'info')).toBe(true); // "-> NAME" on the destination
+    const g = s.groups[guide.group]!;
+    const field = g.dest < 0 ? s.distToFoot : s.distToSpot[g.dest]!;
+    const dist = field[guide.tile.y * s.map.w + guide.tile.x]!;
     run(s, walkTicks(dist));
     expect(s.money).toBe(locked);
     expect(s.popups.some((p) => p.kind === 'gain')).toBe(true);
-    run(s, walkTicks(70));
+    expect(guide.phase).toBe('posing');
+    expect(guide.tile).toEqual(destinationTile(s, g.dest));
+    run(s, TOURIST.poseTicks + walkTicks(70));
     expect(s.tourists.filter((t) => t.group === guide.group).length).toBe(0);
   });
 
@@ -123,6 +129,26 @@ describe('tourist groups', () => {
     s.players[0]!.pos = { ...follower.pos };
     step(s, []);
     expect(guide.phase).toBe('confused');
+  });
+
+  it('groups want the statue or a named building, and buildings pay less', () => {
+    const s = createState({ seed: 4, playerCount: 1 });
+    expect(s.map.buildings.filter((b) => b.spot).length).toBeGreaterThanOrEqual(2);
+    const dests = new Set<number>();
+    for (let i = 0; i < 40; i++) {
+      const guide = spawnGroup(s);
+      const g = s.groups[guide.group]!;
+      dests.add(g.dest);
+      const size = groupSize(s, guide.group);
+      const perHead = g.dest < 0 ? TOURIST.valuePerHead : TOURIST.buildingValuePerHead;
+      expect(g.maxValue).toBe(perHead * size);
+      if (g.dest >= 0) expect(s.map.buildings[g.dest]!.spot).not.toBeNull();
+      s.tourists = [];
+      delete s.groups[guide.group];
+    }
+    expect(dests.has(-1)).toBe(true);
+    expect([...dests].some((d) => d >= 0)).toBe(true);
+    expect(TOURIST.buildingValuePerHead).toBeLessThan(TOURIST.valuePerHead);
   });
 
   it('spawns a group at the gate farthest from the player', () => {

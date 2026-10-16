@@ -36,9 +36,9 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 
 ## Tourists
 - Travel in groups of 3-5 behind a guide, huddled half a tile apart. Groups spawn in every wave, interleaved with bros, at the gate farthest from the nearest player: a new group is never where you already are.
-- A group is worth $10 a head, shown over the guide from the moment it enters. The guide walks a few tiles in (6 in v1) and stops, confused; from then the value ticks down to $0 over 7 seconds, whatever the group size.
+- Every group wants somewhere: the statue (about 45% of groups, $10 a head) or one of the named buildings ($7 a head). The guide's label reads `$N NAME` (JOHN for the statue; MASS, HARVARD, WELD, THAYER for buildings). Buildings carry nameplates on the map and a small marker on their photo spot, the lane tile nearest the building. A group is worth its value from the moment it enters. The guide walks a few tiles in (6 in v1) and stops, confused; from then the value ticks down to $0 over 7 seconds, whatever the group size.
 - Brochure: a player within touching distance of the GUIDE hands it over for the whole group and LOCKS the value. No button. (Standing next to a huddle usually counts; the guide is in front.)
-- Pamphleted: the guide leads the group to the foot; on arrival the group pays the locked value ("+$N" pops), then leaves by the nearest exit.
+- Pamphleted: the destination's name pops on its photo spot; the guide leads the group there; on arrival the group pays the locked value ("+$N" pops), poses for photos for a couple of seconds (flashes), then leaves by the nearest exit.
 - At $0 the group storms out the way it came, and "-$10" pops: a flat penalty, bank floors at zero.
 - The shout spooks: every tick a guide is in the cone knocks $0.50 off an unlocked group (30/s). This is the ONLY way the player loses tourist money by action; towers never touch tourists.
 - Sprinklers soak tourists: a soaked tourist walks at 60% for a moment. Nothing worse.
@@ -128,6 +128,7 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16 (evening): A group's value ($10/head) ticks down over 7s while the guide is confused, locks on the brochure, pays at the foot, and storms out at $0 for a flat -$10. Replaces the patience bar and the question mark. Reason: Owen's idea; one visible number is the timer, the reward and the penalty, and a missed group finally costs something.
 - 2026-10-16 (evening): The shout spooks guides for dollars, not seconds. Reason: same currency everywhere.
 - 2026-10-16 (evening): Tourist groups spawn at the gate farthest from the nearest player; bros stay random. Reason: the guide-or-bro choice only exists if the group is somewhere else.
+- 2026-10-16 (evening): Destinations. Groups want the statue or a named building; names over the guide and nameplates on the map, no icons and no clicking. Buildings pay less than the statue. Reason: spreads tourist traffic across the Yard and makes the map read as Harvard; words read at 7px where 8px building icons would not; a click would be the game's first mouse input. In v1 the destination changes where and when money lands, not what the player does; mechanics on destinations are a later lever.
 - 2026-10-16 (evening): Followers huddle half a tile apart. Reason: with towers neutral the spacing is cosmetic, and a clump reads better than a conga line.
 - 2026-10-16: Towers don't block the player and the shop is key-driven (1/2/U/3/4/5), no menu. Reason: Rock On! pacing; a menu would stop the action.
 - 2026-10-16: Tourists travel in groups of 3-5 behind a guide; the timer and the brochure belong to the guide. Reason: a clump vs a lone figure is the strongest possible read against bros, and one hand-off per group keeps it from being five chores.

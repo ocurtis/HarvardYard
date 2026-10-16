@@ -7,6 +7,13 @@ export interface Vec {
 
 export type TileKind = 'grass' | 'path' | 'tree' | 'building' | 'stone' | 'statue' | 'foot' | 'gate' | 'exit' | 'guide';
 
+export interface BuildingData {
+  name: string;
+  short: string;
+  box: { x0: number; y0: number; x1: number; y1: number };
+  spot: Vec | null; // the lane tile where a group poses for photos; null = not a destination
+}
+
 export interface MapData {
   w: number;
   h: number;
@@ -16,6 +23,7 @@ export interface MapData {
   statue: Vec; // top-left tile of the 2x2
   foot: Vec; // tile coord
   guide: Vec | null; // tile coord
+  buildings: BuildingData[];
 }
 
 export interface PlayerState {
@@ -57,7 +65,7 @@ export interface BroState {
 }
 
 // Guides run the state machine; followers trail their guide's path.
-export type TouristPhase = 'entering' | 'confused' | 'pamphleted' | 'leaving' | 'following';
+export type TouristPhase = 'entering' | 'confused' | 'pamphleted' | 'posing' | 'leaving' | 'following';
 
 export interface TouristState {
   id: number;
@@ -82,6 +90,8 @@ export interface GroupState {
   value: number; // dollars the group is currently worth; ticks down while the guide is confused
   maxValue: number;
   locked: boolean; // true once a brochure is handed over: value stops moving
+  dest: number; // -1 = the statue's foot; otherwise an index into map.buildings
+  poseTimer: number; // ticks left posing at the destination
 }
 
 // Short-lived floating text for the renderer: "+$40", "-$10". Pure data; pruned by the sim.
@@ -90,7 +100,7 @@ export interface Popup {
   text: string;
   pos: Vec;
   tick: number;
-  kind: 'gain' | 'loss';
+  kind: 'gain' | 'loss' | 'info';
 }
 
 export interface WaveState {
@@ -116,6 +126,7 @@ export interface GameState {
   // the map at creation; kept on state so snapshots are self-contained.
   distToStatue: number[];
   distToFoot: number[]; // same idea, target = the foot tile
+  distToSpot: number[][]; // one field per building (empty for non-destinations)
   distToExit: number[]; // same idea, targets = every gate and exit
   players: PlayerState[];
   bros: BroState[];

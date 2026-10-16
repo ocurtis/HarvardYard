@@ -53,7 +53,10 @@ export const TOURIST = {
   speedPxPerTick: 0.5, // 30 px/s; slower than a bro, they're looking around
   wanderTiles: 6, // how far in along the route before they stop, confused
   confusedTicks: 420, // 7s to reach them with a brochure before they give up
-  valuePerHead: 10, // a group's starting value; it ticks down to 0 over confusedTicks once the guide stops
+  valuePerHead: 10, // a group's starting value when it wants the statue; ticks down to 0 over confusedTicks once the guide stops
+  buildingValuePerHead: 7, // a group that wants a building is worth less; the statue is the premium stop
+  statueShare: 0.45, // fraction of groups that want the statue; the rest pick a building
+  poseTicks: 150, // how long a group lingers at its photo spot taking pictures before leaving
   stormOutPenalty: 10, // what a group that reaches $0 costs you on the way out (bank floors at 0)
   touchRadiusPx: 10, // player-to-guide distance that counts as handing over a brochure
   groupMin: 3, // group size including the guide

@@ -12,6 +12,7 @@ import { canBuild, playerTile, towerAt, towerRange } from '../sim/towers';
 import { isBuildable, tileAt } from '../sim/map';
 import { shoutRange } from '../sim/shout';
 import { variantKey, type Atlas } from './assets';
+import { destinationShort } from '../sim/tourists';
 
 const TILE_COLOR: Record<TileKind, number> = {
   grass: PALETTE.grass,
@@ -292,7 +293,7 @@ export class YardScene extends Phaser.Scene {
       if (v.sprite) {
         v.sprite.setPosition(x, feet).setDepth(feet);
         let anim: string;
-        if (t.guide) anim = t.phase === 'confused' ? 'confused' : pamphleted ? 'brochure' : 'walk';
+        if (t.guide) anim = t.phase === 'confused' || t.phase === 'posing' ? 'confused' : pamphleted ? 'brochure' : 'walk';
         else anim = t.photo > 0 ? 'photo' : 'walk';
         const key = v.sprite.texture.key;
         if (anim !== v.anim) {
@@ -324,11 +325,11 @@ export class YardScene extends Phaser.Scene {
       if (v.label) {
         // The group's value, from the moment they're on the map until they leave the foot.
         const g = state.groups[t.group];
-        const show = !!g && (t.phase === 'entering' || t.phase === 'confused' || t.phase === 'pamphleted');
+        const show = !!g && (t.phase === 'entering' || t.phase === 'confused' || t.phase === 'pamphleted' || t.phase === 'posing');
         v.label.setVisible(show);
         if (show && g) {
           const val = Math.max(0, Math.ceil(g.value));
-          v.label.setText(` $${val} `);
+          v.label.setText(` $${val} ${destinationShort(state, g.dest)} `);
           // Locked (brochure handed over) reads white; draining reads yellow; nearly gone reads red.
           const frac = g.maxValue > 0 ? g.value / g.maxValue : 0;
           v.label.setColor(g.locked ? '#ffffff' : frac < 0.3 ? '#fe626e' : '#e8ea4a');
@@ -360,7 +361,7 @@ export class YardScene extends Phaser.Scene {
       let t = this.popupViews.get(p.id);
       if (!t) {
         t = this.add
-          .text(0, 0, p.text, { fontFamily: 'monospace', fontSize: '8px', color: p.kind === 'gain' ? '#a4f022' : '#fe626e', backgroundColor: '#202040' })
+          .text(0, 0, p.text, { fontFamily: 'monospace', fontSize: '8px', color: p.kind === 'gain' ? '#a4f022' : p.kind === 'loss' ? '#fe626e' : '#ffffff', backgroundColor: '#202040' })
           .setOrigin(0.5, 1)
           .setResolution(1);
         this.world.add(t);
@@ -489,6 +490,29 @@ export class YardScene extends Phaser.Scene {
     // Statue outline so the 2x2 reads as one object.
     g.lineStyle(1, 0x000000, 1);
     g.strokeRect(map.statue.x * TILE + 0.5, map.statue.y * TILE + 0.5, TILE * 2 - 1, TILE * 2 - 1);
+    // Nameplates: every building says what it is, like a campus map.
+    for (const b of map.buildings) {
+      const cx = ((b.box.x0 + b.box.x1 + 1) / 2) * TILE;
+      const cy = ((b.box.y0 + b.box.y1 + 1) / 2) * TILE;
+      const tall = b.box.y1 - b.box.y0 > b.box.x1 - b.box.x0;
+      const label = this.add
+        .text(cx, cy, tall ? b.short.split('').join('\n') : b.name.toUpperCase(), {
+          fontFamily: 'monospace',
+          fontSize: '7px',
+          color: '#202040',
+          align: 'center',
+          lineSpacing: -2,
+        })
+        .setOrigin(0.5)
+        .setResolution(1)
+        .setDepth(-1.9);
+      this.world.add(label);
+      if (b.spot) {
+        // A small marker on the photo spot so the destination is visible before anyone goes there.
+        const m = this.add.rectangle(b.spot.x * TILE + TILE / 2, b.spot.y * TILE + TILE / 2, 4, 4, PALETTE.touristFlag, 0.7).setDepth(-1.8);
+        this.world.add(m);
+      }
+    }
   }
 }
 

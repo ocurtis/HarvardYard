@@ -3,11 +3,11 @@
 // snapshot() gives you an exact copy.
 
 import { GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, POPUP_TICKS, STATUE, TILE } from '../config/game';
-import { YARD_MAP } from '../config/maps/yard';
+import { BUILDINGS, YARD_MAP } from '../config/maps/yard';
 import { updateBros } from './bros';
 import { applyShout } from './shout';
 import { blocksMovement, parseMap, tileAt } from './map';
-import { computeDistToExit, computeDistToFoot, computeDistToStatue } from './path';
+import { computeDistField, computeDistToExit, computeDistToFoot, computeDistToStatue } from './path';
 import { seedRng } from './rng';
 import type { Command, GameState, MapData, PlayerState, SimConfig, Vec } from './types';
 import { build, canBuild, speedAdd, updateTowers, upgradeSelf, upgradeTower } from './towers';
@@ -16,7 +16,7 @@ import { startWave, updateWave } from './waves';
 
 export function createState(config: SimConfig): GameState {
   const playerCount = Math.max(1, Math.min(PLAYER_COUNT_MAX, config.playerCount));
-  const map = parseMap(YARD_MAP, GRID_W, GRID_H);
+  const map = parseMap(YARD_MAP, GRID_W, GRID_H, BUILDINGS);
   const players: PlayerState[] = [];
   for (let i = 0; i < playerCount; i++) {
     players.push({
@@ -38,6 +38,7 @@ export function createState(config: SimConfig): GameState {
     distToStatue: computeDistToStatue(map),
     distToFoot: computeDistToFoot(map),
     distToExit: computeDistToExit(map),
+    distToSpot: map.buildings.map((b) => (b.spot ? computeDistField(map, [b.spot]) : [])),
     players,
     bros: [],
     tourists: [],
