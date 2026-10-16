@@ -21,3 +21,17 @@ export const PLAYER = {
   hitboxW: 10,
   hitboxH: 10,
 };
+
+export const STATUE = {
+  hp: 100,
+};
+
+export const BRO = {
+  speedPxPerTick: 0.6, // 36 px/s; a stumbling drunk, slower than the player
+  drunk: 100, // the health bar: sobering it to 0 is the kill
+  windupTicks: 60, // 1s from reaching the statue to the stream starting
+  pissPerTick: 6 / 60, // statue damage per tick while the stream is on (6/s)
+  staggerTicks: 30, // how long a shove interrupts him
+  // How close (px) to the center of the next tile before snapping to it.
+  arriveEpsilon: 0.75,
+};

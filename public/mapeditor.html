@@ -31,7 +31,7 @@
     <label>H <input id="h" type="number" value="18" min="6" max="30"></label>
     <button id="resize">Resize (keeps content)</button>
     <button id="clear">Clear to grass</button>
-    <small>Paint: click/drag. Right-click: grass. Keys: . = T B S F G Y X. S paints a 2x2.</small>
+    <small>Paint: click/drag. Right-click: grass. Keys: . = T B S F G E Y X. S paints a 2x2.</small>
   </div>
 </div>
 <div id="right">
@@ -52,11 +52,12 @@ const KINDS = [
   { ch: 'B', name: 'building', color: '#c8c8c8', key: 'b' },
   { ch: 'S', name: 'statue (2x2)', color: '#707070', key: 's' },
   { ch: 'F', name: 'foot', color: '#feb854', key: 'f' },
-  { ch: 'G', name: 'gate', color: '#991515', key: 'g' },
+  { ch: 'G', name: 'gate (spawn)', color: '#991515', key: 'g' },
+  { ch: 'E', name: 'exit (tourists leave)', color: '#4430ba', key: 'e' },
   { ch: 'Y', name: 'tour guide', color: '#27badb', key: 'y' },
   { ch: 'X', name: 'stone (unbuildable)', color: '#ffffff', key: 'x' },
 ];
-const WALK = new Set(['=', 'F', 'G', 'Y']); // tiles enemies/tourists path over
+const WALK = new Set(['=', 'F', 'G', 'E', 'Y']); // tiles enemies/tourists path over
 const PX = 24;
 
 const DEFAULT = `
@@ -77,7 +78,7 @@ B.=.................=.BB
 B.==========F========...
 ......=....=SS=.Y..=....
 ......=....=SS=....=....
-......=.BBBBBBBBBB.=....
+......E.BBBBBBBBBB.E....
 `;
 
 let W = 24, H = 18;

@@ -9,6 +9,7 @@ const LEGEND: Record<string, TileKind> = {
   S: 'statue',
   F: 'foot',
   G: 'gate',
+  E: 'exit',
   Y: 'guide',
 };
 
@@ -24,6 +25,7 @@ export function parseMap(text: string, expectedW: number, expectedH: number): Ma
 
   const tiles: TileKind[] = [];
   const gates: Vec[] = [];
+  const exits: Vec[] = [];
   let statue: Vec | null = null;
   let foot: Vec | null = null;
   let guide: Vec | null = null;
@@ -38,6 +40,7 @@ export function parseMap(text: string, expectedW: number, expectedH: number): Ma
       if (!kind) throw new Error(`unknown map char "${ch}" at ${x},${y}`);
       tiles.push(kind);
       if (kind === 'gate') gates.push({ x, y });
+      if (kind === 'exit') exits.push({ x, y });
       if (kind === 'statue' && statue === null) statue = { x, y };
       if (kind === 'foot') foot = { x, y };
       if (kind === 'guide') guide = { x, y };
@@ -48,7 +51,7 @@ export function parseMap(text: string, expectedW: number, expectedH: number): Ma
   if (!foot) throw new Error('map has no foot tile');
   if (gates.length === 0) throw new Error('map has no gates');
 
-  return { w: expectedW, h: expectedH, tiles, gates, statue, foot, guide };
+  return { w: expectedW, h: expectedH, tiles, gates, exits, statue, foot, guide };
 }
 
 export function tileAt(map: MapData, tx: number, ty: number): TileKind | null {

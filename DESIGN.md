@@ -47,7 +47,7 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Adjacency: a tower next to the Tour Guide tile (fixed map feature) gets a buff. Tests the idea without a third tower.
 
 ## Map
-One map: the Old Yard, rotated so the John Harvard statue sits at the bottom of the screen facing up into the Yard, with University Hall as the bottom wall. Modeled on the real path network but cut down to three routes: two from Johnston Gate (top) that split around the central lawn and rejoin at the foot, and one from a north gate (right) that merges into the right-hand route. Buildings as blocking blocks: Massachusetts Hall, Harvard Hall, Stoughton, Hollis, Thayer, Weld, Matthews. Trees fill the perimeter. Statue is 2x2 with the foot tile on the Yard side; narrow path alleys on both sides of the statue let bros reach its flanks. Whole map fits on one screen; no camera. Map lives in `src/config/maps/yard.ts` as a 24x18 text block; draw it in `public/mapeditor.html`. Routes should wind: Rock On!'s long routes are 40-60 tiles; under 25 is a straight shot.
+One map, 24x18, Owen's draft of 2026-10-16: the statue at the bottom in front of University Hall, three spawn gates (top, left, right) that bros and tourists share, two bottom exits where only tourists leave. A one-tile-wide perimeter route (47 tiles from the top gate, ~22 from the sides) with two inner loops that shortest-path bros never enter; tourists wander them (session 4). The final approach runs over the foot; alleys either side of the statue let bros flank it. Whole map fits on one screen; no camera. Map lives in `src/config/maps/yard.ts` as a 24x18 text block; draw it in `public/mapeditor.html`. Routes should wind: Rock On!'s long routes are 40-60 tiles; under 25 is a straight shot.
 
 Bros and tourists walk only on path tiles; the player walks anywhere not blocked; towers go on grass. (Pathing: session 2.)
 
@@ -107,4 +107,7 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16: Archaeology Dig as tower 1. Reason: real Yard thing, Rock On! bone nod.
 - 2026-10-16: Player identity deferred. Reason: nothing mechanical depends on it yet.
 - 2026-10-16: Grid is 24x18 with a left HUD column (416x288 logical, 4:3). Reason: room for winding routes; HUD on the left matches Rock On!.
-- 2026-10-16: Map is the real Old Yard rotated (statue at bottom), simplified to three routes. Reason: the real network has too many intersections to defend; Rock On! has one route, this gets one more than that plus a merge.
+- 2026-10-16: Map is the real Old Yard rotated (statue at bottom), simplified to three routes. Reason: the real network has too many intersections to defend; Rock On! has one route, this gets one more than that plus a merge. (Superseded the same day by Owen's perimeter-and-loops draft.)
+- 2026-10-16: Bros and tourists walk lane tiles only (path, foot, gate, exit, guide), 4-connected, via a BFS flow field from statue-adjacent lane tiles. Reason: Rock On! enemies are on rails; it keeps placement readable and the sim cheap.
+- 2026-10-16: Gates spawn both bros and tourists; exit tiles are tourist-only. Reason: Owen's map has four bottom openings that read as ways out, not in.
+- 2026-10-16: A bro adjacent to the statue from any side can piss; the two tiles above the foot and the two alleys are all valid. Reason: flanking is what makes the alleys matter.

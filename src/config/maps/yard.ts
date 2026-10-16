@@ -9,7 +9,8 @@
 //   B  building (blocks)
 //   S  statue (2x2, blocks)
 //   F  foot tile (where tourists pay; walkable path)
-//   G  gate (spawn / exit)
+//   G  gate (bros and tourists spawn here; tourists may also leave here)
+//   E  exit (tourists leave here; nothing spawns)
 //   Y  tour guide tile (adjacency buff, walkable, not buildable)
 //
 // Rows are top to bottom. Every row must be exactly 24 characters.
@@ -32,5 +33,5 @@ B.=.................=.BB
 B.==========F========...
 ......=....=SS=.Y..=....
 ......=....=SS=....=....
-......=.BBBBBBBBBB.=....
+......E.BBBBBBBBBB.E....
 `;

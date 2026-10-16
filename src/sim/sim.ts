@@ -2,11 +2,14 @@
 // Advance it only through step(). Mutates state in place for speed;
 // snapshot() gives you an exact copy.
 
-import { GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, TILE } from '../config/game';
+import { GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, STATUE, TILE } from '../config/game';
 import { YARD_MAP } from '../config/maps/yard';
+import { updateBros } from './bros';
 import { blocksMovement, parseMap, tileAt } from './map';
+import { computeDistToStatue } from './path';
 import { seedRng } from './rng';
 import type { Command, GameState, MapData, PlayerState, SimConfig, Vec } from './types';
+import { startWave, updateWave } from './waves';
 
 export function createState(config: SimConfig): GameState {
   const playerCount = Math.max(1, Math.min(PLAYER_COUNT_MAX, config.playerCount));
@@ -25,8 +28,14 @@ export function createState(config: SimConfig): GameState {
     seed: config.seed,
     rng: seedRng(config.seed),
     playerCount,
+    phase: 'playing',
     map,
+    distToStatue: computeDistToStatue(map),
     players,
+    bros: [],
+    nextEntityId: 1,
+    statueHp: STATUE.hp,
+    wave: { index: -1, toSpawn: 0, nextSpawnTick: 0, active: false },
   };
 }
 
@@ -47,6 +56,12 @@ export function step(state: GameState, commands: Command[]): void {
     const player = state.players[cmd.playerId];
     if (!player) continue;
     if (cmd.type === 'move') applyMove(state.map, player, cmd.dx, cmd.dy);
+    if (cmd.type === 'startWave') startWave(state);
+  }
+
+  if (state.phase === 'playing') {
+    updateWave(state);
+    updateBros(state);
   }
 
   state.tick++;
