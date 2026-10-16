@@ -20,6 +20,7 @@ export function spawnBro(state: GameState): BroState {
     drunk: BRO.drunk,
     phase: 'walking',
     timer: 0,
+    slow: 0,
     facing: { x: 0, y: 1 },
   };
   state.bros.push(bro);
@@ -57,10 +58,12 @@ function updateBro(state: GameState, b: BroState): void {
           b.tile = next;
         }
       } else {
-        const step = Math.min(BRO.speedPxPerTick, d);
+        const speed = b.slow > 0 ? BRO.speedPxPerTick * BRO.slowFactor : BRO.speedPxPerTick;
+        const step = Math.min(speed, d);
         b.pos.x += (dx / d) * step;
         b.pos.y += (dy / d) * step;
       }
+      if (b.slow > 0) b.slow--;
       return;
     }
     case 'windup': {
@@ -99,9 +102,14 @@ export function sober(b: BroState, amount: number): void {
   b.drunk = Math.max(0, b.drunk - amount);
 }
 
-// Interrupts whatever he's doing (walking, winding up, pissing) for a moment.
-export function stagger(b: BroState): void {
+// The shout's effect on him: a walker slows but keeps going; a bro at the
+// statue (winding up or pissing) is interrupted and has to start over.
+export function discipline(b: BroState): void {
   if (b.phase === 'leaving') return;
+  if (b.phase === 'walking') {
+    b.slow = BRO.slowTicks;
+    return;
+  }
   b.phase = 'stagger';
   b.timer = BRO.staggerTicks;
 }

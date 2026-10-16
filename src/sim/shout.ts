@@ -2,7 +2,7 @@
 // every bro inside it sobers a little and is staggered. Hold to keep shouting.
 
 import { SHOUT } from '../config/game';
-import { sober, stagger } from './bros';
+import { discipline, sober } from './bros';
 import type { BroState, GameState, PlayerState, Vec } from './types';
 
 export function applyShout(state: GameState, player: PlayerState): void {
@@ -10,7 +10,7 @@ export function applyShout(state: GameState, player: PlayerState): void {
   for (const b of state.bros) {
     if (inCone(player.pos, player.facing, b.pos)) {
       sober(b, SHOUT.soberPerTick);
-      stagger(b);
+      discipline(b);
     }
   }
 }

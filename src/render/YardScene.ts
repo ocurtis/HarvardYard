@@ -144,7 +144,7 @@ export class YardScene extends Phaser.Scene {
       v.cup.setPosition(x + b.facing.x * 5, y + b.facing.y * 4);
       v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1);
       v.bar.width = Math.max(0, (TILE - 4) * (b.drunk / BRO.drunk));
-      v.body.setFillStyle(b.phase === 'stagger' ? PALETTE.broStagger : PALETTE.bro);
+      v.body.setFillStyle(b.phase === 'stagger' || b.slow > 0 ? PALETTE.broStagger : PALETTE.bro);
     }
     for (const [id, v] of this.broViews) {
       if (!seen.has(id)) {

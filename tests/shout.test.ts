@@ -49,7 +49,14 @@ describe('shout', () => {
   });
 
   it('a fully sobered bro leaves the map', () => {
-    const s = stateWithBroInFront();
+    // Park him at the statue so interruptions keep him in the cone.
+    const s = createState({ seed: 1, playerCount: 1 });
+    const p = s.players[0]!;
+    const b = spawnBro(s);
+    b.tile = { ...s.map.foot };
+    b.pos = tileCenter(b.tile);
+    p.pos = { x: b.pos.x, y: b.pos.y - TILE };
+    p.facing = { x: 0, y: 1 };
     const ticksNeeded = Math.ceil(BRO.drunk / SHOUT.soberPerTick) + 2;
     run(s, ticksNeeded, shout);
     expect(s.bros.length).toBe(0);
@@ -79,11 +86,17 @@ describe('shout', () => {
     expect(b.phase).toBe('windup');
   });
 
-  it('a staggered walker resumes walking, not winding up', () => {
-    const s = stateWithBroInFront();
-    run(s, 1, shout);
-    expect(s.bros[0]!.phase).toBe('stagger');
-    run(s, BRO.staggerTicks + 1, idle);
-    expect(s.bros[0]!.phase).toBe('walking');
+  it('a shouted walker slows but keeps walking', () => {
+    const s = createState({ seed: 1, playerCount: 1 });
+    const p = s.players[0]!;
+    const b = spawnBro(s);
+    // Put him one tile in front on a lane heading away so he has somewhere to go.
+    b.pos = { x: p.pos.x + p.facing.x * TILE, y: p.pos.y + p.facing.y * TILE };
+    const start = { ...b.pos };
+    run(s, 5, shout);
+    expect(b.phase).toBe('walking');
+    const moved = Math.hypot(b.pos.x - start.x, b.pos.y - start.y);
+    expect(moved).toBeGreaterThan(0);
+    expect(moved).toBeLessThan(BRO.speedPxPerTick * 5);
   });
 });

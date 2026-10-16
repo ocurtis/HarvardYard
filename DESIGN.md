@@ -24,7 +24,7 @@ One tile (16px). Free movement, Rock On! style. Bros ignore the player; no playe
 
 Two verbs, both in the facing direction:
 - Pamphlet. Walk into a tourist to hand it over. They then self-path to the foot, routing around tower range rings when a safe route exists; if none exists, they walk through and take the hit.
-- Shout. Short cone (~2 tiles, 80 degrees), hold-to-use, no resource. Disciplines bros: lowers their drunkenness (24/s), staggers them for half a second, interrupts a piss or a wind-up, and freezes a walker in place. Does not scare them off; a staggered bro resumes where he was. Less effective than towers, upgradable. Keys: J, X or Shift.
+- Shout. Short cone (~2 tiles, 80 degrees), hold-to-use, no resource. Disciplines bros: lowers their drunkenness (24/s), interrupts a piss or a wind-up for half a second, and slows a walker to 40% while he's in the cone. Walkers never stop. Does not scare them off; an interrupted bro starts his wind-up over. Less effective than towers, upgradable. Keys: J, X or Shift.
 
 Upgrades: bought with the same currency as towers (Rock On! style). Shout strength, shout range, move speed.
 
@@ -111,5 +111,5 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16: Bros and tourists walk lane tiles only (path, foot, gate, exit, guide), 4-connected, via a BFS flow field from statue-adjacent lane tiles. Reason: Rock On! enemies are on rails; it keeps placement readable and the sim cheap.
 - 2026-10-16: Gates spawn both bros and tourists; exit tiles are tourist-only. Reason: Owen's map has four bottom openings that read as ways out, not in.
 - 2026-10-16: The shout is hold-to-use with no cooldown or resource. Reason: Rock On! throws bones on a cooldown; a sustained cone instead keeps the player standing in the lane, which is where towers can't be. Revisit if it makes the player a turret.
-- 2026-10-16: The shout staggers walking bros too, not just pissing ones. Reason: gives the player crowd-control value on the route, not only at the statue.
+- 2026-10-16: The shout slows walking bros (40%) rather than stopping them; drunkenness cut from 100 to 60 to match. Reason: a stop made the shout a wall; a slow keeps the lane moving and towers relevant.
 - 2026-10-16: A bro adjacent to the statue from any side can piss; the two tiles above the foot and the two alleys are all valid. Reason: flanking is what makes the alleys matter.

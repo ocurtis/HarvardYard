@@ -35,6 +35,7 @@ export interface BroState {
   drunk: number; // health bar; 0 = sober = removed
   phase: BroPhase;
   timer: number; // ticks left in windup/stagger
+  slow: number; // ticks of slow remaining (shout on a walker)
   facing: Vec;
 }
 
