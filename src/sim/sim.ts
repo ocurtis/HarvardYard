@@ -39,10 +39,12 @@ export function createState(config: SimConfig): GameState {
     players,
     bros: [],
     tourists: [],
+    groups: {},
+    nextGroupId: 1,
     nextEntityId: 1,
     statueHp: STATUE.hp,
     money: 0,
-    wave: { index: -1, toSpawn: 0, nextSpawnTick: 0, touristsToSpawn: 0, nextTouristTick: 0, active: false },
+    wave: { index: -1, toSpawn: 0, nextSpawnTick: 0, groupsToSpawn: 0, nextTouristTick: 0, active: false },
   };
 }
 

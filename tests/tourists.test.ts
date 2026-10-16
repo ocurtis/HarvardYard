@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TILE, TOURIST } from '../src/config/game';
 import { createState, serialize, step } from '../src/sim/sim';
-import { spawnTourist } from '../src/sim/tourists';
+import { groupSize, spawnGroup } from '../src/sim/tourists';
 import type { Command, GameState } from '../src/sim/types';
 
 const idle = (): Command[] => [];
@@ -13,61 +13,74 @@ const callWave = (s: GameState): Command[] => [{ playerId: 0, tick: s.tick, type
 // Ticks to walk n tiles at tourist speed, with slack.
 const walkTicks = (n: number) => Math.ceil((n * TILE) / TOURIST.speedPxPerTick) + n * 2 + 20;
 
-describe('tourists', () => {
-  it('spawn with a wave', () => {
+describe('tourist groups', () => {
+  it('spawn with a wave as groups with one guide', () => {
     const s = createState({ seed: 1, playerCount: 1 });
     step(s, callWave(s));
     run(s, 600);
     expect(s.tourists.length).toBeGreaterThan(0);
+    const groups = new Set(s.tourists.map((t) => t.group));
+    for (const g of groups) {
+      const members = s.tourists.filter((t) => t.group === g);
+      expect(members.filter((t) => t.guide).length).toBe(1);
+      expect(members.length).toBeGreaterThanOrEqual(TOURIST.groupMin);
+      expect(members.length).toBeLessThanOrEqual(TOURIST.groupMax);
+    }
   });
 
-  it('walk in a few tiles and then stop, confused', () => {
+  it('the guide walks in a few tiles and stops, confused; followers line up behind', () => {
     const s = createState({ seed: 2, playerCount: 1 });
-    const t = spawnTourist(s);
-    const gate = { ...t.tile };
-    run(s, walkTicks(TOURIST.wanderTiles));
-    expect(t.phase).toBe('confused');
-    const d = s.distToStatue[gate.y * s.map.w + gate.x]! - s.distToStatue[t.tile.y * s.map.w + t.tile.x]!;
+    const guide = spawnGroup(s);
+    const gate = { ...guide.tile };
+    run(s, walkTicks(TOURIST.wanderTiles + TOURIST.groupMax));
+    expect(guide.phase).toBe('confused');
+    const d = s.distToStatue[gate.y * s.map.w + gate.x]! - s.distToStatue[guide.tile.y * s.map.w + guide.tile.x]!;
     expect(d).toBe(TOURIST.wanderTiles);
+    const followers = s.tourists.filter((t) => t.group === guide.group && !t.guide);
+    expect(followers.length).toBeGreaterThanOrEqual(TOURIST.groupMin - 1);
+    // Each follower sits behind the one ahead, never on the guide's tile.
+    for (const f of followers) {
+      expect(f.tile).not.toEqual(guide.tile);
+    }
   });
 
-  it('leave if nobody reaches them in time', () => {
+  it('the whole group leaves if nobody reaches the guide in time', () => {
     const s = createState({ seed: 2, playerCount: 1 });
-    // Park the player far from any tourist.
     s.players[0]!.pos = { x: 1, y: 1 };
-    spawnTourist(s);
-    run(s, walkTicks(TOURIST.wanderTiles) + TOURIST.confusedTicks + walkTicks(TOURIST.wanderTiles + 2));
+    spawnGroup(s);
+    run(s, walkTicks(TOURIST.wanderTiles) + TOURIST.confusedTicks + walkTicks(TOURIST.wanderTiles + TOURIST.groupMax + 2));
     expect(s.tourists.length).toBe(0);
     expect(s.money).toBe(0);
+    expect(Object.keys(s.groups).length).toBe(0);
   });
 
-  it('a touched tourist takes the brochure, walks to the foot, pays, and leaves', () => {
+  it('touching the guide pamphlets the group; it pays per member at the foot and leaves', () => {
     const s = createState({ seed: 2, playerCount: 1 });
-    const t = spawnTourist(s);
-    run(s, walkTicks(TOURIST.wanderTiles));
-    expect(t.phase).toBe('confused');
-    // Teleport the player onto the tourist (the test is the hand-off, not the walk).
-    s.players[0]!.pos = { ...t.pos };
+    const guide = spawnGroup(s);
+    const size = groupSize(s, guide.group);
+    run(s, walkTicks(TOURIST.wanderTiles + TOURIST.groupMax));
+    expect(guide.phase).toBe('confused');
+    s.players[0]!.pos = { ...guide.pos };
     step(s, []);
-    expect(t.phase).toBe('pamphleted');
-    const dist = s.distToFoot[t.tile.y * s.map.w + t.tile.x]!;
+    expect(guide.phase).toBe('pamphleted');
+    const dist = s.distToFoot[guide.tile.y * s.map.w + guide.tile.x]!;
     run(s, walkTicks(dist));
-    expect(s.money).toBe(TOURIST.payout);
-    // Then he heads for an exit and is gone.
-    run(s, walkTicks(60));
-    expect(s.tourists.find((x) => x.id === t.id)).toBeUndefined();
+    expect(s.money).toBe(TOURIST.payout * size);
+    run(s, walkTicks(70));
+    expect(s.tourists.filter((t) => t.group === guide.group).length).toBe(0);
   });
 
-  it('can be reached while still entering', () => {
+  it('touching a follower does nothing', () => {
     const s = createState({ seed: 2, playerCount: 1 });
-    const t = spawnTourist(s);
-    run(s, 5);
-    s.players[0]!.pos = { ...t.pos };
+    const guide = spawnGroup(s);
+    run(s, walkTicks(TOURIST.wanderTiles + TOURIST.groupMax));
+    const follower = s.tourists.find((t) => t.group === guide.group && !t.guide)!;
+    s.players[0]!.pos = { ...follower.pos };
     step(s, []);
-    expect(t.phase).toBe('pamphleted');
+    expect(guide.phase).toBe('confused');
   });
 
-  it('stays deterministic with tourists in play', () => {
+  it('stays deterministic with groups in play', () => {
     const a = createState({ seed: 21, playerCount: 2 });
     const b = createState({ seed: 21, playerCount: 2 });
     for (const s of [a, b]) {

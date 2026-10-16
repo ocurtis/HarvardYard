@@ -35,6 +35,7 @@ interface TouristView {
   body: Phaser.GameObjects.Rectangle;
   hat: Phaser.GameObjects.Rectangle;
   bar: Phaser.GameObjects.Rectangle;
+  flag: Phaser.GameObjects.Rectangle; // the guide's raised flag
 }
 
 export class YardScene extends Phaser.Scene {
@@ -206,21 +207,27 @@ export class YardScene extends Phaser.Scene {
         const body = this.add.rectangle(0, 0, TILE - 4, TILE - 2, PALETTE.tourist).setOrigin(0.5);
         const hat = this.add.rectangle(0, 0, TILE - 2, 3, PALETTE.touristPamphlet).setOrigin(0.5);
         const bar = this.add.rectangle(0, 0, TILE - 4, 2, PALETTE.touristTimer).setOrigin(0, 0.5);
+        const flag = this.add.rectangle(0, 0, 4, 3, PALETTE.touristFlag).setOrigin(0, 1).setVisible(t.guide);
         this.world.add(body);
         this.world.add(hat);
         this.world.add(bar);
-        v = { body, hat, bar };
+        this.world.add(flag);
+        v = { body, hat, bar, flag };
         this.touristViews.set(t.id, v);
       }
       const x = Math.round(t.pos.x);
       const y = Math.round(t.pos.y);
       v.body.setPosition(x, y).setDepth(y + TILE / 2);
       v.hat.setPosition(x, y - TILE / 2 + 1).setDepth(y + TILE / 2 + 0.1);
-      v.body.setFillStyle(t.phase === 'confused' ? PALETTE.touristConfused : PALETTE.tourist);
-      // Pamphleted tourists carry a white brochure (the hat stripe turns solid); the
-      // patience bar only shows while confused.
-      v.hat.setVisible(t.phase === 'pamphleted');
-      v.bar.setVisible(t.phase === 'confused');
+      const guide = t.guide ? t : this.loop.state.tourists.find((g) => g.group === t.group && g.guide);
+      const confused = guide?.phase === 'confused';
+      const pamphleted = guide?.phase === 'pamphleted';
+      v.body.setFillStyle(confused ? PALETTE.touristConfused : t.guide ? PALETTE.touristGuide : PALETTE.tourist);
+      // The guide carries the brochure once handed over; the patience bar and the
+      // flag are the guide's only.
+      v.hat.setVisible(t.guide && pamphleted);
+      v.bar.setVisible(t.guide && t.phase === 'confused');
+      v.flag.setPosition(x + 5, y - TILE / 2 - 2).setDepth(y + TILE / 2 + 0.2);
       v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1).setDepth(y + TILE / 2 + 0.1);
       v.bar.width = Math.max(0, (TILE - 4) * (t.timer / TOURIST.confusedTicks));
     }
@@ -229,6 +236,7 @@ export class YardScene extends Phaser.Scene {
         v.body.destroy();
         v.hat.destroy();
         v.bar.destroy();
+        v.flag.destroy();
         this.touristViews.delete(id);
       }
     }
@@ -248,8 +256,8 @@ export class YardScene extends Phaser.Scene {
       g.fillPath();
     }
     for (const t of this.loop.state.tourists) {
-      if (t.phase !== 'confused') continue;
-      // A question mark: a 2px stroke, pixel-font style, above the head.
+      if (!t.guide || t.phase !== 'confused') continue;
+      // A question mark above the guide's head.
       const x = Math.round(t.pos.x);
       const y = Math.round(t.pos.y) - TILE;
       g.fillStyle(PALETTE.touristTimer, 1);

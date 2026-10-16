@@ -35,12 +35,13 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Bro. Paths gate -> statue. On reaching the statue: 1s wind-up, then a visible stream dealing statue damage per second until he's staggered or sober. Staggered: stumbles back, resumes. Never attacks the player or towers.
 
 ## Tourists
-- Spawn from random gates in every wave, interleaved with bros.
-- Walk a few tiles in along the route (6 in v1), then stop, confused, with a visible patience timer (7s).
-- Brochure: a player within touching distance hands it over, no button. Works while they're entering or confused.
-- Pamphleted: self-path to the foot, pay a flat amount on arrival, leave by the nearest exit or gate. (Routing around tower rings: session 5.)
-- Timer runs out: they turn around and leave the way they came. No payout.
-- Towers do not discriminate (session 5): a bone-struck tourist is hauled off (no payout); a sprinkled tourist scatters.
+- Travel in groups of 3-5 with one guide. Groups spawn from random gates in every wave, interleaved with bros. Followers trail the guide's path a tile apart.
+- The guide walks a few tiles in (6 in v1), then stops, confused, with a visible patience timer (7s). Followers bunch up behind.
+- Brochure: a player within touching distance of the GUIDE hands it over for the whole group; touching a follower does nothing. No button.
+- Pamphleted: the guide leads the group to the foot; on arrival the group pays a flat amount per member still with it, then leaves by the nearest exit. (Routing around tower rings: session 5.)
+- Timer runs out: the guide leads them back out the way they came. No payout.
+- Towers do not discriminate (session 5): a bone-struck tourist is hauled off, reducing the group's payout; a sprinkled group scatters.
+- Look: loaded and loud (backpacks, hats, cameras, saturated colors) against the bros' empty-handed pastels; the group silhouette is the main differentiator. Tour-group identity (matching caps, the guide's flag) not nationality.
 
 ## Towers (v1: two, one in-place upgrade each)
 - Archaeology Dig. A student in a pit lobbing bones. Single target, nearest-first, medium range. Hits tourists too. Range ring always visible. (The Harvard Yard archaeology dig is real; also the Rock On! bone nod.)
@@ -115,5 +116,7 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16: The shout is hold-to-use with no cooldown or resource. Reason: Rock On! throws bones on a cooldown; a sustained cone instead keeps the player standing in the lane, which is where towers can't be. Revisit if it makes the player a turret.
 - 2026-10-16: Art is produced by a panel: parallel artist agents with distinct briefs, an art-director agent's critique, Owen's pick. Sprites are text grids compiled by art/build.py; characters are 16x24 with a parts system for variants. Reason: the panel's first run (the bro) beat a single draft; parts solve crowd sameness in the pipeline instead of by hand.
 - 2026-10-16: Tourists walk in a few tiles and stop confused on a timer; a touch hands them the brochure. Reason: Owen's call; makes each tourist a race the player can see, instead of herding. Replaces the earlier wander-and-leave idea.
+- 2026-10-16: Tourists travel in groups of 3-5 behind a guide; the timer and the brochure belong to the guide. Reason: a clump vs a lone figure is the strongest possible read against bros, and one hand-off per group keeps it from being five chores.
+- 2026-10-16: Tour-group identity (caps, flag, loud colors), not nationality, is the tourist variety axis. Reason: avoids a parade of stereotypes; reads just as well at 1x.
 - 2026-10-16: The shout slows walking bros (40%) rather than stopping them; drunkenness cut from 100 to 60 to match. Reason: a stop made the shout a wall; a slow keeps the lane moving and towers relevant.
 - 2026-10-16: A bro adjacent to the statue from any side can piss; the two tiles above the foot and the two alleys are all valid. Reason: flanking is what makes the alleys matter.

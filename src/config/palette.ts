@@ -24,6 +24,8 @@ export const PALETTE = {
   tourist: 0x27badb,
   touristConfused: 0xfe7000,
   touristPamphlet: 0xffffff,
+  touristGuide: 0x006ab4,
+  touristFlag: 0xfe48de,
   touristTimer: 0xe8ea4a,
   money: 0xe8ea4a,
   playerFacing: 0xff4d6d,

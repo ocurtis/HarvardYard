@@ -40,23 +40,34 @@ export interface BroState {
   variant: number; // which look; the renderer maps it to a sprite variant
 }
 
-export type TouristPhase = 'entering' | 'confused' | 'pamphleted' | 'leaving';
+// Guides run the state machine; followers trail their guide's path.
+export type TouristPhase = 'entering' | 'confused' | 'pamphleted' | 'leaving' | 'following';
 
 export interface TouristState {
   id: number;
+  group: number; // group id; the guide and its followers share it
+  guide: boolean;
   pos: Vec;
   tile: Vec; // tile being walked toward
   phase: TouristPhase;
-  timer: number; // ticks of patience left while confused
-  stepsLeft: number; // tiles still to walk while entering
+  timer: number; // guide: ticks of patience left while confused
+  stepsLeft: number; // guide: tiles still to walk while entering
+  rank: number; // follower: position in line, 1 = right behind the guide
+  pathIndex: number; // follower: index into the group's path
   facing: Vec;
+  variant: number;
+}
+
+export interface GroupState {
+  path: Vec[]; // tiles the guide has stood on, in order; followers replay it
+  guideGone: boolean;
 }
 
 export interface WaveState {
   index: number; // 0-based; -1 before the first wave is called
   toSpawn: number; // bros still to spawn in this wave
   nextSpawnTick: number;
-  touristsToSpawn: number;
+  groupsToSpawn: number;
   nextTouristTick: number;
   active: boolean; // true from call until every bro of the wave is gone
 }
@@ -79,6 +90,8 @@ export interface GameState {
   players: PlayerState[];
   bros: BroState[];
   tourists: TouristState[];
+  groups: Record<number, GroupState>;
+  nextGroupId: number;
   nextEntityId: number;
   statueHp: number;
   money: number;
