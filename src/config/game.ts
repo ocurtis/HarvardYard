@@ -46,3 +46,11 @@ export const SHOUT = {
   // instead trades burst for needing to stand there, which keeps the player
   // in the lane where towers can't be.
 };
+
+export const TOURIST = {
+  speedPxPerTick: 0.5, // 30 px/s; slower than a bro, they're looking around
+  wanderTiles: 6, // how far in along the route before they stop, confused
+  confusedTicks: 420, // 7s to reach them with a brochure before they give up
+  payout: 10, // currency on reaching the foot
+  touchRadiusPx: 10, // player-to-tourist distance that counts as handing over a brochure
+};

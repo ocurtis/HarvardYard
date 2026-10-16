@@ -7,9 +7,10 @@ import { YARD_MAP } from '../config/maps/yard';
 import { updateBros } from './bros';
 import { applyShout } from './shout';
 import { blocksMovement, parseMap, tileAt } from './map';
-import { computeDistToStatue } from './path';
+import { computeDistToExit, computeDistToFoot, computeDistToStatue } from './path';
 import { seedRng } from './rng';
 import type { Command, GameState, MapData, PlayerState, SimConfig, Vec } from './types';
+import { updateTourists } from './tourists';
 import { startWave, updateWave } from './waves';
 
 export function createState(config: SimConfig): GameState {
@@ -33,11 +34,15 @@ export function createState(config: SimConfig): GameState {
     phase: 'playing',
     map,
     distToStatue: computeDistToStatue(map),
+    distToFoot: computeDistToFoot(map),
+    distToExit: computeDistToExit(map),
     players,
     bros: [],
+    tourists: [],
     nextEntityId: 1,
     statueHp: STATUE.hp,
-    wave: { index: -1, toSpawn: 0, nextSpawnTick: 0, active: false },
+    money: 0,
+    wave: { index: -1, toSpawn: 0, nextSpawnTick: 0, touristsToSpawn: 0, nextTouristTick: 0, active: false },
   };
 }
 
@@ -68,6 +73,7 @@ export function step(state: GameState, commands: Command[]): void {
   if (state.phase === 'playing') {
     updateWave(state);
     updateBros(state);
+    updateTourists(state);
   }
 
   state.tick++;

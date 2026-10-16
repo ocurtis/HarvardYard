@@ -35,10 +35,12 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Bro. Paths gate -> statue. On reaching the statue: 1s wind-up, then a visible stream dealing statue damage per second until he's staggered or sober. Staggered: stumbles back, resumes. Never attacks the player or towers.
 
 ## Tourists
-- Spawn in every wave, from the same gates as bros.
-- Un-pamphleted: wander, then leave by a different perimeter gate. No payout.
-- Pamphleted: self-path to the foot (avoiding tower rings), pay a flat amount on arrival, leave by the nearest gate.
-- Towers do not discriminate. A bone-struck tourist is hauled off (no payout). A sprinkled tourist scatters; twice and they leave.
+- Spawn from random gates in every wave, interleaved with bros.
+- Walk a few tiles in along the route (6 in v1), then stop, confused, with a visible patience timer (7s).
+- Brochure: a player within touching distance hands it over, no button. Works while they're entering or confused.
+- Pamphleted: self-path to the foot, pay a flat amount on arrival, leave by the nearest exit or gate. (Routing around tower rings: session 5.)
+- Timer runs out: they turn around and leave the way they came. No payout.
+- Towers do not discriminate (session 5): a bone-struck tourist is hauled off (no payout); a sprinkled tourist scatters.
 
 ## Towers (v1: two, one in-place upgrade each)
 - Archaeology Dig. A student in a pit lobbing bones. Single target, nearest-first, medium range. Hits tourists too. Range ring always visible. (The Harvard Yard archaeology dig is real; also the Rock On! bone nod.)
@@ -47,7 +49,7 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Adjacency: a tower next to the Tour Guide tile (fixed map feature) gets a buff. Tests the idea without a third tower.
 
 ## Map
-One map, 24x18, Owen's draft of 2026-10-16: the statue at the bottom in front of University Hall, three spawn gates (top, left, right) that bros and tourists share, two bottom exits where only tourists leave. A one-tile-wide perimeter route (47 tiles from the top gate, ~22 from the sides) with two inner loops that shortest-path bros never enter; tourists wander them (session 4). The final approach runs over the foot; alleys either side of the statue let bros flank it. Whole map fits on one screen; no camera. Map lives in `src/config/maps/yard.ts` as a 24x18 text block; draw it in `public/mapeditor.html`. Routes should wind: Rock On!'s long routes are 40-60 tiles; under 25 is a straight shot.
+One map, 24x18, Owen's draft of 2026-10-16: the statue at the bottom in front of University Hall, three spawn gates (top, left, right) that bros and tourists share, two bottom exits where only tourists leave. A one-tile-wide network: the top gate's route snakes down through the right-hand inner loop (46 tiles) because the row-3 path has gaps; the side gates reach the statue in ~22 tiles via the outer columns. The left-hand loop is currently bypassed by the left column and sees no traffic. The final approach runs over the foot; alleys either side of the statue let bros flank it. Whole map fits on one screen; no camera. Map lives in `src/config/maps/yard.ts` as a 24x18 text block; draw it in `public/mapeditor.html`. Routes should wind: Rock On!'s long routes are 40-60 tiles; under 25 is a straight shot.
 
 Bros and tourists walk only on path tiles; the player walks anywhere not blocked; towers go on grass. (Pathing: session 2.)
 
@@ -111,5 +113,6 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16: Bros and tourists walk lane tiles only (path, foot, gate, exit, guide), 4-connected, via a BFS flow field from statue-adjacent lane tiles. Reason: Rock On! enemies are on rails; it keeps placement readable and the sim cheap.
 - 2026-10-16: Gates spawn both bros and tourists; exit tiles are tourist-only. Reason: Owen's map has four bottom openings that read as ways out, not in.
 - 2026-10-16: The shout is hold-to-use with no cooldown or resource. Reason: Rock On! throws bones on a cooldown; a sustained cone instead keeps the player standing in the lane, which is where towers can't be. Revisit if it makes the player a turret.
+- 2026-10-16: Tourists walk in a few tiles and stop confused on a timer; a touch hands them the brochure. Reason: Owen's call; makes each tourist a race the player can see, instead of herding. Replaces the earlier wander-and-leave idea.
 - 2026-10-16: The shout slows walking bros (40%) rather than stopping them; drunkenness cut from 100 to 60 to match. Reason: a stop made the shout a wall; a slow keeps the lane moving and towers relevant.
 - 2026-10-16: A bro adjacent to the statue from any side can piss; the two tiles above the foot and the two alleys are all valid. Reason: flanking is what makes the alleys matter.

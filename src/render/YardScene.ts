@@ -1,11 +1,11 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, SHOUT, STATUE, TILE } from '../config/game';
+import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
 import { PALETTE } from '../config/palette';
 import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
-import type { BroState, MapData, PlayerState, TileKind } from '../sim/types';
+import type { BroState, MapData, PlayerState, TileKind, TouristState } from '../sim/types';
 import { canStartWave } from '../sim/waves';
 
 const TILE_COLOR: Record<TileKind, number> = {
@@ -27,6 +27,12 @@ interface BroView {
   bar: Phaser.GameObjects.Rectangle;
 }
 
+interface TouristView {
+  body: Phaser.GameObjects.Rectangle;
+  hat: Phaser.GameObjects.Rectangle;
+  bar: Phaser.GameObjects.Rectangle;
+}
+
 export class YardScene extends Phaser.Scene {
   private players: Phaser.GameObjects.Rectangle[] = [];
   private facingDots: Phaser.GameObjects.Rectangle[] = [];
@@ -38,6 +44,7 @@ export class YardScene extends Phaser.Scene {
   private fpsSamples: number[] = [];
   private world!: Phaser.GameObjects.Container;
   private broViews = new Map<number, BroView>();
+  private touristViews = new Map<number, TouristView>();
 
   constructor(private readonly loop: GameLoop) {
     super('yard');
@@ -102,6 +109,7 @@ export class YardScene extends Phaser.Scene {
     });
 
     this.syncBros(s.bros);
+    this.syncTourists(s.tourists);
     this.drawFx(s.bros, s.players);
 
     // HUD.
@@ -111,7 +119,9 @@ export class YardScene extends Phaser.Scene {
     const avg = this.fpsSamples.reduce((a, b) => a + b, 0) / this.fpsSamples.length;
     const waveLabel = s.wave.index < 0 ? '-' : `${s.wave.index + 1}/${WAVES.length}`;
     const prompt = canStartWave(s) ? '\nSPACE\nnext\nwave' : '\nJ/X\nshout';
-    this.hudText.setText(`HP\n${Math.ceil(s.statueHp)}\n\nWAVE\n${waveLabel}\n\nbros\n${s.bros.length}${prompt}\n\n${(1000 / avg).toFixed(0)}fps`);
+    this.hudText.setText(
+      `HP\n${Math.ceil(s.statueHp)}\n\n$${s.money}\n\nWAVE\n${waveLabel}\n\nbros\n${s.bros.length}${prompt}\n\n${(1000 / avg).toFixed(0)}fps`,
+    );
 
     if (s.phase !== 'playing') {
       this.overlay.setVisible(true);
@@ -156,6 +166,43 @@ export class YardScene extends Phaser.Scene {
     }
   }
 
+  private syncTourists(tourists: TouristState[]): void {
+    const seen = new Set<number>();
+    for (const t of tourists) {
+      seen.add(t.id);
+      let v = this.touristViews.get(t.id);
+      if (!v) {
+        const body = this.add.rectangle(0, 0, TILE - 4, TILE - 2, PALETTE.tourist).setOrigin(0.5);
+        const hat = this.add.rectangle(0, 0, TILE - 2, 3, PALETTE.touristPamphlet).setOrigin(0.5);
+        const bar = this.add.rectangle(0, 0, TILE - 4, 2, PALETTE.touristTimer).setOrigin(0, 0.5);
+        this.world.add(body);
+        this.world.add(hat);
+        this.world.add(bar);
+        v = { body, hat, bar };
+        this.touristViews.set(t.id, v);
+      }
+      const x = Math.round(t.pos.x);
+      const y = Math.round(t.pos.y);
+      v.body.setPosition(x, y);
+      v.hat.setPosition(x, y - TILE / 2 + 1);
+      v.body.setFillStyle(t.phase === 'confused' ? PALETTE.touristConfused : PALETTE.tourist);
+      // Pamphleted tourists carry a white brochure (the hat stripe turns solid); the
+      // patience bar only shows while confused.
+      v.hat.setVisible(t.phase === 'pamphleted');
+      v.bar.setVisible(t.phase === 'confused');
+      v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1);
+      v.bar.width = Math.max(0, (TILE - 4) * (t.timer / TOURIST.confusedTicks));
+    }
+    for (const [id, v] of this.touristViews) {
+      if (!seen.has(id)) {
+        v.body.destroy();
+        v.hat.destroy();
+        v.bar.destroy();
+        this.touristViews.delete(id);
+      }
+    }
+  }
+
   private drawFx(bros: BroState[], players: PlayerState[]): void {
     const g = this.fx;
     g.clear();
@@ -168,6 +215,18 @@ export class YardScene extends Phaser.Scene {
       g.fillStyle(PALETTE.shout, 0.35);
       g.slice(Math.round(p.pos.x), Math.round(p.pos.y), SHOUT.rangePx, a - half, a + half, false);
       g.fillPath();
+    }
+    for (const t of this.loop.state.tourists) {
+      if (t.phase !== 'confused') continue;
+      // A question mark: a 2px stroke, pixel-font style, above the head.
+      const x = Math.round(t.pos.x);
+      const y = Math.round(t.pos.y) - TILE;
+      g.fillStyle(PALETTE.touristTimer, 1);
+      g.fillRect(x - 2, y - 4, 4, 1);
+      g.fillRect(x + 2, y - 3, 1, 2);
+      g.fillRect(x, y - 1, 2, 1);
+      g.fillRect(x, y, 1, 1);
+      g.fillRect(x, y + 2, 1, 1);
     }
     for (const b of bros) {
       if (b.phase === 'windup') {

@@ -39,10 +39,24 @@ export interface BroState {
   facing: Vec;
 }
 
+export type TouristPhase = 'entering' | 'confused' | 'pamphleted' | 'leaving';
+
+export interface TouristState {
+  id: number;
+  pos: Vec;
+  tile: Vec; // tile being walked toward
+  phase: TouristPhase;
+  timer: number; // ticks of patience left while confused
+  stepsLeft: number; // tiles still to walk while entering
+  facing: Vec;
+}
+
 export interface WaveState {
   index: number; // 0-based; -1 before the first wave is called
   toSpawn: number; // bros still to spawn in this wave
   nextSpawnTick: number;
+  touristsToSpawn: number;
+  nextTouristTick: number;
   active: boolean; // true from call until every bro of the wave is gone
 }
 
@@ -59,10 +73,14 @@ export interface GameState {
   // walkable tile, over walkable tiles only; -1 = unreachable. Derived from
   // the map at creation; kept on state so snapshots are self-contained.
   distToStatue: number[];
+  distToFoot: number[]; // same idea, target = the foot tile
+  distToExit: number[]; // same idea, targets = every gate and exit
   players: PlayerState[];
   bros: BroState[];
+  tourists: TouristState[];
   nextEntityId: number;
   statueHp: number;
+  money: number;
   wave: WaveState;
 }
 

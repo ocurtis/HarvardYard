@@ -34,9 +34,23 @@ export function statueAdjacentLaneTiles(map: MapData): Vec[] {
 }
 
 export function computeDistToStatue(map: MapData): number[] {
+  return computeDistField(map, statueAdjacentLaneTiles(map));
+}
+
+export function computeDistToFoot(map: MapData): number[] {
+  return computeDistField(map, [map.foot]);
+}
+
+export function computeDistToExit(map: MapData): number[] {
+  return computeDistField(map, [...map.gates, ...map.exits]);
+}
+
+// BFS distance over lane tiles from a set of source tiles.
+export function computeDistField(map: MapData, sources: Vec[]): number[] {
   const dist = new Array<number>(map.w * map.h).fill(-1);
   const queue: Vec[] = [];
-  for (const t of statueAdjacentLaneTiles(map)) {
+  for (const t of sources) {
+    if (!isLaneTile(tileAt(map, t.x, t.y))) continue;
     dist[t.y * map.w + t.x] = 0;
     queue.push(t);
   }
