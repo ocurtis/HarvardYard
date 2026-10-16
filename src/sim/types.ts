@@ -5,7 +5,7 @@ export interface Vec {
   y: number;
 }
 
-export type TileKind = 'grass' | 'path' | 'tree' | 'statue' | 'foot' | 'gate' | 'guide';
+export type TileKind = 'grass' | 'path' | 'tree' | 'building' | 'statue' | 'foot' | 'gate' | 'guide';
 
 export interface MapData {
   w: number;

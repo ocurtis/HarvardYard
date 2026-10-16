@@ -4,6 +4,7 @@ const LEGEND: Record<string, TileKind> = {
   '.': 'grass',
   '=': 'path',
   T: 'tree',
+  B: 'building',
   S: 'statue',
   F: 'foot',
   G: 'gate',
@@ -57,7 +58,7 @@ export function tileAt(map: MapData, tx: number, ty: number): TileKind | null {
 export function blocksMovement(kind: TileKind | null): boolean {
   // Off-map blocks. Gates are walkable so entities can enter and leave.
   if (kind === null) return true;
-  return kind === 'tree' || kind === 'statue';
+  return kind === 'tree' || kind === 'building' || kind === 'statue';
 }
 
 export function isBuildable(kind: TileKind | null): boolean {

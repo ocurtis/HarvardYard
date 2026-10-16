@@ -76,10 +76,10 @@ describe('player movement', () => {
 
   it('cannot walk into the statue', () => {
     const s = createState({ seed: 1, playerCount: 1 });
-    // Spawn is below the foot; walk up into the foot tile then the statue.
-    run(s, 600, (t) => [{ playerId: 0, tick: t, type: 'move', dx: 0, dy: -1 }]);
+    // Spawn is above the foot; walk down through the foot tile into the statue.
+    run(s, 600, (t) => [{ playerId: 0, tick: t, type: 'move', dx: 0, dy: 1 }]);
     const p = s.players[0]!;
-    const ty = Math.floor((p.pos.y - PLAYER.hitboxH / 2) / TILE);
+    const ty = Math.floor((p.pos.y + PLAYER.hitboxH / 2 - 1) / TILE);
     expect(tileAt(s.map, Math.floor(p.pos.x / TILE), ty)).not.toBe('statue');
   });
 

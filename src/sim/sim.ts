@@ -30,10 +30,11 @@ export function createState(config: SimConfig): GameState {
   };
 }
 
-// Players start just below the statue, fanned out so co-op doesn't stack them.
+// Players start just above the foot (the Yard side of the statue), fanned out
+// so co-op doesn't stack them.
 function spawnPoint(map: MapData, index: number): Vec {
   const fx = map.foot.x * TILE + TILE / 2;
-  const fy = (map.foot.y + 2) * TILE + TILE / 2;
+  const fy = (map.foot.y - 1) * TILE + TILE / 2;
   const offsets = [0, -1, 1, -2];
   return { x: fx + (offsets[index] ?? 0) * TILE, y: fy };
 }

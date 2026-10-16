@@ -6,6 +6,8 @@ export const PALETTE = {
   grassAlt: 0x35712b,
   path: 0xc9b57a,
   tree: 0x1e4d1a,
+  building: 0xb8b0a8,
+  buildingEdge: 0x6b645e,
   statue: 0x6e6a7a,
   foot: 0xe0c060,
   gate: 0x8a3b2b,

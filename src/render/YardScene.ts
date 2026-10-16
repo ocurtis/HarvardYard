@@ -10,6 +10,7 @@ const TILE_COLOR: Record<TileKind, number> = {
   grass: PALETTE.grass,
   path: PALETTE.path,
   tree: PALETTE.tree,
+  building: PALETTE.building,
   statue: PALETTE.statue,
   foot: PALETTE.foot,
   gate: PALETTE.gate,
