@@ -5,6 +5,7 @@ const LEGEND: Record<string, TileKind> = {
   '=': 'path',
   T: 'tree',
   B: 'building',
+  X: 'stone',
   S: 'statue',
   F: 'foot',
   G: 'gate',

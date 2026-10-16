@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Yard map editor</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #202040; color: #e8e8f0; font: 13px/1.4 ui-monospace, Menlo, monospace; display: flex; gap: 16px; padding: 16px; }
+  #left { display: flex; flex-direction: column; gap: 10px; }
+  canvas { image-rendering: pixelated; background: #000; cursor: crosshair; border: 2px solid #4430ba; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tool { padding: 6px 10px; border: 2px solid #4430ba; background: #340058; cursor: pointer; user-select: none; }
+  .tool.active { background: #4430ba; border-color: #fe48de; }
+  .sw { display: inline-block; width: 12px; height: 12px; vertical-align: middle; margin-right: 6px; border: 1px solid #000; }
+  textarea { width: 100%; height: 260px; background: #000; color: #a4f022; border: 1px solid #4430ba; font: 12px ui-monospace, monospace; white-space: pre; }
+  button { padding: 6px 10px; border: 2px solid #4430ba; background: #340058; color: #fff; cursor: pointer; }
+  #right { width: 420px; display: flex; flex-direction: column; gap: 10px; }
+  #report { white-space: pre-wrap; background: #000; padding: 8px; border: 1px solid #4430ba; min-height: 120px; }
+  .ok { color: #a4f022; } .bad { color: #fe626e; } .warn { color: #e8ea4a; }
+  label { display: inline-flex; gap: 6px; align-items: center; }
+  input[type=number] { width: 48px; background: #000; color: #fff; border: 1px solid #4430ba; }
+  small { color: #a48080; }
+</style>
+</head>
+<body>
+<div id="left">
+  <div class="tools" id="tools"></div>
+  <canvas id="c"></canvas>
+  <div>
+    <label>W <input id="w" type="number" value="22" min="8" max="40"></label>
+    <label>H <input id="h" type="number" value="13" min="6" max="30"></label>
+    <button id="resize">Resize (keeps content)</button>
+    <button id="clear">Clear to grass</button>
+    <small>Paint: click/drag. Right-click: grass. Keys: . = T B S F G Y X. S paints a 2x2.</small>
+  </div>
+</div>
+<div id="right">
+  <div id="report"></div>
+  <div>
+    <button id="copy">Copy text block</button>
+    <button id="load">Load from text</button>
+    <small>Paste the block into <code>src/config/maps/yard.ts</code>.</small>
+  </div>
+  <textarea id="text" spellcheck="false"></textarea>
+</div>
+<script>
+// Tile legend. Must match src/sim/map.ts.
+const KINDS = [
+  { ch: '.', name: 'grass', color: '#63b31d', key: '.' },
+  { ch: '=', name: 'path',  color: '#e8ea4a', key: '=' },
+  { ch: 'T', name: 'tree',  color: '#003d10', key: 't' },
+  { ch: 'B', name: 'building', color: '#c8c8c8', key: 'b' },
+  { ch: 'S', name: 'statue (2x2)', color: '#707070', key: 's' },
+  { ch: 'F', name: 'foot', color: '#feb854', key: 'f' },
+  { ch: 'G', name: 'gate', color: '#991515', key: 'g' },
+  { ch: 'Y', name: 'tour guide', color: '#27badb', key: 'y' },
+  { ch: 'X', name: 'stone (unbuildable)', color: '#ffffff', key: 'x' },
+];
+const WALK = new Set(['=', 'F', 'G', 'Y']); // tiles enemies/tourists path over
+const PX = 28;
+
+const DEFAULT = `
+TBBBBBT...G...TBBBBBT.TT
+TBBBBBT..===..TBBBBBT..T
+T.....====.==.........BT
+T.....==...==.......BBBT
+TBBB.==.....==......BBBT
+TBBB.=.......==========G
+TBBB.=........==.......T
+T....==........==..BBB.T
+T.BBB.=.........=..BBB.T
+T.BBB.=======F===..BBB.T
+T.BBB......=SS=..Y..BBBT
+T..........=SS=.....BBBT
+TTTTTBBBBBBBBBBBBBBTTTTT
+`;
+
+let W = 22, H = 13;
+let grid = [];
+let tool = '=';
+let painting = false;
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const report = document.getElementById('report');
+const text = document.getElementById('text');
+
+function init(rows) {
+  const lines = rows.trim().split('\n').map(r => r.trimEnd());
+  H = lines.length; W = Math.max(...lines.map(l => l.length));
+  grid = lines.map(l => l.padEnd(W, '.').split(''));
+  document.getElementById('w').value = W;
+  document.getElementById('h').value = H;
+  canvas.width = W * PX; canvas.height = H * PX;
+  render();
+}
+
+function render() {
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const ch = grid[y][x];
+    const k = KINDS.find(k => k.ch === ch) || KINDS[0];
+    ctx.fillStyle = k.color;
+    ctx.fillRect(x * PX, y * PX, PX - 1, PX - 1);
+    if (ch === '.' && (x + y) % 2 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(x * PX, y * PX, PX - 1, PX - 1); }
+  }
+  const r = analyze();
+  // Highlight routes.
+  for (const route of r.routes) {
+    ctx.fillStyle = 'rgba(254,72,222,0.35)';
+    for (const [x, y] of route.cells) ctx.fillRect(x * PX + 8, y * PX + 8, PX - 17, PX - 17);
+  }
+  // Grid coords for row 0 / col 0 help.
+  ctx.fillStyle = '#fff'; ctx.font = '10px monospace';
+  for (let x = 0; x < W; x++) ctx.fillText(x, x * PX + 2, 10);
+  for (let y = 1; y < H; y++) ctx.fillText(y, 2, y * PX + 10);
+  text.value = toText();
+  showReport(r);
+}
+
+function toText() { return grid.map(r => r.join('')).join('\n'); }
+
+function analyze() {
+  const out = { problems: [], notes: [], routes: [] };
+  const statues = [], feet = [], gates = [], guides = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const ch = grid[y][x];
+    if (ch === 'S') statues.push([x, y]);
+    if (ch === 'F') feet.push([x, y]);
+    if (ch === 'G') gates.push([x, y]);
+    if (ch === 'Y') guides.push([x, y]);
+  }
+  if (statues.length !== 4) out.problems.push(`statue must be exactly 2x2 (found ${statues.length} S tiles)`);
+  else {
+    const xs = statues.map(s => s[0]), ys = statues.map(s => s[1]);
+    if (Math.max(...xs) - Math.min(...xs) !== 1 || Math.max(...ys) - Math.min(...ys) !== 1) out.problems.push('statue tiles are not a 2x2 block');
+  }
+  if (feet.length !== 1) out.problems.push(`need exactly one foot tile (found ${feet.length})`);
+  if (gates.length < 1) out.problems.push('need at least one gate');
+  if (guides.length > 1) out.notes.push(`${guides.length} tour guide tiles (v1 expects 1)`);
+  if (feet.length === 1 && statues.length === 4) {
+    const [fx, fy] = feet[0];
+    const adj = statues.some(([sx, sy]) => Math.abs(sx - fx) + Math.abs(sy - fy) === 1);
+    if (!adj) out.problems.push('foot tile must touch the statue');
+  }
+  // Gates must be on the edge.
+  for (const [gx, gy] of gates) if (gx !== 0 && gy !== 0 && gx !== W - 1 && gy !== H - 1) out.notes.push(`gate at ${gx},${gy} is not on the map edge`);
+  // BFS from each gate to the foot over walkable tiles, 4-connected.
+  if (feet.length === 1) {
+    const [fx, fy] = feet[0];
+    for (const [gx, gy] of gates) {
+      const prev = new Map(); const key = (x, y) => x + ',' + y;
+      const q = [[gx, gy]]; prev.set(key(gx, gy), null);
+      let found = false;
+      while (q.length) {
+        const [x, y] = q.shift();
+        if (x === fx && y === fy) { found = true; break; }
+        for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+          if (!WALK.has(grid[ny][nx])) continue;
+          const k = key(nx, ny); if (prev.has(k)) continue;
+          prev.set(k, key(x, y)); q.push([nx, ny]);
+        }
+      }
+      if (!found) { out.problems.push(`gate ${gx},${gy}: no path to the foot`); continue; }
+      const cells = []; let cur = key(fx, fy);
+      while (cur) { const [x, y] = cur.split(',').map(Number); cells.push([x, y]); cur = prev.get(cur); }
+      out.routes.push({ gate: [gx, gy], len: cells.length - 1, cells });
+    }
+  }
+  // Path width: flag 2x2 blocks of walkable tiles (paths should be one enemy wide).
+  let fat = 0;
+  for (let y = 0; y < H - 1; y++) for (let x = 0; x < W - 1; x++) {
+    if (WALK.has(grid[y][x]) && WALK.has(grid[y+1][x]) && WALK.has(grid[y][x+1]) && WALK.has(grid[y+1][x+1])) fat++;
+  }
+  if (fat) out.notes.push(`${fat} spot(s) where the path is 2 tiles wide`);
+  // Buildable count.
+  let grass = 0; for (const r of grid) for (const ch of r) if (ch === '.') grass++;
+  out.notes.push(`${grass} buildable grass tiles`);
+  return out;
+}
+
+function showReport(r) {
+  const lines = [];
+  lines.push(r.problems.length ? `<span class="bad">${r.problems.length} problem(s)</span>` : `<span class="ok">valid map</span>`);
+  for (const p of r.problems) lines.push(`<span class="bad">- ${p}</span>`);
+  for (const rt of r.routes) {
+    const sec = (rt.len * 16 / 40).toFixed(0); // at 40 px/s bro speed, placeholder
+    lines.push(`<span class="ok">gate ${rt.gate[0]},${rt.gate[1]} -> foot: ${rt.len} tiles (~${sec}s at 40px/s)</span>`);
+  }
+  for (const n of r.notes) lines.push(`<span class="warn">- ${n}</span>`);
+  lines.push(`<small>Rock On! Island's long routes are roughly 40-60 tiles. Shorter than 25 is a straight shot.</small>`);
+  report.innerHTML = lines.join('\n');
+}
+
+function paintAt(e, ch) {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left) / PX), y = Math.floor((e.clientY - rect.top) / PX);
+  if (x < 0 || y < 0 || x >= W || y >= H) return;
+  if (ch === 'S') {
+    if (x + 1 >= W || y + 1 >= H) return;
+    for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) if (grid[yy][xx] === 'S') grid[yy][xx] = '.';
+    grid[y][x] = grid[y][x+1] = grid[y+1][x] = grid[y+1][x+1] = 'S';
+  } else grid[y][x] = ch;
+  render();
+}
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('mousedown', e => { painting = true; paintAt(e, e.button === 2 ? '.' : tool); });
+canvas.addEventListener('mousemove', e => { if (painting && tool !== 'S') paintAt(e, (e.buttons & 2) ? '.' : tool); });
+addEventListener('mouseup', () => painting = false);
+addEventListener('keydown', e => { const k = KINDS.find(k => k.key === e.key.toLowerCase()); if (k) setTool(k.ch); });
+
+const toolsEl = document.getElementById('tools');
+for (const k of KINDS) {
+  const b = document.createElement('div'); b.className = 'tool'; b.dataset.ch = k.ch;
+  b.innerHTML = `<span class="sw" style="background:${k.color}"></span>${k.ch} ${k.name}`;
+  b.onclick = () => setTool(k.ch); toolsEl.appendChild(b);
+}
+function setTool(ch) { tool = ch; for (const el of toolsEl.children) el.classList.toggle('active', el.dataset.ch === ch); }
+setTool('=');
+
+document.getElementById('resize').onclick = () => {
+  const nw = +document.getElementById('w').value, nh = +document.getElementById('h').value;
+  const g = []; for (let y = 0; y < nh; y++) { g.push([]); for (let x = 0; x < nw; x++) g[y].push(grid[y]?.[x] ?? '.'); }
+  grid = g; W = nw; H = nh; canvas.width = W * PX; canvas.height = H * PX; render();
+};
+document.getElementById('clear').onclick = () => { grid = grid.map(r => r.map(() => '.')); render(); };
+document.getElementById('copy').onclick = () => navigator.clipboard.writeText('\n' + toText() + '\n');
+document.getElementById('load').onclick = () => init(text.value);
+
+// Autosave to this browser.
+setInterval(() => { try { localStorage.setItem('yardmap', toText()); } catch {} }, 1000);
+let saved = null; try { saved = localStorage.getItem('yardmap'); } catch {}
+init(saved || DEFAULT);
+</script>
+</body>
+</html>

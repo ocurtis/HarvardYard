@@ -8,6 +8,7 @@ export const PALETTE = {
   tree: 0x1e4d1a,
   building: 0xb8b0a8,
   buildingEdge: 0x6b645e,
+  stone: 0xe8e8e8,
   statue: 0x6e6a7a,
   foot: 0xe0c060,
   gate: 0x8a3b2b,
