@@ -109,6 +109,12 @@ def render(sprite):
 # Shirt swaps for part-built characters: (fill, shade) pairs replacing keys L and Q.
 # Director's cut: cyan/magenta collide with the bro's shirts, green with the grass.
 TOURIST_GROUP_COLORS = [("#fe7000", "#ca4a00"), ("#e8ea4a", "#a3a324"), ("#9600dc", "#340058")]
+# Extra characters composed from another character's parts with their own shirts.
+# name -> (body sprite name, heads sprite name, shirts)
+COMPOSITES = {
+    "longshot": ("bro_body", "bro_heads", [("#d10f4c", "#991515")]),  # the Longshot Bro: crimson shirt
+}
+
 SHIRTS = {
     "bro": [("#27badb", "#006ab4"), ("#ffffff", "#c8c8c8"), ("#fe626e", "#d10f4c")],
     "tourist": TOURIST_GROUP_COLORS,
@@ -177,6 +183,18 @@ def build(src_dir, out_dir):
             continue
         sp = parse(os.path.join(src_dir, fn))
         parsed[sp["name"]] = sp
+    for cname, (body_name, heads_name, shirts) in COMPOSITES.items():
+        if body_name in parsed and heads_name in parsed:
+            body = dict(parsed[body_name])
+            body["name"] = cname + "_body"
+            variants = compose_variants(body, parsed[heads_name], shirts)
+            names = []
+            for v in variants:
+                png = f"{v['name']}.png"
+                render_grid(v).save(os.path.join(out_dir, png))
+                atlas[v["name"]] = {"file": png, "w": v["w"], "h": v["h"], "frames": len(v["frames"]), "anims": v["anims"]}
+                names.append(v["name"])
+            atlas[cname] = {"variants": names, "w": body["w"], "h": body["h"], "frames": len(body["frames"]), "anims": body["anims"]}
     for name, sp in parsed.items():
         if name.endswith("_heads"):
             continue  # only used through composition

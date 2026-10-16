@@ -51,7 +51,7 @@ export function createState(config: SimConfig): GameState {
     money: 0,
     notice: null,
     popups: [],
-    wave: { index: -1, toSpawn: 0, nextSpawnTick: 0, groupsToSpawn: 0, nextTouristTick: 0, active: false },
+    wave: { index: -1, toSpawn: 0, longshotsToSpawn: 0, nextSpawnTick: 0, groupsToSpawn: 0, nextTouristTick: 0, active: false },
   };
 }
 

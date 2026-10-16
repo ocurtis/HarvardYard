@@ -31,8 +31,9 @@ Upgrades: bought with the same currency as towers (Rock On! style). Shout streng
 ## The HP model: drunkenness
 A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up: your shout, a bone to the head, a sprinkler soak. At zero he sobers up, gets embarrassed, and walks off the map. No corpses.
 
-## Enemies (v1: one)
+## Enemies (v1: two)
 - Bro. Paths gate -> statue. On reaching the statue: 1s wind-up, then a visible stream dealing statue damage per second until he's staggered or sober. Staggered: stumbles back, resumes. Never attacks the player or towers.
+- Longshot Bro (from wave 3). Crimson shirt, about 1.6x a bro's speed, less drunk (45). Shakes the whole way in. Stops on the first lane tile within 3.5 tiles of the statue, winds up (0.7s), and arcs a stream over everything between him and the statue; the arc passes over the player. Slightly weaker stream than point-blank. Exists so the alleys and the last corridor aren't the only places that matter.
 
 ## Tourists
 - Travel in groups of 3-5 behind a guide, huddled half a tile apart. Groups spawn in every wave, interleaved with bros, at the gate farthest from the nearest player: a new group is never where you already are.
@@ -95,7 +96,7 @@ TypeScript, Vite, Phaser 3, Vitest (sim tests). GitHub repo, Cloudflare Pages de
 6. Waves and sim. Wave config, headless runner, win screen. Done: beat the level; sim reports win rate.
 
 ## v2 list (not before M3)
-Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that clog lanes. Tour Guide as a placeable tower. Day/night dial with lantern vignette. Second map. Endless mode. Gamepad. Online co-op. Final player character.
+Sorority wave (fast, erratic). Tour groups that clog lanes. Tour Guide as a placeable tower. Day/night dial with lantern vignette. Second map. Endless mode. Gamepad. Online co-op. Final player character.
 
 ## Open questions
 - Tourist payout vs tower cost vs self-upgrade cost: sim decides.
@@ -129,6 +130,7 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16 (evening): The shout spooks guides for dollars, not seconds. Reason: same currency everywhere.
 - 2026-10-16 (evening): Tourist groups spawn at the gate farthest from the nearest player; bros stay random. Reason: the guide-or-bro choice only exists if the group is somewhere else.
 - 2026-10-16 (evening): Destinations. Groups want the statue or a named building; names over the guide and nameplates on the map, no icons and no clicking. Buildings pay less than the statue. Reason: spreads tourist traffic across the Yard and makes the map read as Harvard; words read at 7px where 8px building icons would not; a click would be the game's first mouse input. In v1 the destination changes where and when money lands, not what the player does; mechanics on destinations are a later lever.
+- 2026-10-16 (evening): Longshot Bro added as the second enemy (Owen's call: faster, slightly different look, fires at range with an arc the player passes under, shakes because he has to go). Reason: ranged pressure moves the fight off the last corridor; the shake and the arc are the comedy.
 - 2026-10-16 (evening): Followers huddle half a tile apart. Reason: with towers neutral the spacing is cosmetic, and a clump reads better than a conga line.
 - 2026-10-16: Towers don't block the player and the shop is key-driven (1/2/U/3/4/5), no menu. Reason: Rock On! pacing; a menu would stop the action.
 - 2026-10-16: Tourists travel in groups of 3-5 behind a guide; the timer and the brochure belong to the guide. Reason: a clump vs a lone figure is the strongest possible read against bros, and one hand-off per group keeps it from being five chores.

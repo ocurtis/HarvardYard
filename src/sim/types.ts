@@ -52,8 +52,11 @@ export interface BoneState {
 
 export type BroPhase = 'walking' | 'windup' | 'pissing' | 'stagger' | 'leaving';
 
+export type BroKind = 'bro' | 'longshot';
+
 export interface BroState {
   id: number;
+  kind: BroKind;
   pos: Vec; // pixel center
   tile: Vec; // the tile he is walking toward (or standing on when arrived)
   drunk: number; // health bar; 0 = sober = removed
@@ -106,6 +109,7 @@ export interface Popup {
 export interface WaveState {
   index: number; // 0-based; -1 before the first wave is called
   toSpawn: number; // bros still to spawn in this wave
+  longshotsToSpawn: number; // of those, how many are longshots (spawned interleaved)
   nextSpawnTick: number;
   groupsToSpawn: number;
   nextTouristTick: number;

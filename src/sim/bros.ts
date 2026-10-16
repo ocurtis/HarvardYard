@@ -1,23 +1,44 @@
 // Bro behavior. A bro walks the lane toward the statue, winds up, then
 // pisses until he's staggered or sober. Sobering to 0 is the kill: he
-// leaves the map embarrassed. Nothing here touches the player or towers.
+// leaves the map embarrassed. A Longshot does the same but stops as soon
+// as the statue is in range and arcs it from there. Nothing here touches
+// the player or towers.
 
-import { BRO, TILE } from '../config/game';
+import { BRO, LONGSHOT, TILE } from '../config/game';
 import { nextTileToward } from './path';
 import { nextInt } from './rng';
-import type { BroState, GameState, Vec } from './types';
+import type { BroKind, BroState, GameState, Vec } from './types';
+
+// Per-kind numbers. Everything else about the two kinds is shared.
+function stats(kind: BroKind) {
+  return kind === 'longshot'
+    ? { speed: LONGSHOT.speedPxPerTick, drunk: LONGSHOT.drunk, windup: LONGSHOT.windupTicks, piss: LONGSHOT.pissPerTick }
+    : { speed: BRO.speedPxPerTick, drunk: BRO.drunk, windup: BRO.windupTicks, piss: BRO.pissPerTick };
+}
+
+export function statueCenter(state: GameState): Vec {
+  return { x: (state.map.statue.x + 1) * TILE, y: (state.map.statue.y + 1) * TILE };
+}
+
+// A longshot fires from the first lane tile within range of the statue.
+function longshotInRange(state: GameState, tile: Vec): boolean {
+  const c = tileCenter(tile);
+  const s = statueCenter(state);
+  return Math.hypot(c.x - s.x, c.y - s.y) <= LONGSHOT.rangePx;
+}
 
 export function tileCenter(t: Vec): Vec {
   return { x: t.x * TILE + TILE / 2, y: t.y * TILE + TILE / 2 };
 }
 
-export function spawnBro(state: GameState): BroState {
+export function spawnBro(state: GameState, kind: BroKind = 'bro'): BroState {
   const gate = state.map.gates[nextInt(state, state.map.gates.length)]!;
   const bro: BroState = {
     id: state.nextEntityId++,
+    kind,
     pos: tileCenter(gate),
     tile: { ...gate },
-    drunk: BRO.drunk,
+    drunk: stats(kind).drunk,
     phase: 'walking',
     timer: 0,
     slow: 0,
@@ -49,17 +70,19 @@ function updateBro(state: GameState, b: BroState): void {
       if (d <= BRO.arriveEpsilon) {
         b.pos = target;
         const next = nextTileToward(state.map, state.distToStatue, b.tile);
-        if (next === null) {
-          // Adjacent to the statue (or stuck): start the wind-up.
+        const inRange = b.kind === 'longshot' && longshotInRange(state, b.tile);
+        if (next === null || inRange) {
+          // Adjacent to the statue (or a longshot with it in range): start the wind-up.
           b.phase = 'windup';
-          b.timer = BRO.windupTicks;
+          b.timer = stats(b.kind).windup;
           b.facing = faceStatue(state, b.tile);
         } else {
           b.facing = { x: Math.sign(next.x - b.tile.x), y: Math.sign(next.y - b.tile.y) };
           b.tile = next;
         }
       } else {
-        const speed = b.slow > 0 ? BRO.speedPxPerTick * BRO.slowFactor : BRO.speedPxPerTick;
+        const base = stats(b.kind).speed;
+        const speed = b.slow > 0 ? base * BRO.slowFactor : base;
         const step = Math.min(speed, d);
         b.pos.x += (dx / d) * step;
         b.pos.y += (dy / d) * step;
@@ -73,7 +96,7 @@ function updateBro(state: GameState, b: BroState): void {
       return;
     }
     case 'pissing': {
-      state.statueHp = Math.max(0, state.statueHp - BRO.pissPerTick);
+      state.statueHp = Math.max(0, state.statueHp - stats(b.kind).piss);
       if (state.statueHp <= 0 && state.phase === 'playing') state.phase = 'lost';
       return;
     }
@@ -81,12 +104,13 @@ function updateBro(state: GameState, b: BroState): void {
       b.timer--;
       if (b.timer <= 0) {
         // Resume. If he's adjacent to the statue, wind up again; otherwise keep walking.
+        const arrived = Math.hypot(tileCenter(b.tile).x - b.pos.x, tileCenter(b.tile).y - b.pos.y) <= BRO.arriveEpsilon;
         const atStatue =
-          Math.hypot(tileCenter(b.tile).x - b.pos.x, tileCenter(b.tile).y - b.pos.y) <= BRO.arriveEpsilon &&
-          nextTileToward(state.map, state.distToStatue, b.tile) === null;
+          arrived &&
+          (nextTileToward(state.map, state.distToStatue, b.tile) === null || (b.kind === 'longshot' && longshotInRange(state, b.tile)));
         if (atStatue) {
           b.phase = 'windup';
-          b.timer = BRO.windupTicks;
+          b.timer = stats(b.kind).windup;
         } else {
           b.phase = 'walking';
         }

@@ -1,7 +1,7 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
+import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
 import { PALETTE } from '../config/palette';
 import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
@@ -13,6 +13,7 @@ import { isBuildable, tileAt } from '../sim/map';
 import { shoutRange } from '../sim/shout';
 import { variantKey, type Atlas } from './assets';
 import { destinationShort } from '../sim/tourists';
+import { statueCenter } from '../sim/bros';
 
 const TILE_COLOR: Record<TileKind, number> = {
   grass: PALETTE.grass,
@@ -68,6 +69,7 @@ export class YardScene extends Phaser.Scene {
   private boneViews = new Map<number, Phaser.GameObjects.Rectangle>();
   private rings!: Phaser.GameObjects.Graphics;
   private statueSprite: Phaser.GameObjects.Sprite | null = null;
+  private overhead!: Phaser.GameObjects.Graphics;
   private towerSprites = new Map<number, { sprite: Phaser.GameObjects.Sprite; anim: string; cooldown: number }>();
   private boneSprites = new Map<number, Phaser.GameObjects.Sprite>();
   private cursor!: Phaser.GameObjects.Graphics;
@@ -91,6 +93,9 @@ export class YardScene extends Phaser.Scene {
     this.world.add(this.cursor);
     this.fx = this.add.graphics().setDepth(-1);
     this.world.add(this.fx);
+    // Overhead layer: the longshot's arc flies over everyone, including the player.
+    this.overhead = this.add.graphics().setDepth(9000);
+    this.world.add(this.overhead);
 
     for (const p of this.loop.state.players) {
       // Placeholder until the player has a sprite: a hollow outline, so it never looks like a backdrop.
@@ -200,7 +205,7 @@ export class YardScene extends Phaser.Scene {
       seen.add(b.id);
       let v = this.broViews.get(b.id);
       if (!v) {
-        const key = variantKey(this.atlas, 'bro', b.variant);
+        const key = variantKey(this.atlas, b.kind === 'longshot' ? 'longshot' : 'bro', b.variant) ?? variantKey(this.atlas, 'bro', b.variant);
         const bar = this.add.rectangle(0, 0, TILE - 4, 2, PALETTE.broBar).setOrigin(0, 0.5);
         this.world.add(bar);
         if (key) {
@@ -216,7 +221,10 @@ export class YardScene extends Phaser.Scene {
         }
         this.broViews.set(b.id, v);
       }
-      const x = Math.round(b.pos.x);
+      // A longshot shakes the whole way in and through the wind-up: he has to go.
+      const shaking = b.kind === 'longshot' && (b.phase === 'walking' || b.phase === 'windup');
+      const jitter = shaking ? (Math.floor(this.loop.state.tick / LONGSHOT.shakeEveryTicks) % 2 === 0 ? LONGSHOT.shakePx : -LONGSHOT.shakePx) : 0;
+      const x = Math.round(b.pos.x) + jitter;
       const y = Math.round(b.pos.y);
       const feet = y + TILE / 2; // sim pos is the tile center; sprites stand on the tile's bottom edge
       if (v.sprite) {
@@ -511,6 +519,7 @@ export class YardScene extends Phaser.Scene {
   private drawFx(bros: BroState[], players: PlayerState[]): void {
     const g = this.fx;
     g.clear();
+    this.overhead.clear();
     for (const p of players) {
       if (!p.shouting) continue;
       // The shout cone, drawn as a translucent wedge so range and width are readable.
@@ -527,6 +536,27 @@ export class YardScene extends Phaser.Scene {
         g.fillStyle(PALETTE.foot, 1);
         g.fillRect(Math.round(b.pos.x) - 1, Math.round(b.pos.y) - TILE, 2, 5);
         g.fillRect(Math.round(b.pos.x) - 1, Math.round(b.pos.y) - TILE + 6, 2, 2);
+      }
+      if (b.phase === 'pissing' && b.kind === 'longshot') {
+        // The long arc: from the bro's hips up and over to the statue's head.
+        const sc = statueCenter(this.loop.state);
+        const sx = Math.round(b.pos.x);
+        const sy = Math.round(b.pos.y) + 2;
+        const ex = sc.x;
+        const ey = sc.y - 14;
+        const dist = Math.hypot(ex - sx, ey - sy);
+        const height = Math.max(10, dist * 0.45);
+        const steps = Math.max(10, Math.round(dist / 2));
+        const phase = Math.floor(this.loop.state.tick / 2) % 4;
+        this.overhead.fillStyle(PALETTE.piss, 1);
+        for (let i = 0; i <= steps; i++) {
+          if ((i + phase) % 4 === 0) continue; // gaps so it reads as a stream, not a rope
+          const t = i / steps;
+          const px = Math.round(sx + (ex - sx) * t);
+          const py = Math.round(sy + (ey - sy) * t - Math.sin(t * Math.PI) * height);
+          this.overhead.fillRect(px - 1, py - 1, 2, 2);
+        }
+        continue;
       }
       if (b.phase === 'pissing') {
         // The stream: an arc of yellow pixels from the bro toward the statue.

@@ -11,7 +11,8 @@ export function startWave(state: GameState): void {
   if (!canStartWave(state)) return;
   state.wave.index++;
   const def = scaleWaveForPlayers(WAVES[state.wave.index]!, state.playerCount);
-  state.wave.toSpawn = def.bros;
+  state.wave.toSpawn = def.bros + def.longshots;
+  state.wave.longshotsToSpawn = def.longshots;
   state.wave.nextSpawnTick = state.tick; // first bro spawns this tick
   state.wave.groupsToSpawn = def.groups;
   // Tourists start half a spacing later so the first thing out of a gate is a bro.
@@ -24,7 +25,10 @@ export function updateWave(state: GameState): void {
   if (!w.active) return;
   const def = scaleWaveForPlayers(WAVES[w.index]!, state.playerCount);
   if (w.toSpawn > 0 && state.tick >= w.nextSpawnTick) {
-    spawnBro(state);
+    // Interleave longshots evenly through the wave: spawn one when the share says so.
+    const longshot = w.longshotsToSpawn > 0 && w.longshotsToSpawn * 2 >= w.toSpawn;
+    spawnBro(state, longshot ? 'longshot' : 'bro');
+    if (longshot) w.longshotsToSpawn--;
     w.toSpawn--;
     w.nextSpawnTick = state.tick + def.spacingTicks;
   }

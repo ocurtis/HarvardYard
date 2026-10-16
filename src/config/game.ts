@@ -39,6 +39,20 @@ export const BRO = {
   arriveEpsilon: 0.75,
 };
 
+// The Longshot Bro: faster, less drunk, and he doesn't need to reach the
+// statue. He stops the moment it's in range, unzips, and arcs it over
+// everything in between. He shakes the whole way in because he has to go.
+export const LONGSHOT = {
+  speedPxPerTick: 0.95, // 57 px/s, about 1.6x a bro
+  drunk: 45,
+  rangePx: 56, // 3.5 tiles from the statue's center; he stops on the first lane tile inside it
+  windupTicks: 40,
+  pissPerTick: 5 / 60, // a little weaker than a bro's point-blank stream
+  shakePx: 1, // sprite jitter amplitude while walking and winding up
+  shakeEveryTicks: 3,
+  firstWave: 3, // 1-based wave on which longshots start appearing
+};
+
 export const SHOUT = {
   rangePx: 30, // just under two tiles
   halfAngleDeg: 40, // cone half-width; 40 = an 80-degree cone
