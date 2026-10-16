@@ -11,6 +11,7 @@ import { SELF_UPGRADE, TOWERS } from '../config/towers';
 import { canBuild, playerTile, towerAt, towerRange } from '../sim/towers';
 import { isBuildable, tileAt } from '../sim/map';
 import { shoutRange } from '../sim/shout';
+import { isLaneTile } from '../sim/path';
 import { variantKey, type Atlas } from './assets';
 import { destinationShort } from '../sim/tourists';
 import { statueCenter } from '../sim/bros';
@@ -584,6 +585,18 @@ export class YardScene extends Phaser.Scene {
         if (frame !== null) {
           const img = this.add.image(x * TILE, y * TILE, 'tiles', frame).setOrigin(0).setDepth(-2);
           this.world.add(img);
+          // A rim on every side of a lane tile that meets something that isn't lane: the
+          // path reads as one surface with an edge instead of a run of squares.
+          if (isLaneTile(kind)) {
+            const sides: Array<[string, number, number]> = [['edge_n', 0, -1], ['edge_e', 1, 0], ['edge_s', 0, 1], ['edge_w', -1, 0]];
+            for (const [name, dx, dy] of sides) {
+              const n = tileAt(map, x + dx, y + dy);
+              if (n !== null && !isLaneTile(n) && n !== 'statue') {
+                const ef = tiles!.anims[name]?.frames[0];
+                if (ef !== undefined) this.world.add(this.add.image(x * TILE, y * TILE, 'tiles', ef).setOrigin(0).setDepth(-1.99));
+              }
+            }
+          }
         } else {
           let color = TILE_COLOR[kind];
           if (kind === 'grass' && (x + y) % 2 === 0) color = PALETTE.grassAlt;
@@ -645,13 +658,20 @@ function broAnim(b: BroState): string {
 
 // Which tile frame draws a map cell. Buildings get walls with windows on
 // alternate rows; University Hall (the bottom wall) is granite, the dorms brick.
+// A cheap integer hash so tile variants don't fall into a visible lattice.
+function tileHash(x: number, y: number): number {
+  let h = (x * 374761393 + y * 668265263) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
 function tileFrame(anims: Record<string, { frames: number[] }>, kind: TileKind, x: number, y: number, map: MapData): number | null {
   const f = (name: string) => anims[name]?.frames[0] ?? null;
   switch (kind) {
     case 'grass':
-      return f((x * 7 + y * 13) % 5 === 0 ? 'grass_b' : 'grass_a');
+      return f(['grass_a', 'grass_a', 'grass_b', 'grass_c', 'grass_d'][tileHash(x, y) % 5]!);
     case 'path':
-      return f('path');
+      return f(['path', 'path_b', 'path_c', 'path_d'][tileHash(x, y) % 4]!);
     case 'tree':
       return f(['bush_a', 'bush_b', 'bush_c'][(x * 3 + y * 5) % 3]!);
     case 'stone':

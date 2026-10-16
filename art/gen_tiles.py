@@ -13,8 +13,9 @@ KEY = {
     "g": "#63b31d",  # grass
     "l": "#a4f022",  # grass light dot
     "d": "#008456",  # grass dark dot
-    "y": "#e8ea4a",  # path
-    "o": "#a3a324",  # path dot
+    "y": "#707070",  # path: asphalt
+    "o": "#202040",  # path speck dark / rim
+    "e": "#c8c8c8",  # path speck light
     "t": "#008456",  # bush
     "k": "#003d10",  # bush dark
     "h": "#58f5b1",  # bush highlight
@@ -41,24 +42,46 @@ def put(g, x, y, ch):
         g[y][x] = ch
 
 
+# Dots stay off the outer row/column of a tile: a dot on the edge lines up with
+# its neighbor's into a dotted seam the eye reads as a grid.
+INNER = range(1, 15)
+
+
 def grass(seed, dots):
     rng = random.Random(seed)
     g = grid("g")
     for _ in range(dots):
-        x, y = rng.randrange(16), rng.randrange(16)
+        x, y = rng.choice(INNER), rng.choice(INNER)
         put(g, x, y, "l")
-        if rng.random() < 0.35:
+        if rng.random() < 0.35 and x + 1 in INNER:
             put(g, x + 1, y, "l")
-    for _ in range(2):
-        put(g, rng.randrange(16), rng.randrange(16), "d")
+    put(g, rng.choice(INNER), rng.choice(INNER), "d")
     return g
 
 
 def path(seed):
     rng = random.Random(seed)
     g = grid("y")
-    for _ in range(9):
-        put(g, rng.randrange(16), rng.randrange(16), "o")
+    for _ in range(5):
+        put(g, rng.choice(INNER), rng.choice(INNER), "o")
+    for _ in range(3):
+        put(g, rng.choice(INNER), rng.choice(INNER), "e")
+    return g
+
+
+def edge(side):
+    """A transparent tile with a 1px shade line on one side. Overlaid on a lane
+    tile wherever it borders grass, so a path reads as one surface with a rim."""
+    g = grid(".")
+    for i in range(16):
+        if side == "n":
+            put(g, i, 0, "o")
+        elif side == "s":
+            put(g, i, 15, "o")
+        elif side == "w":
+            put(g, 0, i, "o")
+        else:
+            put(g, 15, i, "o")
     return g
 
 
@@ -143,8 +166,8 @@ def foot():
 def gate():
     g = path(3)
     for x in range(16):
-        put(g, x, 0, "s")
-        put(g, x, 15, "s")
+        put(g, x, 0, "e")
+        put(g, x, 15, "e")
     return g
 
 
@@ -172,7 +195,16 @@ def guide_tile():
 TILES = [
     ("grass_a", grass(1, 6)),
     ("grass_b", grass(2, 5)),
+    ("grass_c", grass(3, 6)),
+    ("grass_d", grass(4, 4)),
     ("path", path(1)),
+    ("path_b", path(2)),
+    ("path_c", path(3)),
+    ("path_d", path(4)),
+    ("edge_n", edge("n")),
+    ("edge_e", edge("e")),
+    ("edge_s", edge("s")),
+    ("edge_w", edge("w")),
     ("bush_a", bush(1)),
     ("bush_b", bush(2)),
     ("bush_c", bush(3)),

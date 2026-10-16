@@ -4,7 +4,7 @@ export const PALETTE = {
   bg: 0x0c0c14,
   grass: 0x3a7d2f,
   grassAlt: 0x35712b,
-  path: 0xc9b57a,
+  path: 0x707070,
   tree: 0x1e4d1a,
   building: 0xb8b0a8,
   buildingEdge: 0x6b645e,

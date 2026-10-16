@@ -137,3 +137,6 @@ Sorority wave (fast, erratic). Tour groups that clog lanes. Tour Guide as a plac
 - 2026-10-16: Tour-group identity (caps, flag, loud colors), not nationality, is the tourist variety axis. Reason: avoids a parade of stereotypes; reads just as well at 1x.
 - 2026-10-16: The shout slows walking bros (40%) rather than stopping them; drunkenness cut from 100 to 60 to match. Reason: a stop made the shout a wall; a slow keeps the lane moving and towers relevant.
 - 2026-10-16: A bro adjacent to the statue from any side can piss; the two tiles above the foot and the two alleys are all valid. Reason: flanking is what makes the alleys matter.
+- 2026-10-16: Paths are asphalt grey with a navy rim where they meet grass, not yellow. Reason: Owen's photos of the Yard; the rim is what makes a path read as one surface instead of tiles.
+- 2026-10-16: Tile dots stay off the outer pixel of a tile; grass and path get 4 variants picked by hash. Reason: edge dots and a regular pick formed visible seams.
+- 2026-10-16: Walk "sway" frames no longer shear the torso 1px off the legs; the bob stays. Reason: at 1x it read as a broken waist.
