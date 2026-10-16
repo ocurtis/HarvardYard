@@ -53,6 +53,29 @@ export const LONGSHOT = {
   firstWave: 3, // 1-based wave on which longshots start appearing
 };
 
+// The Cup Chucker: a slow walker who stops almost at the gate and lobs a full
+// solo cup at the statue. The cup floats in slowly; the player catches it by
+// running under it or shouting it down. If it lands, it's a lot of damage.
+export const CHUCKER = {
+  speedPxPerTick: 0.5,
+  drunk: 50,
+  rangePx: 192, // 12 tiles: he stops a few tiles in from any gate
+  windupTicks: 90, // 1.5s wind-up before each throw
+  reloadTicks: 300, // 5s between throws
+  firstWave: 5,
+};
+
+export const CUP = {
+  speedPxPerTick: 0.4, // about a third of the player's run; ~8s from a far gate
+  damage: 15, // statue HP on landing
+  arcPx: 24, // how high the arc peaks, for the renderer
+  catchRadiusPx: 10, // player-to-cup-shadow distance that counts as a catch
+};
+
+// What a bro pays when he sobers out, by kind. Small next to a tourist group
+// so the group is still the thing you drop everything for.
+export const BOUNTY: Record<'bro' | 'longshot' | 'chucker', number> = { bro: 2, longshot: 3, chucker: 4 };
+
 export const SHOUT = {
   rangePx: 30, // just under two tiles
   halfAngleDeg: 40, // cone half-width; 40 = an 80-degree cone

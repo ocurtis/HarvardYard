@@ -1,7 +1,7 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
+import { BRO, CHUCKER, CUP, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
 import { PALETTE } from '../config/palette';
 import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
@@ -206,7 +206,7 @@ export class YardScene extends Phaser.Scene {
       seen.add(b.id);
       let v = this.broViews.get(b.id);
       if (!v) {
-        const key = variantKey(this.atlas, b.kind === 'longshot' ? 'longshot' : 'bro', b.variant) ?? variantKey(this.atlas, 'bro', b.variant);
+        const key = variantKey(this.atlas, b.kind, b.variant) ?? variantKey(this.atlas, 'bro', b.variant);
         const bar = this.add.rectangle(0, 0, TILE - 4, 2, PALETTE.broBar).setOrigin(0, 0.5);
         this.world.add(bar);
         if (key) {
@@ -223,7 +223,7 @@ export class YardScene extends Phaser.Scene {
         this.broViews.set(b.id, v);
       }
       // A longshot shakes the whole way in and through the wind-up: he has to go.
-      const shaking = b.kind === 'longshot' && (b.phase === 'walking' || b.phase === 'windup');
+      const shaking = (b.kind === 'longshot' && (b.phase === 'walking' || b.phase === 'windup')) || (b.kind === 'chucker' && b.phase === 'windup' && b.timer <= LONGSHOT.windupTicks);
       const jitter = shaking ? (Math.floor(this.loop.state.tick / LONGSHOT.shakeEveryTicks) % 2 === 0 ? LONGSHOT.shakePx : -LONGSHOT.shakePx) : 0;
       const x = Math.round(b.pos.x) + jitter;
       const y = Math.round(b.pos.y);
@@ -244,7 +244,7 @@ export class YardScene extends Phaser.Scene {
         v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1).setDepth(feet + 0.1);
         v.body!.setFillStyle(b.phase === 'stagger' || b.slow > 0 ? PALETTE.broStagger : PALETTE.bro);
       }
-      v.bar.width = Math.max(0, (TILE - 4) * (b.drunk / BRO.drunk));
+      v.bar.width = Math.max(0, (TILE - 4) * (b.drunk / (b.kind === 'chucker' ? CHUCKER.drunk : b.kind === 'longshot' ? LONGSHOT.drunk : BRO.drunk)));
     }
     for (const [id, v] of this.broViews) {
       if (!seen.has(id)) {
@@ -531,8 +531,24 @@ export class YardScene extends Phaser.Scene {
       g.slice(Math.round(p.pos.x), Math.round(p.pos.y), shoutRange(p), a - half, a + half, false);
       g.fillPath();
     }
+    // Cups in flight: a shadow on the ground (that's what you run under) and the
+    // cup itself on the overhead layer, arcing up and back down to the statue.
+    for (const c of this.loop.state.cups) {
+      const gx = Math.round(c.pos.x);
+      const gy = Math.round(c.pos.y);
+      g.fillStyle(0x202040, 0.45);
+      g.fillRect(gx - 3, gy - 1, 6, 3);
+      const h = Math.round(Math.sin(c.progress * Math.PI) * CUP.arcPx) + 6;
+      const spin = Math.floor(this.loop.state.tick / 8) % 2;
+      this.overhead.fillStyle(PALETTE.broCup, 1);
+      this.overhead.fillRect(gx - 2, gy - h - 2 + spin, 4, 5);
+      this.overhead.fillStyle(0xffffff, 1);
+      this.overhead.fillRect(gx - 2, gy - h - 2 + spin, 4, 1);
+      this.overhead.fillStyle(PALETTE.piss, 1);
+      this.overhead.fillRect(gx - 1, gy - h + 1 + spin, 2, 1);
+    }
     for (const b of bros) {
-      if (b.phase === 'windup') {
+      if (b.phase === 'windup' && !(b.kind === 'chucker' && b.timer > CHUCKER.windupTicks)) {
         // Small exclamation above the head while he unzips.
         g.fillStyle(PALETTE.foot, 1);
         g.fillRect(Math.round(b.pos.x) - 1, Math.round(b.pos.y) - TILE, 2, 5);

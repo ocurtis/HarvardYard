@@ -4,7 +4,7 @@
 
 import { GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, POPUP_TICKS, STATUE, TILE } from '../config/game';
 import { BUILDINGS, YARD_MAP } from '../config/maps/yard';
-import { updateBros } from './bros';
+import { updateBros, updateCups } from './bros';
 import { applyShout } from './shout';
 import { blocksMovement, parseMap, tileAt } from './map';
 import { computeDistField, computeDistToExit, computeDistToFoot, computeDistToStatue } from './path';
@@ -45,13 +45,14 @@ export function createState(config: SimConfig): GameState {
     groups: {},
     towers: [],
     bones: [],
+    cups: [],
     nextGroupId: 1,
     nextEntityId: 1,
     statueHp: STATUE.hp,
     money: 0,
     notice: null,
     popups: [],
-    wave: { index: -1, toSpawn: 0, longshotsToSpawn: 0, nextSpawnTick: 0, groupsToSpawn: 0, nextTouristTick: 0, active: false },
+    wave: { index: -1, toSpawn: 0, longshotsToSpawn: 0, chuckersToSpawn: 0, nextSpawnTick: 0, groupsToSpawn: 0, nextTouristTick: 0, active: false },
   };
 }
 
@@ -95,6 +96,7 @@ export function step(state: GameState, commands: Command[]): void {
   if (state.phase === 'playing') {
     updateWave(state);
     updateBros(state);
+    updateCups(state);
     updateTourists(state);
     updateTowers(state);
     state.popups = state.popups.filter((p) => state.tick - p.tick < POPUP_TICKS);

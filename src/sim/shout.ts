@@ -17,6 +17,12 @@ export function applyShout(state: GameState, player: PlayerState): void {
       discipline(b);
     }
   }
+  // A cup in the cone is shouted out of the air.
+  state.cups = state.cups.filter((c) => {
+    if (!inCone(player.pos, player.facing, c.pos, range)) return true;
+    state.popups.push({ id: state.nextEntityId++, text: 'caught!', pos: { ...c.pos }, tick: state.tick, kind: 'info' });
+    return false;
+  });
   // Tourists in the cone get spooked: dollars off their group's value. This
   // is the only way the player loses tourists, so it's always their call.
   for (const t of state.tourists) {

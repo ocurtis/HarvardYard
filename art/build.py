@@ -113,6 +113,7 @@ TOURIST_GROUP_COLORS = [("#fe7000", "#ca4a00"), ("#e8ea4a", "#a3a324"), ("#9600d
 # name -> (body sprite name, heads sprite name, shirts)
 COMPOSITES = {
     "longshot": ("bro_body", "bro_heads", [("#d10f4c", "#991515")]),  # the Longshot Bro: crimson shirt
+    "chucker": ("bro_body", "bro_heads", [("#9600dc", "#340058")]),  # the Cup Chucker: purple shirt
 }
 
 SHIRTS = {

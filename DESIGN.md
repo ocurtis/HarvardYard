@@ -34,6 +34,8 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 ## Enemies (v1: two)
 - Bro. Paths gate -> statue. On reaching the statue: 1s wind-up, then a visible stream dealing statue damage per second until he's staggered or sober. Staggered: stumbles back, resumes. Never attacks the player or towers.
 - Longshot Bro (from wave 3). Crimson shirt, about 1.6x a bro's speed, much less drunk (34). Shakes the whole way in. Stops on the first lane tile within 6.5 tiles of the statue (the bottoms of both inner loops are in range), winds up (0.7s), and arcs a stream over everything between him and the statue; the arc passes over the player. Slightly weaker stream than point-blank. Exists so the alleys and the last corridor aren't the only places that matter.
+- Cup Chucker (from wave 5). Purple shirt, slow (0.5), drunk 50. Stops on the first lane tile within 12 tiles of the statue, which on the Yard map is two or three tiles in from any gate. Winds up 1.5s (shaking), lobs a full solo cup at the statue, reloads 5s, throws again until sobered. The cup floats in at 0.4 px/tick (about a third of the player's run) with a shadow on the ground; the player kills it by standing at the shadow or shouting it out of the air. Towers ignore cups. A cup that lands does 15 statue HP. He is the enemy you have to leave the statue to deal with.
+- Bounties: sobering any bro pays a little ($2 bro, $3 longshot, $4 chucker). Small next to a group so the group is still the thing you drop everything for.
 
 ## Tourists
 - Travel in groups of 3-5 behind a guide, huddled half a tile apart. Groups spawn in every wave, interleaved with bros, at the gate farthest from the nearest player: a new group is never where you already are.
@@ -140,3 +142,5 @@ Sorority wave (fast, erratic). Tour groups that clog lanes. Tour Guide as a plac
 - 2026-10-16: Paths are asphalt grey with a navy rim where they meet grass, not yellow. Reason: Owen's photos of the Yard; the rim is what makes a path read as one surface instead of tiles.
 - 2026-10-16: Tile dots stay off the outer pixel of a tile; grass and path get 4 variants picked by hash. Reason: edge dots and a regular pick formed visible seams.
 - 2026-10-16: Walk "sway" frames no longer shear the torso 1px off the legs; the bob stays. Reason: at 1x it read as a broken waist.
+- 2026-10-16 (evening): Cup Chucker added as the third enemy (Owen's call: super long range, slow-motion solo cup the player can chase down; huge damage if it lands). Reason: a threat the player must leave the statue for, and a cup to run under is a chase the towers can't do for you.
+- 2026-10-16 (evening): Kill bounties ($2/$3/$4 by kind). Owen wanted each takeout to net a small amount. Kept well under a group's value so the choose-the-guide tension survives; the balance sim will say if it doesn't.

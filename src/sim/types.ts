@@ -50,9 +50,19 @@ export interface BoneState {
   sober: number;
 }
 
+// A thrown solo cup in flight from a chucker to the statue. Straight line on
+// the ground; the renderer draws the arc. The player catches it at its shadow.
+export interface CupState {
+  id: number;
+  from: Vec;
+  to: Vec;
+  pos: Vec; // ground position (the shadow)
+  progress: number; // 0..1 along from->to
+}
+
 export type BroPhase = 'walking' | 'windup' | 'pissing' | 'stagger' | 'leaving';
 
-export type BroKind = 'bro' | 'longshot';
+export type BroKind = 'bro' | 'longshot' | 'chucker';
 
 export interface BroState {
   id: number;
@@ -110,6 +120,7 @@ export interface WaveState {
   index: number; // 0-based; -1 before the first wave is called
   toSpawn: number; // bros still to spawn in this wave
   longshotsToSpawn: number; // of those, how many are longshots (spawned interleaved)
+  chuckersToSpawn: number; // and how many are chuckers
   nextSpawnTick: number;
   groupsToSpawn: number;
   nextTouristTick: number;
@@ -138,6 +149,7 @@ export interface GameState {
   groups: Record<number, GroupState>;
   towers: TowerState[];
   bones: BoneState[];
+  cups: CupState[];
   nextGroupId: number;
   nextEntityId: number;
   statueHp: number;
