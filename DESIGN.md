@@ -41,7 +41,7 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Pamphleted: the guide leads the group to the foot; on arrival the group pays a flat amount per member still with it, then leaves by the nearest exit. (Routing around tower rings: session 5.)
 - Timer runs out: the guide leads them back out the way they came. No payout.
 - Towers do not discriminate (session 5): a bone-struck tourist is hauled off, reducing the group's payout; a sprinkled group scatters.
-- Look: loaded and loud (backpacks, hats, cameras, saturated colors) against the bros' empty-handed pastels; the group silhouette is the main differentiator. Tour-group identity (matching caps, the guide's flag) not nationality.
+- Look (approved 2026-10-16): short and loaded against the bros' tall and slim. Crimson hats and a crimson flag on every group (Harvard tour groups); shirts in orange, yellow or purple per group (cyan, magenta and green were cut for colliding with the bro's shirts and the grass). Followers snap photos with a flash while the group is stopped. Rule: bros tall, tourists short.
 
 ## Towers (v1: two, one in-place upgrade each)
 - Archaeology Dig. A student in a pit lobbing bones. Single target, nearest-first, medium range. Hits tourists too. Range ring always visible. (The Harvard Yard archaeology dig is real; also the Rock On! bone nod.)

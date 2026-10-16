@@ -448,5 +448,445 @@
         "fps": 4
       }
     }
+  },
+  "flash": {
+    "file": "flash.png",
+    "w": 16,
+    "h": 16,
+    "frames": 2,
+    "anims": {
+      "flash": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 12
+      }
+    }
+  },
+  "tourist_v00": {
+    "file": "tourist_v00.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_v01": {
+    "file": "tourist_v01.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_v02": {
+    "file": "tourist_v02.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_v10": {
+    "file": "tourist_v10.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_v11": {
+    "file": "tourist_v11.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_v12": {
+    "file": "tourist_v12.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_v20": {
+    "file": "tourist_v20.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_v21": {
+    "file": "tourist_v21.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_v22": {
+    "file": "tourist_v22.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist": {
+    "variants": [
+      "tourist_v00",
+      "tourist_v01",
+      "tourist_v02",
+      "tourist_v10",
+      "tourist_v11",
+      "tourist_v12",
+      "tourist_v20",
+      "tourist_v21",
+      "tourist_v22"
+    ],
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "confused": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 3
+      },
+      "brochure": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 8
+      },
+      "photo": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "tourist_flag": {
+    "file": "tourist_flag.png",
+    "w": 8,
+    "h": 16,
+    "frames": 2,
+    "anims": {
+      "wave": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 4
+      }
+    }
   }
 }

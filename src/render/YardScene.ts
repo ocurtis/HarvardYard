@@ -32,10 +32,16 @@ interface BroView {
 }
 
 interface TouristView {
-  body: Phaser.GameObjects.Rectangle;
-  hat: Phaser.GameObjects.Rectangle;
+  sprite: Phaser.GameObjects.Sprite | null;
+  flagSprite: Phaser.GameObjects.Sprite | null;
+  flash: Phaser.GameObjects.Sprite | null;
+  body: Phaser.GameObjects.Rectangle | null;
+  hat: Phaser.GameObjects.Rectangle | null;
+  flag: Phaser.GameObjects.Rectangle | null;
   bar: Phaser.GameObjects.Rectangle;
-  flag: Phaser.GameObjects.Rectangle; // the guide's raised flag
+  anim: string;
+  moving: boolean;
+  lastPos: { x: number; y: number };
 }
 
 export class YardScene extends Phaser.Scene {
@@ -200,43 +206,95 @@ export class YardScene extends Phaser.Scene {
 
   private syncTourists(tourists: TouristState[]): void {
     const seen = new Set<number>();
+    const state = this.loop.state;
     for (const t of tourists) {
       seen.add(t.id);
       let v = this.touristViews.get(t.id);
       if (!v) {
-        const body = this.add.rectangle(0, 0, TILE - 4, TILE - 2, PALETTE.tourist).setOrigin(0.5);
-        const hat = this.add.rectangle(0, 0, TILE - 2, 3, PALETTE.touristPamphlet).setOrigin(0.5);
+        const key = variantKey(this.atlas, 'tourist', t.variant);
         const bar = this.add.rectangle(0, 0, TILE - 4, 2, PALETTE.touristTimer).setOrigin(0, 0.5);
-        const flag = this.add.rectangle(0, 0, 4, 3, PALETTE.touristFlag).setOrigin(0, 1).setVisible(t.guide);
-        this.world.add(body);
-        this.world.add(hat);
         this.world.add(bar);
-        this.world.add(flag);
-        v = { body, hat, bar, flag };
+        if (key) {
+          const sprite = this.add.sprite(0, 0, key, 0).setOrigin(0.5, 1);
+          this.world.add(sprite);
+          let flagSprite: Phaser.GameObjects.Sprite | null = null;
+          if (t.guide && this.atlas['tourist_flag']) {
+            flagSprite = this.add.sprite(0, 0, 'tourist_flag', 0).setOrigin(0, 1);
+            flagSprite.play('tourist_flag:wave');
+            this.world.add(flagSprite);
+          }
+          let flash: Phaser.GameObjects.Sprite | null = null;
+          if (!t.guide && this.atlas['flash']) {
+            flash = this.add.sprite(0, 0, 'flash', 0).setOrigin(0.5, 0.5).setVisible(false);
+            this.world.add(flash);
+          }
+          v = { sprite, flagSprite, flash, body: null, hat: null, flag: null, bar, anim: '', moving: false, lastPos: { ...t.pos } };
+        } else {
+          const body = this.add.rectangle(0, 0, TILE - 4, TILE - 2, PALETTE.tourist).setOrigin(0.5);
+          const hat = this.add.rectangle(0, 0, TILE - 2, 3, PALETTE.touristPamphlet).setOrigin(0.5);
+          const flag = this.add.rectangle(0, 0, 4, 3, PALETTE.touristFlag).setOrigin(0, 1).setVisible(t.guide);
+          this.world.add(body);
+          this.world.add(hat);
+          this.world.add(flag);
+          v = { sprite: null, flagSprite: null, flash: null, body, hat, flag, bar, anim: '', moving: false, lastPos: { ...t.pos } };
+        }
         this.touristViews.set(t.id, v);
       }
       const x = Math.round(t.pos.x);
       const y = Math.round(t.pos.y);
-      v.body.setPosition(x, y).setDepth(y + TILE / 2);
-      v.hat.setPosition(x, y - TILE / 2 + 1).setDepth(y + TILE / 2 + 0.1);
-      const guide = t.guide ? t : this.loop.state.tourists.find((g) => g.group === t.group && g.guide);
+      const feet = y + TILE / 2;
+      const guide = t.guide ? t : state.tourists.find((g) => g.group === t.group && g.guide);
       const confused = guide?.phase === 'confused';
       const pamphleted = guide?.phase === 'pamphleted';
-      v.body.setFillStyle(confused ? PALETTE.touristConfused : t.guide ? PALETTE.touristGuide : PALETTE.tourist);
-      // The guide carries the brochure once handed over; the patience bar and the
-      // flag are the guide's only.
-      v.hat.setVisible(t.guide && pamphleted);
+      const moving = t.pos.x !== v.lastPos.x || t.pos.y !== v.lastPos.y;
+      v.lastPos = { x: t.pos.x, y: t.pos.y };
+
+      if (v.sprite) {
+        v.sprite.setPosition(x, feet).setDepth(feet);
+        let anim: string;
+        if (t.guide) anim = t.phase === 'confused' ? 'confused' : pamphleted ? 'brochure' : 'walk';
+        else anim = t.photo > 0 ? 'photo' : 'walk';
+        const key = v.sprite.texture.key;
+        if (anim !== v.anim) {
+          v.anim = anim;
+          v.sprite.play(`${key}:${anim}`, true);
+        }
+        // Standing still: freeze the walk on its first frame.
+        if (anim === 'walk' || anim === 'brochure') {
+          if (!moving && v.moving) v.sprite.anims.pause(v.sprite.anims.currentAnim?.frames[0]);
+          if (moving && !v.moving) v.sprite.anims.resume();
+        }
+        v.moving = moving;
+        v.flagSprite?.setPosition(x + 5, feet - 20).setDepth(feet + 0.2);
+        if (v.flash) {
+          const show = t.photo > TOURIST.photoTicks * (2 / 3);
+          v.flash.setVisible(show);
+          if (show) {
+            v.flash.setPosition(x, feet - 14).setDepth(feet + 0.3);
+            if (!v.flash.anims.isPlaying) v.flash.play('flash:flash');
+          } else if (v.flash.anims.isPlaying) v.flash.stop();
+        }
+        v.bar.setPosition(x - (TILE - 4) / 2, feet - 24 - 2).setDepth(feet + 0.1);
+      } else {
+        v.body!.setPosition(x, y).setDepth(feet);
+        v.hat!.setPosition(x, y - TILE / 2 + 1).setDepth(feet + 0.1);
+        v.body!.setFillStyle(confused ? PALETTE.touristConfused : t.guide ? PALETTE.touristGuide : PALETTE.tourist);
+        v.hat!.setVisible(t.guide && pamphleted);
+        v.flag!.setPosition(x + 5, y - TILE / 2 - 2).setDepth(feet + 0.2);
+        v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1).setDepth(feet + 0.1);
+      }
       v.bar.setVisible(t.guide && t.phase === 'confused');
-      v.flag.setPosition(x + 5, y - TILE / 2 - 2).setDepth(y + TILE / 2 + 0.2);
-      v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1).setDepth(y + TILE / 2 + 0.1);
       v.bar.width = Math.max(0, (TILE - 4) * (t.timer / TOURIST.confusedTicks));
     }
     for (const [id, v] of this.touristViews) {
       if (!seen.has(id)) {
-        v.body.destroy();
-        v.hat.destroy();
+        v.sprite?.destroy();
+        v.flagSprite?.destroy();
+        v.flash?.destroy();
+        v.body?.destroy();
+        v.hat?.destroy();
+        v.flag?.destroy();
         v.bar.destroy();
-        v.flag.destroy();
         this.touristViews.delete(id);
       }
     }
@@ -259,7 +317,7 @@ export class YardScene extends Phaser.Scene {
       if (!t.guide || t.phase !== 'confused') continue;
       // A question mark above the guide's head.
       const x = Math.round(t.pos.x);
-      const y = Math.round(t.pos.y) - TILE;
+      const y = Math.round(t.pos.y) + TILE / 2 - 24 - 6;
       g.fillStyle(PALETTE.touristTimer, 1);
       g.fillRect(x - 2, y - 4, 4, 1);
       g.fillRect(x + 2, y - 3, 1, 2);

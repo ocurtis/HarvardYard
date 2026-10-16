@@ -15,7 +15,8 @@ export function spawnGroup(state: GameState): TouristState {
   const gate = state.map.gates[nextInt(state, state.map.gates.length)]!;
   const size = TOURIST.groupMin + nextInt(state, TOURIST.groupMax - TOURIST.groupMin + 1);
   const group = state.nextGroupId++;
-  state.groups[group] = { path: [{ ...gate }], guideGone: false };
+  const color = nextInt(state, TOURIST.colors);
+  state.groups[group] = { path: [{ ...gate }], guideGone: false, color };
   const guide = makeTourist(state, group, gate, true, 0);
   guide.phase = 'entering';
   guide.stepsLeft = TOURIST.wanderTiles;
@@ -29,6 +30,7 @@ export function spawnGroup(state: GameState): TouristState {
 }
 
 function makeTourist(state: GameState, group: number, gate: Vec, guide: boolean, rank: number): TouristState {
+  const color = state.groups[group]!.color;
   return {
     id: state.nextEntityId++,
     group,
@@ -41,7 +43,8 @@ function makeTourist(state: GameState, group: number, gate: Vec, guide: boolean,
     rank,
     pathIndex: 0,
     facing: { x: 0, y: 1 },
-    variant: nextInt(state, TOURIST.variants),
+    variant: nextInt(state, TOURIST.heads) * TOURIST.colors + color,
+    photo: 0,
   };
 }
 
@@ -146,10 +149,15 @@ function updateFollower(state: GameState, t: TouristState): boolean {
   if (!walkToward(t, tileCenter(t.tile))) return true;
   const last = g.path.length - 1;
   const allowed = g.guideGone ? last : last - t.rank * TOURIST.followSpacingTiles;
+  if (t.photo > 0) t.photo--;
   if (t.pathIndex >= allowed) {
     // Caught up to the line. If the guide is gone and we're at the end, we're out.
-    return !(g.guideGone && t.pathIndex >= last);
+    if (g.guideGone && t.pathIndex >= last) return false;
+    // Standing around: snap a photo now and then.
+    if (t.photo === 0 && nextInt(state, Math.round(1 / TOURIST.photoChancePerTick)) === 0) t.photo = TOURIST.photoTicks;
+    return true;
   }
+  t.photo = 0;
   t.pathIndex++;
   const next = g.path[t.pathIndex]!;
   t.facing = { x: Math.sign(next.x - t.tile.x), y: Math.sign(next.y - t.tile.y) };

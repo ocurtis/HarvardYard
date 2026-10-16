@@ -55,12 +55,14 @@ export interface TouristState {
   rank: number; // follower: position in line, 1 = right behind the guide
   pathIndex: number; // follower: index into the group's path
   facing: Vec;
-  variant: number;
+  variant: number; // head * colors + group color
+  photo: number; // ticks left in the photo pose (followers)
 }
 
 export interface GroupState {
   path: Vec[]; // tiles the guide has stood on, in order; followers replay it
   guideGone: boolean;
+  color: number; // shirt color index shared by the group
 }
 
 export interface WaveState {

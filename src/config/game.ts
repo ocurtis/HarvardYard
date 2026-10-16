@@ -57,5 +57,8 @@ export const TOURIST = {
   groupMin: 3, // group size including the guide
   groupMax: 5,
   followSpacingTiles: 1, // each follower stays this many tiles behind the one ahead
-  variants: 9,
+  heads: 3, // head stamps in the art pipeline
+  colors: 3, // group shirt colors; a whole group shares one
+  photoChancePerTick: 1 / 90, // a standing follower snaps a photo about every 1.5s
+  photoTicks: 24, // how long the photo pose lasts; the flash is the first third
 };
