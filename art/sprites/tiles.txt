@@ -1,0 +1,273 @@
+# name: tiles
+# size: 16x16
+# g=#63b31d l=#a4f022 d=#008456 y=#e8ea4a o=#a3a324 t=#008456 k=#003d10 h=#58f5b1 w=#ffffff c=#c8c8c8 s=#707070 n=#202040 b=#991515 r=#ca4a00 m=#4c0000 p=#e8ea4a q=#a3a324 f=#fe48de u=#4430ba
+# anim grass_a: 0
+# anim grass_b: 1
+# anim path: 2
+# anim bush_a: 3
+# anim bush_b: 4
+# anim bush_c: 5
+# anim stone: 6
+# anim granite: 7
+# anim granite_window: 8
+# anim brick: 9
+# anim brick_window: 10
+# anim foot: 11
+# anim gate: 12
+# anim exit: 13
+# anim guide: 14
+# frame (grass_a)
+dggggggggggggggg
+gggggggggggggggg
+ggggllgggggggggg
+ggggggglgggggggg
+gggggggggggggggg
+gggggggggggggggg
+ggggggggggggllgg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+lggggggggggggggg
+gggggggggggggggg
+llgggggggggggggl
+gggggggggggggggg
+# frame (grass_b)
+gdgggggggggggggg
+gggggglggggggggg
+gllggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+gggggllggggggggg
+gggggggggggggggg
+gggggggggggggggg
+gggggggggggggggg
+ggggglgggggggggg
+gggggggggggdgggg
+gggggggggggggggg
+# frame (path)
+yyyyyyyyyyyyyyyo
+yyyyyyyyyyyyyyyy
+yyyyoyyyyyyyyyyy
+yyyyyyoyoyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyoyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyo
+yyyyyyyyyyyyoyyy
+oyyyyyyyyyyyyyyo
+yyyyyyyyyyyyyyyy
+# frame (bush_a)
+kkkktkkkkkkkkkkk
+kkthtttkkkktkkkk
+kthhktttkthtttkk
+khhtttttkhhttttk
+tttttttthhtttttk
+kttttttttttttttt
+kttttttttttttttk
+kktttttttttttttk
+kkkktthtttttttkk
+kkkkthhtttttktkk
+kkkkhhtttttthttt
+kkktttttttthhttt
+kkkktttttttttttt
+kkkktttttttttttt
+kkkkktttttkttttk
+kkkkkkktkkkkktkk
+# frame (bush_b)
+kkkkktkkkkkkkkkk
+kktthttttkkktkkk
+kkhhhtttttthtttk
+kthttttttthhtttk
+khhttttttttttttt
+tttttttttttttttk
+kttttttttttttttk
+ktttttttttkktkkk
+kttttttthtttkkkk
+kktttkthhttttkkk
+kthttthhtttttkkk
+khktttttttttttkk
+tttttttttttttkkk
+kttttttttttttkkk
+ktttttktttttkkkk
+kkktkkkkktkkkkkk
+# frame (bush_c)
+kkkktkkkkkkkkkkk
+kkthtttkkkktkkkk
+kthhttttkthtttkk
+khhtttttthhttttk
+tttttttkhhtttttk
+kttttttttttttttt
+kttttttttttttttk
+kktttttttttttttk
+kkkktthtttttttkk
+kkkkthhtttttktkk
+kkkkhhtttttthttt
+kkktttttttthhttt
+kkkktttttttttttt
+kkkktttttttttttt
+kkkkktttttkttttt
+kkkkkkktkkkkktkk
+# frame (stone)
+ggggwggggggggggg
+ggwwwwwggggwgggg
+ggwwwwcggwwwwwgg
+gwwwwcccgwwwwcgg
+ggwwcccgwwwwcccg
+ggwccccggwwcccgg
+ggggcggggwccccgg
+gggggggwgggcgggg
+gggggwwwwwgggggg
+gggggwwwwcgggggg
+ggggwwwwcccggwgg
+gggggwwcccggwwwg
+gggggwccccgwwwcc
+gggggggcggggwccg
+gggggggggggggcgg
+gggggggggggggggg
+# frame (granite)
+cccccccscccccccs
+cccccccscccccccs
+cccccccscccccccs
+ssssssssssssssss
+cccscccccccscccc
+cccscccccccscccc
+cccscccccccscccc
+ssssssssssssssss
+cccccccscccccccs
+cccccccscccccccs
+cccccccscccccccs
+ssssssssssssssss
+cccscccccccscccc
+cccscccccccscccc
+cccscccccccscccc
+ssssssssssssssss
+# frame (granite_window)
+cccccccscccccccs
+cccccccscccccccs
+ccccnnnnnnnncccs
+ssssncsncssnssss
+cccsnssnsssncccc
+cccsnssnsssncccc
+cccsnssnsssncccc
+ssssnssnsssnssss
+ccccnnnnnnnncccs
+ccccnssnsssncccs
+ccccnssnsssncccs
+ssssnssnsssnssss
+cccsnssnsssncccc
+cccsnnnnnnnncccc
+cccscccccccscccc
+ssssssssssssssss
+# frame (brick)
+brbbbmbrbbbmbrbb
+bbbbbmbbbbbmbbbb
+mmmmmmmmmmmmmmmm
+rbmbbbrbmbbbrbmb
+bbmbbbbbmbbbbbmb
+mmmmmmmmmmmmmmmm
+bbbbbmbbbbbmbbbb
+bbbbbmbbbbbmbbbb
+mmmmmmmmmmmmmmmm
+bbmbrbbbmbrbbbmb
+bbmbbbbbmbbbbbmb
+mmmmmmmmmmmmmmmm
+bbbrbmbbbrbmbbbr
+bbbbbmbbbbbmbbbb
+mmmmmmmmmmmmmmmm
+bbmbbbbbmbbbbbmb
+# frame (brick_window)
+brbbbmbrbbbmbrbb
+bbbbbmbbbbbmbbbb
+mmmmnnnnnnnnmmmm
+rbmbncsncssnrbmb
+bbmbnssnsssnbbmb
+mmmmnssnsssnmmmm
+bbbbnssnsssnbbbb
+bbbbnssnsssnbbbb
+mmmmnnnnnnnnmmmm
+bbmbnssnsssnbbmb
+bbmbnssnsssnbbmb
+mmmmnssnsssnmmmm
+bbbrnssnsssnbbbr
+bbbbnnnnnnnnbbbb
+mmmmmmmmmmmmmmmm
+bbmbbbbbmbbbbbmb
+# frame (foot)
+yyyyyyyyyyyyyyyy
+yyyyyyoyyyyoooyy
+yyyyyyyoyyyyyoyy
+yyoyyyyyyyyyyyyy
+yyyyyyyyqyoyyyyy
+yyyyyyqqqqqyyyyy
+yyyyyqqqpqqqyyyy
+yyyyyqqpppqqyyyy
+yyyyqqpppppqqyyy
+yyyyyqqpppqqyyyy
+yyyyyqqqpqqqyyyy
+yyyyyyqqqqqyyyyy
+yyyyyyyyqyyyyyyy
+yyoyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+# frame (gate)
+ssssssssssssssss
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyoyyyyoyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyoyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyo
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+ssssssssssssssss
+# frame (exit)
+yyyyyyyyyyyyyyyy
+yyyyyyyoyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyoyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+oyyyyyyyyyyyyyyy
+yyyoyyyyyyyyyyyy
+yyyyyyyuuyyyyoyy
+yyyyyyuyyuyyyyyy
+yyyyyuyuuyuyyyyy
+yyyyyyyuuyyyyyyy
+yyyyyyyuuyyyyyyy
+yyyyyyyuuyyyyyyy
+oyyyyyyyyyyyyyyy
+yyyyyyyyyyyoyyyy
+# frame (guide)
+yyyyyoyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyyynfffffyyy
+yyyyyyynffffyyyy
+yyyyyyynfffyyoyy
+yyyyyyynffyyyyyy
+yyyyyoynfyyyyyyy
+yyyyyyynyyyyyyyy
+yyyyyyynyyyyyyyy
+yyoyyyynyyyyyyyy
+yyyyyyynyyyyyyoy
+yoyyyyynyyyyyyyy
+yyyyyyyyyyyyyyyy
+yyyyyoyyyyoyyyyy
+yyyyyyyyyyyyyyyy

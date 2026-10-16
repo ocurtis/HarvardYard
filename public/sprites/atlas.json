@@ -1,4 +1,19 @@
 {
+  "bone": {
+    "file": "bone.png",
+    "w": 8,
+    "h": 8,
+    "frames": 2,
+    "anims": {
+      "spin": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 10
+      }
+    }
+  },
   "bro_v00": {
     "file": "bro_v00.png",
     "w": 16,
@@ -449,6 +464,46 @@
       }
     }
   },
+  "dig": {
+    "file": "dig.png",
+    "w": 16,
+    "h": 24,
+    "frames": 12,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 6
+      },
+      "fire": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 8
+      },
+      "idle2": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 6
+      },
+      "fire2": {
+        "frames": [
+          10,
+          11
+        ],
+        "fps": 8
+      }
+    }
+  },
   "flash": {
     "file": "flash.png",
     "w": 16,
@@ -461,6 +516,160 @@
           1
         ],
         "fps": 12
+      }
+    }
+  },
+  "sprinkler": {
+    "file": "sprinkler.png",
+    "w": 16,
+    "h": 24,
+    "frames": 6,
+    "anims": {
+      "spin": {
+        "frames": [
+          0,
+          1,
+          2
+        ],
+        "fps": 8
+      },
+      "spin2": {
+        "frames": [
+          3,
+          4,
+          5
+        ],
+        "fps": 8
+      }
+    }
+  },
+  "statue": {
+    "file": "statue.png",
+    "w": 32,
+    "h": 32,
+    "frames": 4,
+    "anims": {
+      "clean": {
+        "frames": [
+          0
+        ],
+        "fps": 6
+      },
+      "wet1": {
+        "frames": [
+          1
+        ],
+        "fps": 6
+      },
+      "wet2": {
+        "frames": [
+          2
+        ],
+        "fps": 6
+      },
+      "wrecked": {
+        "frames": [
+          3
+        ],
+        "fps": 6
+      }
+    }
+  },
+  "tiles": {
+    "file": "tiles.png",
+    "w": 16,
+    "h": 16,
+    "frames": 15,
+    "anims": {
+      "grass_a": {
+        "frames": [
+          0
+        ],
+        "fps": 6
+      },
+      "grass_b": {
+        "frames": [
+          1
+        ],
+        "fps": 6
+      },
+      "path": {
+        "frames": [
+          2
+        ],
+        "fps": 6
+      },
+      "bush_a": {
+        "frames": [
+          3
+        ],
+        "fps": 6
+      },
+      "bush_b": {
+        "frames": [
+          4
+        ],
+        "fps": 6
+      },
+      "bush_c": {
+        "frames": [
+          5
+        ],
+        "fps": 6
+      },
+      "stone": {
+        "frames": [
+          6
+        ],
+        "fps": 6
+      },
+      "granite": {
+        "frames": [
+          7
+        ],
+        "fps": 6
+      },
+      "granite_window": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "brick": {
+        "frames": [
+          9
+        ],
+        "fps": 6
+      },
+      "brick_window": {
+        "frames": [
+          10
+        ],
+        "fps": 6
+      },
+      "foot": {
+        "frames": [
+          11
+        ],
+        "fps": 6
+      },
+      "gate": {
+        "frames": [
+          12
+        ],
+        "fps": 6
+      },
+      "exit": {
+        "frames": [
+          13
+        ],
+        "fps": 6
+      },
+      "guide": {
+        "frames": [
+          14
+        ],
+        "fps": 6
       }
     }
   },

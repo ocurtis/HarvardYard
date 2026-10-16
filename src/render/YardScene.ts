@@ -67,6 +67,9 @@ export class YardScene extends Phaser.Scene {
   private popupViews = new Map<number, Phaser.GameObjects.Text>();
   private boneViews = new Map<number, Phaser.GameObjects.Rectangle>();
   private rings!: Phaser.GameObjects.Graphics;
+  private statueSprite: Phaser.GameObjects.Sprite | null = null;
+  private towerSprites = new Map<number, { sprite: Phaser.GameObjects.Sprite; anim: string; cooldown: number }>();
+  private boneSprites = new Map<number, Phaser.GameObjects.Sprite>();
   private cursor!: Phaser.GameObjects.Graphics;
 
   constructor(private readonly loop: GameLoop) {
@@ -151,6 +154,11 @@ export class YardScene extends Phaser.Scene {
     this.drawFx(s.bros, s.players);
     // Draw order: whoever's feet are lower on screen draws in front. Tiles and fx stay at the back.
     this.world.sort('depth');
+
+    if (this.statueSprite) {
+      const frac = s.statueHp / STATUE.hp;
+      this.statueSprite.setFrame(frac > 0.75 ? 0 : frac > 0.4 ? 1 : frac > 0.1 ? 2 : 3);
+    }
 
     // HUD.
     this.hpFill.width = Math.max(0, (HUD_W - 4) * (s.statueHp / STATUE.hp));
@@ -382,22 +390,63 @@ export class YardScene extends Phaser.Scene {
   private syncTowers(): void {
     const s = this.loop.state;
     const seen = new Set<number>();
+    const hasArt = !!this.atlas['dig'] && !!this.atlas['sprinkler'];
     for (const t of s.towers) {
       seen.add(t.id);
-      let r = this.towerViews.get(t.id);
-      if (!r) {
-        r = this.add.rectangle(0, 0, TILE - 2, TILE - 2, t.kind === 'dig' ? PALETTE.dig : PALETTE.sprinkler).setOrigin(0.5, 1);
-        this.world.add(r);
-        this.towerViews.set(t.id, r);
-      }
       const c = { x: t.tile.x * TILE + TILE / 2, y: t.tile.y * TILE + TILE };
-      r.setPosition(c.x, c.y).setDepth(c.y);
-      r.setStrokeStyle(t.level > 0 ? 1 : 0, 0xffffff);
+      if (hasArt) {
+        let v = this.towerSprites.get(t.id);
+        if (!v) {
+          const sprite = this.add.sprite(c.x, c.y, t.kind, 0).setOrigin(0.5, 1);
+          this.world.add(sprite);
+          v = { sprite, anim: '', cooldown: t.cooldown };
+          this.towerSprites.set(t.id, v);
+        }
+        v.sprite.setPosition(c.x, c.y).setDepth(c.y);
+        let anim: string;
+        if (t.kind === 'dig') {
+          // A bone just left when the cooldown jumps up; play the fire frames once, then idle.
+          const fired = t.cooldown > v.cooldown;
+          v.cooldown = t.cooldown;
+          const level = t.level > 0 ? '2' : '';
+          if (fired) {
+            v.anim = `fire${level}`;
+            v.sprite.play(`dig:fire${level}`, true);
+            v.sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+              v!.anim = '';
+            });
+            v.sprite.anims.currentAnim!.repeat = 0;
+            continue;
+          }
+          anim = v.anim.startsWith('fire') ? v.anim : `idle${level}`;
+        } else {
+          anim = t.level > 0 ? 'spin2' : 'spin';
+        }
+        if (anim !== v.anim) {
+          v.anim = anim;
+          v.sprite.play(`${t.kind}:${anim}`, true);
+        }
+      } else {
+        let r = this.towerViews.get(t.id);
+        if (!r) {
+          r = this.add.rectangle(0, 0, TILE - 2, TILE - 2, t.kind === 'dig' ? PALETTE.dig : PALETTE.sprinkler).setOrigin(0.5, 1);
+          this.world.add(r);
+          this.towerViews.set(t.id, r);
+        }
+        r.setPosition(c.x, c.y).setDepth(c.y);
+        r.setStrokeStyle(t.level > 0 ? 1 : 0, 0xffffff);
+      }
     }
     for (const [id, r] of this.towerViews) {
       if (!seen.has(id)) {
         r.destroy();
         this.towerViews.delete(id);
+      }
+    }
+    for (const [id, v] of this.towerSprites) {
+      if (!seen.has(id)) {
+        v.sprite.destroy();
+        this.towerSprites.delete(id);
       }
     }
     // Range rings, always visible: this is the placement tax made legible.
@@ -408,20 +457,38 @@ export class YardScene extends Phaser.Scene {
     }
     // Bones.
     const seenB = new Set<number>();
+    const boneArt = !!this.atlas['bone'];
     for (const b of s.bones) {
       seenB.add(b.id);
-      let r = this.boneViews.get(b.id);
-      if (!r) {
-        r = this.add.rectangle(0, 0, 3, 3, PALETTE.bone).setOrigin(0.5);
-        this.world.add(r);
-        this.boneViews.set(b.id, r);
+      if (boneArt) {
+        let sp = this.boneSprites.get(b.id);
+        if (!sp) {
+          sp = this.add.sprite(0, 0, 'bone', 0).setOrigin(0.5);
+          sp.play('bone:spin');
+          this.world.add(sp);
+          this.boneSprites.set(b.id, sp);
+        }
+        sp.setPosition(Math.round(b.pos.x), Math.round(b.pos.y) - 6).setDepth(b.pos.y + 100);
+      } else {
+        let r = this.boneViews.get(b.id);
+        if (!r) {
+          r = this.add.rectangle(0, 0, 3, 3, PALETTE.bone).setOrigin(0.5);
+          this.world.add(r);
+          this.boneViews.set(b.id, r);
+        }
+        r.setPosition(Math.round(b.pos.x), Math.round(b.pos.y)).setDepth(b.pos.y + 100);
       }
-      r.setPosition(Math.round(b.pos.x), Math.round(b.pos.y)).setDepth(b.pos.y + 100);
     }
     for (const [id, r] of this.boneViews) {
       if (!seenB.has(id)) {
         r.destroy();
         this.boneViews.delete(id);
+      }
+    }
+    for (const [id, sp] of this.boneSprites) {
+      if (!seenB.has(id)) {
+        sp.destroy();
+        this.boneSprites.delete(id);
       }
     }
     // Build cursor: the tile under the player, green if buildable, red if not.
@@ -476,30 +543,44 @@ export class YardScene extends Phaser.Scene {
   }
 
   private drawMap(map: MapData): void {
+    const tiles = this.atlas['tiles'];
     const g = this.add.graphics().setDepth(-2);
     this.world.add(g);
     for (let y = 0; y < GRID_H; y++) {
       for (let x = 0; x < GRID_W; x++) {
         const kind = map.tiles[y * GRID_W + x]!;
-        let color = TILE_COLOR[kind];
-        if (kind === 'grass' && (x + y) % 2 === 0) color = PALETTE.grassAlt;
-        g.fillStyle(color, 1);
-        g.fillRect(x * TILE, y * TILE, TILE, TILE);
+        const frame = tiles ? tileFrame(tiles.anims, kind, x, y, map) : null;
+        if (frame !== null) {
+          const img = this.add.image(x * TILE, y * TILE, 'tiles', frame).setOrigin(0).setDepth(-2);
+          this.world.add(img);
+        } else {
+          let color = TILE_COLOR[kind];
+          if (kind === 'grass' && (x + y) % 2 === 0) color = PALETTE.grassAlt;
+          g.fillStyle(color, 1);
+          g.fillRect(x * TILE, y * TILE, TILE, TILE);
+        }
       }
     }
-    // Statue outline so the 2x2 reads as one object.
-    g.lineStyle(1, 0x000000, 1);
-    g.strokeRect(map.statue.x * TILE + 0.5, map.statue.y * TILE + 0.5, TILE * 2 - 1, TILE * 2 - 1);
+    // The statue: a 32x32 sprite whose frame follows statue HP; rectangles otherwise.
+    if (this.atlas['statue']) {
+      this.statueSprite = this.add.sprite(map.statue.x * TILE, map.statue.y * TILE, 'statue', 0).setOrigin(0);
+      this.statueSprite.setDepth((map.statue.y + 2) * TILE); // its feet are the plinth's bottom edge
+      this.world.add(this.statueSprite);
+    } else {
+      g.lineStyle(1, 0x000000, 1);
+      g.strokeRect(map.statue.x * TILE + 0.5, map.statue.y * TILE + 0.5, TILE * 2 - 1, TILE * 2 - 1);
+    }
     // Nameplates: every building says what it is, like a campus map.
     for (const b of map.buildings) {
       const cx = ((b.box.x0 + b.box.x1 + 1) / 2) * TILE;
       const cy = ((b.box.y0 + b.box.y1 + 1) / 2) * TILE;
       const tall = b.box.y1 - b.box.y0 > b.box.x1 - b.box.x0;
       const label = this.add
-        .text(cx, cy, tall ? b.short.split('').join('\n') : b.name.toUpperCase(), {
+        .text(cx, cy, tall ? b.short.split('').join('\n') : ` ${b.name.toUpperCase()} `, {
           fontFamily: 'monospace',
           fontSize: '7px',
-          color: '#202040',
+          color: '#ffffff',
+          backgroundColor: '#202040',
           align: 'center',
           lineSpacing: -2,
         })
@@ -528,5 +609,37 @@ function broAnim(b: BroState): string {
       return 'stagger';
     case 'leaving':
       return 'sober';
+  }
+}
+
+// Which tile frame draws a map cell. Buildings get walls with windows on
+// alternate rows; University Hall (the bottom wall) is granite, the dorms brick.
+function tileFrame(anims: Record<string, { frames: number[] }>, kind: TileKind, x: number, y: number, map: MapData): number | null {
+  const f = (name: string) => anims[name]?.frames[0] ?? null;
+  switch (kind) {
+    case 'grass':
+      return f((x * 7 + y * 13) % 5 === 0 ? 'grass_b' : 'grass_a');
+    case 'path':
+      return f('path');
+    case 'tree':
+      return f(['bush_a', 'bush_b', 'bush_c'][(x * 3 + y * 5) % 3]!);
+    case 'stone':
+      return f('stone');
+    case 'building': {
+      const b = map.buildings.find((bb) => x >= bb.box.x0 && x <= bb.box.x1 && y >= bb.box.y0 && y <= bb.box.y1);
+      const granite = b ? b.name.toLowerCase().includes('university') : y >= map.h - 2;
+      const window = (x + (b ? b.box.x0 : 0)) % 3 === 1 && (y - (b ? b.box.y0 : 0)) % 2 === 0;
+      return f(granite ? (window ? 'granite_window' : 'granite') : window ? 'brick_window' : 'brick');
+    }
+    case 'statue':
+      return f('grass_a'); // the statue sprite draws over it
+    case 'foot':
+      return f('foot');
+    case 'gate':
+      return f('gate');
+    case 'exit':
+      return f('exit');
+    case 'guide':
+      return f('guide');
   }
 }
