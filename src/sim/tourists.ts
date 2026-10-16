@@ -45,6 +45,7 @@ function makeTourist(state: GameState, group: number, gate: Vec, guide: boolean,
     facing: { x: 0, y: 1 },
     variant: nextInt(state, TOURIST.heads) * TOURIST.colors + color,
     photo: 0,
+    wet: 0,
   };
 }
 

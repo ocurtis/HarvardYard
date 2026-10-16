@@ -44,10 +44,13 @@ A bro's health bar is his drunkenness. Everything that "hurts" him sobers him up
 - Look (approved 2026-10-16): short and loaded against the bros' tall and slim. Crimson hats and a crimson flag on every group (Harvard tour groups); shirts in orange, yellow or purple per group (cyan, magenta and green were cut for colliding with the bro's shirts and the grass). Followers snap photos with a flash while the group is stopped. Rule: bros tall, tourists short.
 
 ## Towers (v1: two, one in-place upgrade each)
-- Archaeology Dig. A student in a pit lobbing bones. Single target, nearest-first, medium range. Hits tourists too. Range ring always visible. (The Harvard Yard archaeology dig is real; also the Rock On! bone nod.)
-- Sprinkler. Area slow plus small sobering. Scatters tourists. Cheap.
-- Placement: walk to the spot, press build. On grass only, not on paths. No selling, no moving. Towers have no HP.
-- Adjacency: a tower next to the Tour Guide tile (fixed map feature) gets a buff. Tests the idea without a third tower.
+- Archaeology Dig ($30). A student in a pit lobbing bones. Single target, nearest-first within 3 tiles, a bone every 0.75s sobering 18. Hits tourists too: a bone-struck tourist is hauled off; if it was the guide, the group has nobody to follow and walks out unpaid. Upgrade ($40): longer range, faster, harder.
+- Sprinkler ($20). Area, 1.6 tiles. Bros inside slow and sober slowly (8/s). Tourists inside get wet; after 1.5s of soaking a member gives up and leaves the group. Upgrade ($25): wider, wetter.
+- Range rings are always visible, and the tile under the player shows a build cursor with the Dig's range previewed.
+- Placement: walk to a grass tile, press 1 (Dig) or 2 (Sprinkler). U upgrades the tower you're standing on. Anytime, mid-wave included. No selling, no moving. Towers have no HP and don't block the player.
+- Self-upgrades, same money: 3 shout strength, 4 shout range, 5 move speed; three levels each at $25/$40/$60.
+- Adjacency: a tower next to the Tour Guide tile (fixed map feature) gets a buff. (Not yet implemented; the tile exists.)
+- Pamphleted tourists routing around rings: not yet implemented; they take the shortest path.
 
 ## Map
 One map, 24x18, Owen's draft of 2026-10-16: the statue at the bottom in front of University Hall, three spawn gates (top, left, right) that bros and tourists share, two bottom exits where only tourists leave. A one-tile-wide network: the top gate's route snakes down through the right-hand inner loop (46 tiles) because the row-3 path has gaps; the side gates reach the statue in ~22 tiles via the outer columns. The left-hand loop is currently bypassed by the left column and sees no traffic. The final approach runs over the foot; alleys either side of the statue let bros flank it. Whole map fits on one screen; no camera. Map lives in `src/config/maps/yard.ts` as a 24x18 text block; draw it in `public/mapeditor.html`. Routes should wind: Rock On!'s long routes are 40-60 tiles; under 25 is a straight shot.
@@ -87,7 +90,7 @@ TypeScript, Vite, Phaser 3, Vitest (sim tests). GitHub repo, Cloudflare Pages de
 2. Bros. Spawn at gates, path to the statue (flow field), wind-up, stream, statue HP, loss screen. Done: lose a game.
 3. Shout. Cone, sobering, stagger, interrupt. Done: clear a wave with the shout alone.
 4. Tourists and pamphlets. Wander/leave, touch to pamphlet, self-path with ring avoidance, payout at the foot. Done: earn money.
-5. Towers. Walk-to-place, Dig and Sprinkler firing nearest-first, friendly fire, in-place upgrades, a build/upgrade menu usable anytime including self-upgrades, a "next wave" button. Done: survive 5 waves.
+5. Towers. DONE 2026-10-16: walk-to-place, Dig and Sprinkler firing nearest-first, friendly fire, in-place upgrades, self-upgrades, shop in the HUD usable anytime. Owen verifies: survive 5 waves.
 6. Waves and sim. Wave config, headless runner, win screen. Done: beat the level; sim reports win rate.
 
 ## v2 list (not before M3)
@@ -116,6 +119,8 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16: The shout is hold-to-use with no cooldown or resource. Reason: Rock On! throws bones on a cooldown; a sustained cone instead keeps the player standing in the lane, which is where towers can't be. Revisit if it makes the player a turret.
 - 2026-10-16: Art is produced by a panel: parallel artist agents with distinct briefs, an art-director agent's critique, Owen's pick. Sprites are text grids compiled by art/build.py; characters are 16x24 with a parts system for variants. Reason: the panel's first run (the bro) beat a single draft; parts solve crowd sameness in the pipeline instead of by hand.
 - 2026-10-16: Tourists walk in a few tiles and stop confused on a timer; a touch hands them the brochure. Reason: Owen's call; makes each tourist a race the player can see, instead of herding. Replaces the earlier wander-and-leave idea.
+- 2026-10-16: Sprinkler 'scatter' is implemented as soaking: 1.5s in range and a tourist leaves the group. Reason: tourists are on rails, so pushing them is meaningless; a timer is readable and tunable.
+- 2026-10-16: Towers don't block the player and the shop is key-driven (1/2/U/3/4/5), no menu. Reason: Rock On! pacing; a menu would stop the action.
 - 2026-10-16: Tourists travel in groups of 3-5 behind a guide; the timer and the brochure belong to the guide. Reason: a clump vs a lone figure is the strongest possible read against bros, and one hand-off per group keeps it from being five chores.
 - 2026-10-16: Tour-group identity (caps, flag, loud colors), not nationality, is the tourist variety axis. Reason: avoids a parade of stereotypes; reads just as well at 1x.
 - 2026-10-16: The shout slows walking bros (40%) rather than stopping them; drunkenness cut from 100 to 60 to match. Reason: a stop made the shout a wall; a slow keeps the lane moving and towers relevant.

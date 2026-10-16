@@ -7,6 +7,10 @@ import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
 import type { BroState, MapData, PlayerState, TileKind, TouristState } from '../sim/types';
 import { canStartWave } from '../sim/waves';
+import { SELF_UPGRADE, TOWERS } from '../config/towers';
+import { canBuild, playerTile, towerAt, towerRange } from '../sim/towers';
+import { isBuildable, tileAt } from '../sim/map';
+import { shoutRange } from '../sim/shout';
 import { variantKey, type Atlas } from './assets';
 
 const TILE_COLOR: Record<TileKind, number> = {
@@ -57,6 +61,10 @@ export class YardScene extends Phaser.Scene {
   private broViews = new Map<number, BroView>();
   private atlas: Atlas = {};
   private touristViews = new Map<number, TouristView>();
+  private towerViews = new Map<number, Phaser.GameObjects.Rectangle>();
+  private boneViews = new Map<number, Phaser.GameObjects.Rectangle>();
+  private rings!: Phaser.GameObjects.Graphics;
+  private cursor!: Phaser.GameObjects.Graphics;
 
   constructor(private readonly loop: GameLoop) {
     super('yard');
@@ -71,6 +79,10 @@ export class YardScene extends Phaser.Scene {
     this.drawMap(this.loop.state.map);
 
     // Dynamic per-frame drawing (shout cone, piss streams) goes here, above tiles, below sprites.
+    this.rings = this.add.graphics().setDepth(-1.5);
+    this.world.add(this.rings);
+    this.cursor = this.add.graphics().setDepth(-1.2);
+    this.world.add(this.cursor);
     this.fx = this.add.graphics().setDepth(-1);
     this.world.add(this.fx);
 
@@ -91,7 +103,7 @@ export class YardScene extends Phaser.Scene {
     this.add.rectangle(2, 2, HUD_W - 4, 6, 0x333333).setOrigin(0);
     this.hpFill = this.add.rectangle(2, 2, HUD_W - 4, 6, PALETTE.playerFacing).setOrigin(0);
     this.hudText = this.add
-      .text(1, 10, '', { fontFamily: 'monospace', fontSize: '7px', color: '#ffffff', wordWrap: { width: HUD_W - 2 } })
+      .text(1, 10, '', { fontFamily: 'monospace', fontSize: '7px', color: '#ffffff', lineSpacing: -1 })
       .setOrigin(0)
       .setResolution(1);
 
@@ -124,6 +136,7 @@ export class YardScene extends Phaser.Scene {
 
     this.syncBros(s.bros);
     this.syncTourists(s.tourists);
+    this.syncTowers();
     this.drawFx(s.bros, s.players);
     // Draw order: whoever's feet are lower on screen draws in front. Tiles and fx stay at the back.
     this.world.sort('depth');
@@ -134,9 +147,18 @@ export class YardScene extends Phaser.Scene {
     if (this.fpsSamples.length > 30) this.fpsSamples.shift();
     const avg = this.fpsSamples.reduce((a, b) => a + b, 0) / this.fpsSamples.length;
     const waveLabel = s.wave.index < 0 ? '-' : `${s.wave.index + 1}/${WAVES.length}`;
-    const prompt = canStartWave(s) ? '\nSPACE\nnext\nwave' : '\nJ/X\nshout';
+    const prompt = canStartWave(s) ? 'SPACE\nnext\nwave\n' : '';
+    const p0 = s.players[0]!;
+    const here = towerAt(s, playerTile(p0));
+    const up = here ? TOWERS[here.kind].levels[here.level]!.upgradeCost : null;
+    const u = p0.upgrades;
+    const selfCost = (lvl: number) => (SELF_UPGRADE.costs[lvl] !== undefined ? `$${SELF_UPGRADE.costs[lvl]}` : 'max');
+    const shop =
+      `1 Dig\n $${TOWERS.dig.cost}\n2 Sprnk\n $${TOWERS.sprinkler.cost}\n` +
+      (here ? `U upgr\n ${up === null ? 'max' : '$' + up}\n` : '') +
+      `3 shout\n ${selfCost(u.shout)}\n4 range\n ${selfCost(u.range)}\n5 speed\n ${selfCost(u.speed)}`;
     this.hudText.setText(
-      `HP\n${Math.ceil(s.statueHp)}\n\n$${s.money}\n\nWAVE\n${waveLabel}\n\nbros\n${s.bros.length}${prompt}\n\n${(1000 / avg).toFixed(0)}fps`,
+      `HP ${Math.ceil(s.statueHp)}\n$${s.money}\nWAVE ${waveLabel}\n${prompt}\n${shop}\n\n${(1000 / avg).toFixed(0)}fps`,
     );
 
     if (s.phase !== 'playing') {
@@ -300,6 +322,67 @@ export class YardScene extends Phaser.Scene {
     }
   }
 
+  private syncTowers(): void {
+    const s = this.loop.state;
+    const seen = new Set<number>();
+    for (const t of s.towers) {
+      seen.add(t.id);
+      let r = this.towerViews.get(t.id);
+      if (!r) {
+        r = this.add.rectangle(0, 0, TILE - 2, TILE - 2, t.kind === 'dig' ? PALETTE.dig : PALETTE.sprinkler).setOrigin(0.5, 1);
+        this.world.add(r);
+        this.towerViews.set(t.id, r);
+      }
+      const c = { x: t.tile.x * TILE + TILE / 2, y: t.tile.y * TILE + TILE };
+      r.setPosition(c.x, c.y).setDepth(c.y);
+      r.setStrokeStyle(t.level > 0 ? 1 : 0, 0xffffff);
+    }
+    for (const [id, r] of this.towerViews) {
+      if (!seen.has(id)) {
+        r.destroy();
+        this.towerViews.delete(id);
+      }
+    }
+    // Range rings, always visible: this is the placement tax made legible.
+    this.rings.clear();
+    for (const t of s.towers) {
+      this.rings.lineStyle(1, t.kind === 'dig' ? PALETTE.dig : PALETTE.sprinkler, 0.5);
+      this.rings.strokeCircle(t.tile.x * TILE + TILE / 2, t.tile.y * TILE + TILE / 2, towerRange(t));
+    }
+    // Bones.
+    const seenB = new Set<number>();
+    for (const b of s.bones) {
+      seenB.add(b.id);
+      let r = this.boneViews.get(b.id);
+      if (!r) {
+        r = this.add.rectangle(0, 0, 3, 3, PALETTE.bone).setOrigin(0.5);
+        this.world.add(r);
+        this.boneViews.set(b.id, r);
+      }
+      r.setPosition(Math.round(b.pos.x), Math.round(b.pos.y)).setDepth(b.pos.y + 100);
+    }
+    for (const [id, r] of this.boneViews) {
+      if (!seenB.has(id)) {
+        r.destroy();
+        this.boneViews.delete(id);
+      }
+    }
+    // Build cursor: the tile under the player, green if buildable, red if not.
+    this.cursor.clear();
+    const p0 = s.players[0];
+    if (p0) {
+      const tile = playerTile(p0);
+      const ok = isBuildable(tileAt(s.map, tile.x, tile.y)) && !towerAt(s, tile);
+      this.cursor.lineStyle(1, ok ? PALETTE.cursorOk : PALETTE.cursorBad, 0.9);
+      this.cursor.strokeRect(tile.x * TILE + 0.5, tile.y * TILE + 0.5, TILE - 1, TILE - 1);
+      if (ok && canBuild(s, p0, 'sprinkler').ok) {
+        // Preview the cheaper tower's range so placement is a decision, not a guess.
+        this.cursor.lineStyle(1, PALETTE.cursorOk, 0.25);
+        this.cursor.strokeCircle(tile.x * TILE + TILE / 2, tile.y * TILE + TILE / 2, TOWERS.dig.levels[0]!.rangePx);
+      }
+    }
+  }
+
   private drawFx(bros: BroState[], players: PlayerState[]): void {
     const g = this.fx;
     g.clear();
@@ -310,7 +393,7 @@ export class YardScene extends Phaser.Scene {
       const a = Math.atan2(p.facing.y / fl, p.facing.x / fl);
       const half = (SHOUT.halfAngleDeg * Math.PI) / 180;
       g.fillStyle(PALETTE.shout, 0.35);
-      g.slice(Math.round(p.pos.x), Math.round(p.pos.y), SHOUT.rangePx, a - half, a + half, false);
+      g.slice(Math.round(p.pos.x), Math.round(p.pos.y), shoutRange(p), a - half, a + half, false);
       g.fillPath();
     }
     for (const t of this.loop.state.tourists) {

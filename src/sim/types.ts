@@ -24,6 +24,22 @@ export interface PlayerState {
   facing: Vec; // unit-ish direction, last non-zero move
   moving: boolean;
   shouting: boolean; // true on ticks a shout command was applied (for render)
+  upgrades: { shout: number; range: number; speed: number }; // levels 0-3
+}
+
+export interface TowerState {
+  id: number;
+  kind: 'dig' | 'sprinkler';
+  tile: Vec;
+  level: number; // index into TowerDef.levels
+  cooldown: number; // dig: ticks until next bone
+}
+
+export interface BoneState {
+  id: number;
+  pos: Vec;
+  target: { kind: 'bro' | 'tourist'; id: number };
+  sober: number;
 }
 
 export type BroPhase = 'walking' | 'windup' | 'pissing' | 'stagger' | 'leaving';
@@ -57,6 +73,7 @@ export interface TouristState {
   facing: Vec;
   variant: number; // head * colors + group color
   photo: number; // ticks left in the photo pose (followers)
+  wet: number; // ticks soaked by sprinklers; past a threshold the member gives up
 }
 
 export interface GroupState {
@@ -93,6 +110,8 @@ export interface GameState {
   bros: BroState[];
   tourists: TouristState[];
   groups: Record<number, GroupState>;
+  towers: TowerState[];
+  bones: BoneState[];
   nextGroupId: number;
   nextEntityId: number;
   statueHp: number;
@@ -105,7 +124,10 @@ export interface GameState {
 export type Command =
   | { playerId: number; tick: number; type: 'move'; dx: -1 | 0 | 1; dy: -1 | 0 | 1 }
   | { playerId: number; tick: number; type: 'startWave' }
-  | { playerId: number; tick: number; type: 'shout' };
+  | { playerId: number; tick: number; type: 'shout' }
+  | { playerId: number; tick: number; type: 'build'; kind: 'dig' | 'sprinkler' } // at the player's tile
+  | { playerId: number; tick: number; type: 'upgradeTower' } // the tower at the player's tile
+  | { playerId: number; tick: number; type: 'upgradeSelf'; stat: 'shout' | 'range' | 'speed' };
 
 export interface SimConfig {
   playerCount: number;

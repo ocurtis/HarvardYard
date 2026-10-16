@@ -10,6 +10,7 @@ import { blocksMovement, parseMap, tileAt } from './map';
 import { computeDistToExit, computeDistToFoot, computeDistToStatue } from './path';
 import { seedRng } from './rng';
 import type { Command, GameState, MapData, PlayerState, SimConfig, Vec } from './types';
+import { build, speedAdd, updateTowers, upgradeSelf, upgradeTower } from './towers';
 import { updateTourists } from './tourists';
 import { startWave, updateWave } from './waves';
 
@@ -24,6 +25,7 @@ export function createState(config: SimConfig): GameState {
       facing: { x: 0, y: 1 },
       moving: false,
       shouting: false,
+      upgrades: { shout: 0, range: 0, speed: 0 },
     });
   }
   return {
@@ -40,6 +42,8 @@ export function createState(config: SimConfig): GameState {
     bros: [],
     tourists: [],
     groups: {},
+    towers: [],
+    bones: [],
     nextGroupId: 1,
     nextEntityId: 1,
     statueHp: STATUE.hp,
@@ -70,12 +74,16 @@ export function step(state: GameState, commands: Command[]): void {
     if (cmd.type === 'move') applyMove(state.map, player, cmd.dx, cmd.dy);
     if (cmd.type === 'startWave') startWave(state);
     if (cmd.type === 'shout') applyShout(state, player);
+    if (cmd.type === 'build') build(state, player, cmd.kind);
+    if (cmd.type === 'upgradeTower') upgradeTower(state, player);
+    if (cmd.type === 'upgradeSelf') upgradeSelf(state, player, cmd.stat);
   }
 
   if (state.phase === 'playing') {
     updateWave(state);
     updateBros(state);
     updateTourists(state);
+    updateTowers(state);
   }
 
   state.tick++;
@@ -86,8 +94,9 @@ function applyMove(map: MapData, p: PlayerState, dx: number, dy: number): void {
 
   // Normalize diagonals so they aren't faster than cardinals.
   const len = Math.hypot(dx, dy);
-  const vx = (dx / len) * PLAYER.speedPxPerTick;
-  const vy = (dy / len) * PLAYER.speedPxPerTick;
+  const speed = PLAYER.speedPxPerTick + speedAdd(p);
+  const vx = (dx / len) * speed;
+  const vy = (dy / len) * speed;
 
   p.facing = { x: dx, y: dy };
   p.moving = true;
