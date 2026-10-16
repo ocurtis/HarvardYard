@@ -10,7 +10,7 @@ import { blocksMovement, parseMap, tileAt } from './map';
 import { computeDistToExit, computeDistToFoot, computeDistToStatue } from './path';
 import { seedRng } from './rng';
 import type { Command, GameState, MapData, PlayerState, SimConfig, Vec } from './types';
-import { build, speedAdd, updateTowers, upgradeSelf, upgradeTower } from './towers';
+import { build, canBuild, speedAdd, updateTowers, upgradeSelf, upgradeTower } from './towers';
 import { updateTourists } from './tourists';
 import { startWave, updateWave } from './waves';
 
@@ -48,6 +48,7 @@ export function createState(config: SimConfig): GameState {
     nextEntityId: 1,
     statueHp: STATUE.hp,
     money: 0,
+    notice: null,
     wave: { index: -1, toSpawn: 0, nextSpawnTick: 0, groupsToSpawn: 0, nextTouristTick: 0, active: false },
   };
 }
@@ -74,9 +75,19 @@ export function step(state: GameState, commands: Command[]): void {
     if (cmd.type === 'move') applyMove(state.map, player, cmd.dx, cmd.dy);
     if (cmd.type === 'startWave') startWave(state);
     if (cmd.type === 'shout') applyShout(state, player);
-    if (cmd.type === 'build') build(state, player, cmd.kind);
-    if (cmd.type === 'upgradeTower') upgradeTower(state, player);
-    if (cmd.type === 'upgradeSelf') upgradeSelf(state, player, cmd.stat);
+    if (cmd.type === 'build') {
+      const r = canBuild(state, player, cmd.kind);
+      state.notice = { text: r.ok ? `built ${cmd.kind}` : `no: ${r.why}`, tick: state.tick };
+      if (r.ok) build(state, player, cmd.kind);
+    }
+    if (cmd.type === 'upgradeTower') {
+      const ok = upgradeTower(state, player);
+      state.notice = { text: ok ? 'upgraded' : 'no: not on a tower, maxed, or too poor', tick: state.tick };
+    }
+    if (cmd.type === 'upgradeSelf') {
+      const ok = upgradeSelf(state, player, cmd.stat);
+      state.notice = { text: ok ? `${cmd.stat} up` : 'no: maxed or too poor', tick: state.tick };
+    }
   }
 
   if (state.phase === 'playing') {

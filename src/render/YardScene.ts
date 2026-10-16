@@ -56,6 +56,7 @@ export class YardScene extends Phaser.Scene {
   private fx!: Phaser.GameObjects.Graphics;
   private overlay!: Phaser.GameObjects.Container;
   private overlayText!: Phaser.GameObjects.Text;
+  private noticeText!: Phaser.GameObjects.Text;
   private fpsSamples: number[] = [];
   private world!: Phaser.GameObjects.Container;
   private broViews = new Map<number, BroView>();
@@ -106,6 +107,13 @@ export class YardScene extends Phaser.Scene {
       .text(1, 10, '', { fontFamily: 'monospace', fontSize: '7px', color: '#ffffff', lineSpacing: -1 })
       .setOrigin(0)
       .setResolution(1);
+
+    // Shop feedback, bottom of the map.
+    this.noticeText = this.add
+      .text(HUD_W + 2, LOGICAL_H - 9, '', { fontFamily: 'monospace', fontSize: '7px', color: '#e8ea4a', backgroundColor: '#000000' })
+      .setOrigin(0)
+      .setResolution(1)
+      .setDepth(1000);
 
     // Win/loss overlay.
     this.overlay = this.add.container(0, 0).setVisible(false);
@@ -160,6 +168,9 @@ export class YardScene extends Phaser.Scene {
     this.hudText.setText(
       `HP ${Math.ceil(s.statueHp)}\n$${s.money}\nWAVE ${waveLabel}\n${prompt}\n${shop}\n\n${(1000 / avg).toFixed(0)}fps`,
     );
+
+    const n = s.notice;
+    this.noticeText.setText(n && s.tick - n.tick < 120 ? ` ${n.text} ` : '');
 
     if (s.phase !== 'playing') {
       this.overlay.setVisible(true);

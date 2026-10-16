@@ -116,6 +116,7 @@ export interface GameState {
   nextEntityId: number;
   statueHp: number;
   money: number;
+  notice: { text: string; tick: number } | null; // last shop result, for the HUD
   wave: WaveState;
 }
 
