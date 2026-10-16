@@ -26,6 +26,9 @@ def parse(path):
     anims = {}
     frames = []
     cur = None
+    head_default = None
+    head_overrides = {}
+    expressions = None
     with open(path) as f:
         for raw in f:
             line = raw.rstrip("\n")
@@ -43,6 +46,14 @@ def parse(path):
                         "frames": [int(v) for v in m.group(2).split()],
                         "fps": int(m.group(3) or 6),
                     }
+                elif body.startswith("head:"):
+                    x, y = (int(v) for v in body[5:].strip().split(","))
+                    if cur is None and not frames:
+                        head_default = (x, y)
+                    else:
+                        head_overrides[len(frames) - 1] = (x, y)
+                elif body.startswith("expressions:"):
+                    expressions = body[len("expressions:"):].split()
                 elif body.startswith("frame"):
                     cur = []
                     frames.append(cur)
@@ -76,7 +87,10 @@ def parse(path):
                     raise ValueError(f"{path}: frame {i} uses undefined key {ch!r}")
     if not anims:
         anims["idle"] = {"frames": list(range(len(frames))), "fps": 6}
-    return {"name": name, "w": w, "h": h, "colors": colors, "anims": anims, "frames": frames}
+    return {
+        "name": name, "w": w, "h": h, "colors": colors, "anims": anims, "frames": frames,
+        "head": head_default, "head_overrides": head_overrides, "expressions": expressions,
+    }
 
 
 def render(sprite):
@@ -92,13 +106,87 @@ def render(sprite):
     return strip
 
 
+# Shirt swaps for part-built characters: (fill, shade) pairs replacing keys L and Q.
+SHIRTS = {
+    "bro": [("#27badb", "#006ab4"), ("#ffffff", "#c8c8c8"), ("#fe626e", "#d10f4c")],
+}
+
+
+def compose_variants(body, heads, shirts):
+    """Body + each head x each shirt -> list of (variant_name, sprite dict)."""
+    exprs = heads["expressions"] or ["neutral"]
+    n_expr = len(exprs)
+    n_heads = len(heads["frames"]) // n_expr
+    # Which expression each body frame wants: by anim membership.
+    def expr_for(frame_idx):
+        for an, d in body["anims"].items():
+            if frame_idx in d["frames"] and an in exprs:
+                return exprs.index(an)
+        return 0
+    out = []
+    for hi in range(n_heads):
+        for si, (fill, shade) in enumerate(shirts):
+            frames = []
+            for fi, fr in enumerate(body["frames"]):
+                grid = [list(row) for row in fr]
+                hx, hy = body["head_overrides"].get(fi, body["head"])
+                stamp = heads["frames"][hi * n_expr + expr_for(fi)]
+                for y, row in enumerate(stamp):
+                    for x, ch in enumerate(row):
+                        if ch == ".":
+                            continue
+                        gy, gx = hy + y, hx + x
+                        if 0 <= gy < body["h"] and 0 <= gx < body["w"]:
+                            grid[gy][gx] = "h" + ch  # namespace head keys
+                frames.append(grid)
+            colors = dict(body["colors"])
+            colors["L"], colors["Q"] = fill, shade
+            for k, v in heads["colors"].items():
+                colors["h" + k] = v
+            sp = {"name": f"{body['name'].removesuffix('_body')}_v{hi}{si}", "w": body["w"], "h": body["h"],
+                  "colors": colors, "anims": body["anims"], "frames": frames}
+            out.append(sp)
+    return out
+
+
+def render_grid(sprite):
+    # Like render() but frames are lists of lists and keys may be multi-char.
+    w, h, frames = sprite["w"], sprite["h"], sprite["frames"]
+    strip = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
+    px = strip.load()
+    for i, fr in enumerate(frames):
+        for y, row in enumerate(fr):
+            for x, ch in enumerate(row):
+                if ch == ".":
+                    continue
+                px[i * w + x, y] = hex_to_rgb(sprite["colors"][ch]) + (255,)
+    return strip
+
+
 def build(src_dir, out_dir):
     os.makedirs(out_dir, exist_ok=True)
     atlas = {}
+    parsed = {}
     for fn in sorted(os.listdir(src_dir)):
         if not fn.endswith(".txt"):
             continue
         sp = parse(os.path.join(src_dir, fn))
+        parsed[sp["name"]] = sp
+    for name, sp in parsed.items():
+        if name.endswith("_heads"):
+            continue  # only used through composition
+        if name.endswith("_body") and f"{name.removesuffix('_body')}_heads" in parsed:
+            base = name.removesuffix("_body")
+            heads = parsed[f"{base}_heads"]
+            variants = compose_variants(sp, heads, SHIRTS.get(base, [(sp["colors"]["L"], sp["colors"]["Q"])]))
+            names = []
+            for v in variants:
+                png = f"{v['name']}.png"
+                render_grid(v).save(os.path.join(out_dir, png))
+                atlas[v["name"]] = {"file": png, "w": v["w"], "h": v["h"], "frames": len(v["frames"]), "anims": v["anims"]}
+                names.append(v["name"])
+            atlas[base] = {"variants": names, "w": sp["w"], "h": sp["h"], "frames": len(sp["frames"]), "anims": sp["anims"]}
+            continue
         strip = render(sp)
         png = f"{sp['name']}.png"
         strip.save(os.path.join(out_dir, png))
@@ -114,5 +202,8 @@ if __name__ == "__main__":
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(root, "public", "sprites")
     atlas = build(src, out)
     for name, a in atlas.items():
-        print(f"{name}: {a['frames']} frames {a['w']}x{a['h']}  anims={list(a['anims'])}")
+        if "variants" in a:
+            print(f"{name}: {len(a['variants'])} variants of {a['frames']} frames {a['w']}x{a['h']}")
+        else:
+            print(f"{name}: {a['frames']} frames {a['w']}x{a['h']}  anims={list(a['anims'])}")
     print(f"-> {out}")

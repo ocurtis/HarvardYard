@@ -1,1 +1,452 @@
-{}
+{
+  "bro_v00": {
+    "file": "bro_v00.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro_v01": {
+    "file": "bro_v01.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro_v02": {
+    "file": "bro_v02.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro_v10": {
+    "file": "bro_v10.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro_v11": {
+    "file": "bro_v11.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro_v12": {
+    "file": "bro_v12.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro_v20": {
+    "file": "bro_v20.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro_v21": {
+    "file": "bro_v21.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro_v22": {
+    "file": "bro_v22.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "bro": {
+    "variants": [
+      "bro_v00",
+      "bro_v01",
+      "bro_v02",
+      "bro_v10",
+      "bro_v11",
+      "bro_v12",
+      "bro_v20",
+      "bro_v21",
+      "bro_v22"
+    ],
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  }
+}

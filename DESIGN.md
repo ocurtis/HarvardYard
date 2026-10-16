@@ -69,7 +69,7 @@ Statue HP 100, no regen. Loss on zero. Win on clearing the last wave. Score = st
 ## Art spec
 UFO 50 look: their shared 32-color palette (`art/palette.py`, `src/config/palette.ts`), 16px tiles, chunky shapes, selective dark outlines, no anti-aliasing. Logical resolution 416x288 (2-tile HUD column on the left + a 24x18 map), nearest-neighbor integer scaling (3x = 1248x864). This trades UFO 50's 16:9 for a 4:3 NES shape so the map can be tall enough for winding routes. Every sprite ships with anchor point and frame count. Placeholders are colored rectangles with final names and dimensions; finals swap one-to-one. `art/sprites.py` holds sprites as pixel grids; `public/mapeditor.html` is the map tool.
 
-Priority order for final art: statue, bro, player, tourist, dig, sprinkler, ground tiles, HUD.
+Characters are 16x24 (anchored bottom-center, overhanging the tile above); crowd characters are built from parts (one body, several heads, shirt swaps) so a crowd isn't clones. The bro is the golden sprite (approved 2026-10-16, art/bro_golden_sheet.png). Priority order for the rest: tourist, player, statue, dig, sprinkler, ground tiles, HUD.
 
 ## Stack
 TypeScript, Vite, Phaser 3, Vitest (sim tests). GitHub repo, Cloudflare Pages deploy from main. itch.io page at ship.
@@ -113,6 +113,7 @@ Longshot Bro (ranged pisser). Sorority wave (fast, erratic). Tour groups that cl
 - 2026-10-16: Bros and tourists walk lane tiles only (path, foot, gate, exit, guide), 4-connected, via a BFS flow field from statue-adjacent lane tiles. Reason: Rock On! enemies are on rails; it keeps placement readable and the sim cheap.
 - 2026-10-16: Gates spawn both bros and tourists; exit tiles are tourist-only. Reason: Owen's map has four bottom openings that read as ways out, not in.
 - 2026-10-16: The shout is hold-to-use with no cooldown or resource. Reason: Rock On! throws bones on a cooldown; a sustained cone instead keeps the player standing in the lane, which is where towers can't be. Revisit if it makes the player a turret.
+- 2026-10-16: Art is produced by a panel: parallel artist agents with distinct briefs, an art-director agent's critique, Owen's pick. Sprites are text grids compiled by art/build.py; characters are 16x24 with a parts system for variants. Reason: the panel's first run (the bro) beat a single draft; parts solve crowd sameness in the pipeline instead of by hand.
 - 2026-10-16: Tourists walk in a few tiles and stop confused on a timer; a touch hands them the brochure. Reason: Owen's call; makes each tourist a race the player can see, instead of herding. Replaces the earlier wander-and-leave idea.
 - 2026-10-16: The shout slows walking bros (40%) rather than stopping them; drunkenness cut from 100 to 60 to match. Reason: a stop made the shout a wall; a slow keeps the lane moving and towers relevant.
 - 2026-10-16: A bro adjacent to the statue from any side can piss; the two tiles above the foot and the two alleys are all valid. Reason: flanking is what makes the alleys matter.

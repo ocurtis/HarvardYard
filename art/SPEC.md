@@ -3,14 +3,23 @@
 Every pixel in the game follows this. Agents and humans alike.
 
 ## Format
-- Tiles are 16x16. Characters are 16x16 unless the spec says otherwise (the statue is 32x32).
+- Tiles are 16x16. Characters are 16 wide x 24 tall: the extra 8px overhang the tile above, anchored
+  bottom-center. The statue is 32x32.
 - Palette: the 32 UFO 50 colors in `palette.py`, nothing else. No alpha except fully transparent.
 - No anti-aliasing, no dithering except deliberate 2-color checker on large flat areas.
-- Anchor: bottom-center of the cell. Feet sit on the bottom row (row 15) or one above it.
+- Anchor: bottom-center of the cell. Feet sit on the bottom row (row 23) or one above it.
 - Characters never fill the full 16 width. 10-12 px wide at the shoulders leaves room for arm frames.
+- Props that define a character (the bro's cup, the tourist's brochure) are held OUT from the body so
+  they break the silhouette. The cup is a 4x5 red cup with a white rim, not a dot.
+
+## Parts and variants
+Characters that appear in numbers (bros, tourists) are built from parts so a crowd isn't clones:
+one body file plus a `heads` file with several head stamps, plus a list of shirt color swaps. The
+build composes every head x shirt combination into a variant strip; the game picks a variant at
+spawn with the seeded RNG. Draw one body well; variety is the pipeline's job.
 
 ## Style (the Rock On! Island contract)
-- Big heads: head is ~6-7 px tall of a 16 px character, with a 1-2 px neck or none.
+- Big heads: head is ~8 px tall of a 24 px character, with a 1 px neck or none. Body ~10 px, legs ~6.
 - Outlines: a dark outline (#202040 navy, or the fill's darkest shade) on the silhouette only.
   Interior edges get a shade change, not a line. Never a pure black ring around everything.
 - Shading: flat fill plus one shade step on the lower/left side. No gradients, no three-step ramps on
@@ -39,9 +48,9 @@ Every pixel in the game follows this. Agents and humans alike.
 ## Asset list, in build order
 | asset | size | animations | notes |
 |---|---|---|---|
-| bro | 16x16 | walk 4, windup 2, piss 2 (loop), stagger 1, sober 2 | the golden sprite; everything else matches him |
-| tourist | 16x16 | walk 4, confused 2, brochure-walk 4 | blazer, khakis, rep tie; brochure visible in hand |
-| player | 16x16 | walk 4, shout 2 | placeholder "student"; final character undecided |
+| bro | 16x24 | walk 4, windup 2, piss 2 (loop), stagger 1, sober 2 | the golden sprite; 3 heads x 3 shirts |
+| tourist | 16x24 | walk 4, confused 2, brochure-walk 4 | blazer, khakis, rep tie; brochure visible in hand |
+| player | 16x24 | walk 4, shout 2 | placeholder "student"; final character undecided |
 | statue | 32x32 | clean, wet-1, wet-2, wrecked | seated bronze on plinth, gold toe; foot tile is the front-left cell |
 | dig | 16x16 | idle 2, throw 2 | a pit with a student in it; bones fly from the throw frame |
 | sprinkler | 16x16 | spin 3 | |
