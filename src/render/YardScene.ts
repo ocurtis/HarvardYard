@@ -686,8 +686,12 @@ function tileFrame(anims: Record<string, { frames: number[] }>, kind: TileKind, 
   switch (kind) {
     case 'grass':
       return f(['grass_a', 'grass_a', 'grass_b', 'grass_c', 'grass_d'][tileHash(x, y) % 5]!);
-    case 'path':
+    case 'path': {
+      // Cobbles on the lane tile just inside a gate: the gate is a place, not a line.
+      const byGate = [[0, -1], [1, 0], [0, 1], [-1, 0]].some(([dx, dy]) => tileAt(map, x + dx!, y + dy!) === 'gate');
+      if (byGate) return f('cobble');
       return f(['path', 'path_b', 'path_c', 'path_d'][tileHash(x, y) % 4]!);
+    }
     case 'tree':
       return f(['bush_a', 'bush_b', 'bush_c'][(x * 3 + y * 5) % 3]!);
     case 'stone':
@@ -703,7 +707,7 @@ function tileFrame(anims: Record<string, { frames: number[] }>, kind: TileKind, 
     case 'foot':
       return f('foot');
     case 'gate':
-      return f('gate');
+      return f(y === 0 ? 'gate_n' : y === map.h - 1 ? 'gate_s' : x === 0 ? 'gate_w' : 'gate_e');
     case 'exit':
       return f('exit');
     case 'guide':

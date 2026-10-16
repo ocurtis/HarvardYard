@@ -22,9 +22,13 @@
 # anim brick: 18
 # anim brick_window: 19
 # anim foot: 20
-# anim gate: 21
-# anim exit: 22
-# anim guide: 23
+# anim cobble: 21
+# anim gate_n: 22
+# anim gate_e: 23
+# anim gate_s: 24
+# anim gate_w: 25
+# anim exit: 26
+# anim guide: 27
 # frame (grass_a)
 gggggggggggggggg
 gggggggggggggggg
@@ -382,23 +386,91 @@ yyyyyyyyqyyyyyyy
 yyyyyyyyyyyyyyyy
 yyyyyyyyyyyyyyyy
 yyyyyyyyyyyyyyyy
-# frame (gate)
-eeeeeeeeeeeeeeee
-yyyyyyyyyyeyyyyy
-yyyyyyyyyyoyyyyy
-yyyyyyyyyoyyyyyy
-yyyyyyyyyyyyyyyy
-yyyyyyyyyyyyyyyy
-yyyyyyyyyyyyyyyy
-yyyyyyyyyyyyyyyy
-yyyyyyyyyyyyyyey
-yyyyyeyyyyyyyyyy
-yyyyoyoyyyyyyyyy
-yyyyyyyyoyyyyyyy
-yyyyyyyyyyyyyyyy
-yyyyyyyyyyyyyyyy
-yyyyyyyyyyyyyyyy
-eeeeeeeeeeeeeeee
+# frame (cobble)
+yoyyyoyyyoeyyoey
+yoyyyoyyyoyyyoyy
+yoyyyoyyyoyyyoyy
+oooooooooooooooo
+eyyoyyyoyyyoeyyo
+yyyoyyyoyyyoyyyo
+yyyoyyyoyyyoyyyo
+oooooooooooooooo
+yoeyyoyyyoeyyoey
+yoyyyoyyyoyyyoyy
+yoyyyoyyyoyyyoyy
+oooooooooooooooo
+yyyoeyyoyyyoyyyo
+yyyoyyyoyyyoyyyo
+yyyoyyyoyyyoyyyo
+oooooooooooooooo
+# frame (gate_n)
+cccpypepypypyccc
+rbbnnnnnnnnnnrbb
+rbbnynynynynyrbb
+mmmnononononommm
+rbbnenynynynerbb
+rbbnnnnnnnnnnrbb
+rbboyyyoyyyoyrbb
+mmmoooooooooommm
+rbbyyoyyyoeyyrbb
+rbbyyoyyyoyyyrbb
+rbbyyoyyyoyyyrbb
+mmmoooooooooommm
+rbboyyyoyyyoerbb
+rbboyyyoyyyoyrbb
+rbboyyyoyyyoyrbb
+mmmoooooooooommm
+# frame (gate_e)
+mrrrmrrrmrrrmrrc
+mbbbmbbbmbbbmbbc
+mbbbmbbbmbbbmbbc
+oooooooooonnnnnp
+eyyoeyyoyynoeyno
+yyyoyyyoyynnnnnp
+yyyoyyyoyynoyyno
+oooooooooonnnnnp
+yoeyyoyyyonyyony
+yoyyyoyyyonnnnnp
+yoyyyoyyyonyyony
+oooooooooonnnnnp
+eyyoyyyoyynoeyno
+mrrrmrrrmrrrmrrc
+mbbbmbbbmbbbmbbc
+mbbbmbbbmbbbmbbc
+# frame (gate_s)
+mmmyyoeyyoyyymmm
+bbryyoyyyoyyybbr
+bbryyoyyyoyyybbr
+bbroooooooooobbr
+mmmoeyyoyyyoemmm
+bbroyyyoyyyoybbr
+bbroyyyoyyyoybbr
+bbroooooooooobbr
+mmmyyoyyyoeyymmm
+bbryyoyyyoyyybbr
+bbrnnnnnnnnnnbbr
+bbronononononbbr
+mmmonynonynonmmm
+bbronynonynonbbr
+bbrnnnnnnnnnnbbr
+cccopopopopopccc
+# frame (gate_w)
+crrmrrrmrrrmrrrm
+cbbmbbbmbbbmbbbm
+cbbmbbbmbbbmbbbm
+pnnnnnoooooooooo
+enyoenyoyyyoeyyo
+pnnnnnyoyyyoyyyo
+ynyoynyoyyyoyyyo
+pnnnnnoooooooooo
+yneyynyyyoeyyoyy
+pnnnnnyyyoyyyoyy
+ynyyynyyyoyyyoyy
+pnnnnnoooooooooo
+enyoynyoyyyoeyyo
+crrmrrrmrrrmrrrm
+cbbmbbbmbbbmbbbm
+cbbmbbbmbbbmbbbm
 # frame (exit)
 yyyyyyyyyyyyyyyy
 yyyyyyyyyyyyyyyy

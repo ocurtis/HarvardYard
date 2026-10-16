@@ -144,3 +144,6 @@ Sorority wave (fast, erratic). Tour groups that clog lanes. Tour Guide as a plac
 - 2026-10-16: Walk "sway" frames no longer shear the torso 1px off the legs; the bob stays. Reason: at 1x it read as a broken waist.
 - 2026-10-16 (evening): Cup Chucker added as the third enemy (Owen's call: super long range, slow-motion solo cup the player can chase down; huge damage if it lands). Reason: a threat the player must leave the statue for, and a cup to run under is a chase the towers can't do for you.
 - 2026-10-16 (evening): Kill bounties ($2/$3/$4 by kind). Owen wanted each takeout to net a small amount. Kept well under a group's value so the choose-the-guide tension survives; the balance sim will say if it doesn't.
+- 2026-10-16 (evening): Gates are brick posts, iron bars and cobbles (oriented per map edge), cobbles on the first lane tile in. Owen loathed the two-line gate. Reason: a gate is a place you watch; it needs to look like one.
+- 2026-10-16 (evening): Enemy silhouettes must differ, not just colors. Longshot holds a beer funnel up at head height; Chucker is a fat waddler (speed 0.4) cradling a big cup. Reason: Owen must anticipate a kind from across the map.
+- 2026-10-16 (evening): art/build.py refuses a 16x24 body whose walk frames shift the legs off the torso. Reason: the 1px sway shear shipped twice.

@@ -163,11 +163,52 @@ def foot():
     return g
 
 
-def gate():
-    g = path(3)
-    for x in range(16):
-        put(g, x, 0, "e")
-        put(g, x, 15, "e")
+def cobble(seed):
+    """Cobblestones: rounded 4x4 setts in offset courses, dark joints."""
+    rng = random.Random(seed)
+    g = grid("o")
+    for cy in range(0, 16, 4):
+        off = 2 if (cy // 4) % 2 else 0
+        for cx in range(-2, 16, 4):
+            x0 = cx + off
+            for y in range(cy, cy + 3):
+                for x in range(x0, x0 + 3):
+                    put(g, x, y, "y")
+            put(g, x0, cy, "e" if rng.random() < 0.6 else "y")
+    return g
+
+
+def gate(side):
+    """A real gate: cobbles underfoot, brick posts on both flanks, iron bars across
+    the outer edge. `side` is the map edge the gate sits on."""
+    g = cobble(3)
+
+    def rot(x, y):
+        # Draw in 'north' orientation, then rotate into place.
+        if side == "n":
+            return x, y
+        if side == "s":
+            return 15 - x, 15 - y
+        if side == "w":
+            return y, x
+        return 15 - y, x  # e
+
+    # Posts: 3px brick on the left and right flanks, full depth.
+    for y in range(16):
+        for x in list(range(0, 3)) + list(range(13, 16)):
+            ch = "m" if y % 4 == 3 else ("r" if x in (0, 13) else "b")
+            put(g, *rot(x, y), ch)
+    # Caps on the posts at the outer edge.
+    for x in list(range(0, 3)) + list(range(13, 16)):
+        put(g, *rot(x, 0), "c")
+    # Iron bars across the outer 6 rows between the posts, a rail along the top and bottom.
+    for x in range(3, 13):
+        put(g, *rot(x, 1), "n")
+        put(g, *rot(x, 5), "n")
+        if x % 2 == 1:
+            for y in range(1, 6):
+                put(g, *rot(x, y), "n")
+            put(g, *rot(x, 0), "p")  # gilded finials
     return g
 
 
@@ -214,7 +255,11 @@ TILES = [
     ("brick", brick()),
     ("brick_window", window(brick)),
     ("foot", foot()),
-    ("gate", gate()),
+    ("cobble", cobble(1)),
+    ("gate_n", gate("n")),
+    ("gate_e", gate("e")),
+    ("gate_s", gate("s")),
+    ("gate_w", gate("w")),
     ("exit", exit_tile()),
     ("guide", guide_tile()),
 ]

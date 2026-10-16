@@ -57,7 +57,7 @@ export const LONGSHOT = {
 // solo cup at the statue. The cup floats in slowly; the player catches it by
 // running under it or shouting it down. If it lands, it's a lot of damage.
 export const CHUCKER = {
-  speedPxPerTick: 0.5,
+  speedPxPerTick: 0.4, // a waddle; two-thirds of a bro
   drunk: 50,
   rangePx: 192, // 12 tiles: he stops a few tiles in from any gate
   windupTicks: 90, // 1.5s wind-up before each throw

@@ -192,7 +192,7 @@
           2,
           3
         ],
-        "fps": 8
+        "fps": 5
       },
       "windup": {
         "frames": [
@@ -236,7 +236,7 @@
           2,
           3
         ],
-        "fps": 8
+        "fps": 5
       },
       "windup": {
         "frames": [
@@ -280,7 +280,7 @@
           2,
           3
         ],
-        "fps": 8
+        "fps": 5
       },
       "windup": {
         "frames": [
@@ -328,7 +328,7 @@
           2,
           3
         ],
-        "fps": 8
+        "fps": 5
       },
       "windup": {
         "frames": [
@@ -939,7 +939,7 @@
     "file": "tiles.png",
     "w": 16,
     "h": 16,
-    "frames": 24,
+    "frames": 28,
     "anims": {
       "grass_a": {
         "frames": [
@@ -1067,21 +1067,45 @@
         ],
         "fps": 6
       },
-      "gate": {
+      "cobble": {
         "frames": [
           21
         ],
         "fps": 6
       },
-      "exit": {
+      "gate_n": {
         "frames": [
           22
         ],
         "fps": 6
       },
-      "guide": {
+      "gate_e": {
         "frames": [
           23
+        ],
+        "fps": 6
+      },
+      "gate_s": {
+        "frames": [
+          24
+        ],
+        "fps": 6
+      },
+      "gate_w": {
+        "frames": [
+          25
+        ],
+        "fps": 6
+      },
+      "exit": {
+        "frames": [
+          26
+        ],
+        "fps": 6
+      },
+      "guide": {
+        "frames": [
+          27
         ],
         "fps": 6
       }

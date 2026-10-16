@@ -87,10 +87,29 @@ def parse(path):
                     raise ValueError(f"{path}: frame {i} uses undefined key {ch!r}")
     if not anims:
         anims["idle"] = {"frames": list(range(len(frames))), "fps": 6}
+    if h == 24:
+        check_waist(path, frames)
     return {
         "name": name, "w": w, "h": h, "colors": colors, "anims": anims, "frames": frames,
         "head": head_default, "head_overrides": head_overrides, "expressions": expressions,
     }
+
+
+def check_waist(path, frames):
+    """A character's torso and legs must share a center in every walk frame. A 1px
+    'sway' drawn as a shear reads as a broken waist at 1x; refuse it at build time."""
+    def center(rows):
+        xs = [x for r in rows for x, ch in enumerate(r) if ch != "."]
+        return (min(xs) + max(xs)) / 2 if xs else None
+    ref = None
+    for i, fr in enumerate(frames[:4]):  # the walk cycle is frames 0-3 by convention
+        legs = center(fr[19:23])
+        if legs is None:
+            continue
+        if ref is None:
+            ref = legs
+        elif abs(legs - ref) > 1.0:
+            raise ValueError(f"{path}: frame {i} legs are offset {legs - ref:+.1f}px from frame 0; keep the waist aligned")
 
 
 def render(sprite):
@@ -112,8 +131,8 @@ TOURIST_GROUP_COLORS = [("#fe7000", "#ca4a00"), ("#e8ea4a", "#a3a324"), ("#9600d
 # Extra characters composed from another character's parts with their own shirts.
 # name -> (body sprite name, heads sprite name, shirts)
 COMPOSITES = {
-    "longshot": ("bro_body", "bro_heads", [("#d10f4c", "#991515")]),  # the Longshot Bro: crimson shirt
-    "chucker": ("bro_body", "bro_heads", [("#9600dc", "#340058")]),  # the Cup Chucker: purple shirt
+    "longshot": ("longshot_body", "bro_heads", [("#d10f4c", "#991515")]),  # the Longshot Bro: crimson, beer funnel held high
+    "chucker": ("chucker_body", "bro_heads", [("#9600dc", "#340058")]),  # the Cup Chucker: fat, purple, cradling a big cup
 }
 
 SHIRTS = {
@@ -197,7 +216,7 @@ def build(src_dir, out_dir):
                 names.append(v["name"])
             atlas[cname] = {"variants": names, "w": body["w"], "h": body["h"], "frames": len(body["frames"]), "anims": body["anims"]}
     for name, sp in parsed.items():
-        if name.endswith("_heads"):
+        if name.endswith("_heads") or name in {b for b, _, _ in COMPOSITES.values()}:
             continue  # only used through composition
         if name.endswith("_body") and f"{name.removesuffix('_body')}_heads" in parsed:
             base = name.removesuffix("_body")
