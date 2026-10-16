@@ -1,9 +1,6 @@
-// Harvard Yard (the Old Yard), 24x18 tiles, rotated so the John Harvard
-// statue sits at the bottom facing up into the Yard. University Hall is the
-// bottom wall. Johnston Gate is the top entrance; a north gate is on the right.
-//
-// Buildings, clockwise from top-left: Massachusetts Hall, [Johnston Gate],
-// Harvard Hall, Stoughton, Hollis, Thayer, [University Hall], Weld, Matthews.
+// Harvard Yard, 24x18 tiles. Owen's draft (2026-10-16): statue at the bottom
+// in front of University Hall, main gate at the top, side gates left and right,
+// a perimeter route around two inner loops. Claude added G/F/Y tiles.
 //
 // Legend (src/sim/map.ts):
 //   .  grass (buildable)
@@ -18,22 +15,22 @@
 // Rows are top to bottom. Every row must be exactly 24 characters.
 // Paths are 4-connected on purpose; pathing never cuts corners through grass.
 export const YARD_MAP = `
-TBBBBBT...G...TBBBBBT.TT
-TBBBBBT..===..TBBBBBT..T
-T.....====.==.........BT
-T.....==...==.......BBBT
-TBBB.==.....==......BBBT
-TBBB.=.......==========G
-TBBB.=........==.......T
-T....==........==..BBB.T
-T.BBB.=.........=..BBB.T
-T.BBB.=.........=..BBB.T
-T.BBB.=.........=..BBB.T
-T.....=.........=....T.T
-T.....=.........=......T
-T.....=.........=.....TT
-T.....=======F===..BBB.T
-T..........=SS=..Y.BBB.T
-T..........=SS=....BBB.T
-TTTTTBBBBBBBBBBBBBBTTTTT
+BBBBBBBBBB.G.BBBBBBBBBBB
+BBBBBBBBBB.=.BBBBBBBBBBB
+...........=............
+G====...======...======G
+..=.=...=....=...=..=...
+B.=.=...=....=...=..=.BB
+B.=.=...=....=...=..=.BB
+B.=.=...=....=...=..=.BB
+B.=.=...=....=...=..=.BB
+B.=.=...=....=...=..=.BB
+B.=.=...=....=...=..=.BB
+B.=.=====....=====..=.BB
+B.=.................=.BB
+B.=.................=.BB
+B.==========F========...
+......=....=SS=.Y..=....
+......=....=SS=....=....
+......=.BBBBBBBBBB.=....
 `;
