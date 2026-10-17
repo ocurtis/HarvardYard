@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { TILE } from '../src/config/game';
 import { AMP, TOWERS } from '../src/config/towers';
 import { spawnBro, tileCenter } from '../src/sim/bros';
-import { createState, step } from '../src/sim/sim';
-import { build, canBuild } from '../src/sim/towers';
+import { createState, restore, serialize, step } from '../src/sim/sim';
+import { build, canBuild, upgradeTower } from '../src/sim/towers';
 import type { GameState, Vec } from '../src/sim/types';
 import { windTiles } from '../src/sim/wind';
 
@@ -73,9 +73,9 @@ describe('the amp', () => {
     expect(entered).toBe(true);
     expect(maxY).toBeLessThan(tileCenter({ x: 2, y: 8 }).y); // never reached the windy tile's center
     expect(b.drunk).toBeLessThan(drunk0);
-    // Shoved a full tile back up the lane, and by now walking on up it: the long way round.
-    expect(b.pos.y).toBeLessThanOrEqual(tileCenter({ x: 2, y: 6 }).y);
-    expect(b.tile.y).toBeLessThan(7);
+    // Shoved back off the windy tile, and by now walking on up the lane: the long way round.
+    expect(b.pos.y).toBeLessThan(8 * TILE);
+    expect(b.tile.y).toBeLessThan(8);
     run(s, 600);
     // Long after, he has left the wind and is somewhere on the long route, not below the amp.
     expect(b.inWind).toBe(false);
@@ -104,6 +104,85 @@ describe('the amp', () => {
     expect(Math.abs(c.pos.y - y0)).toBeLessThan(TILE); // his own walking, not a shove
   });
 
+  it('leaves a bro alone when the wind is at his back', () => {
+    // Amp at the foot of the x=4 lane blowing north; from (4,10) the way to the
+    // statue is up the lane, so the only "back" is straight into the wind: past it.
+    const s = createState({ seed: 1, playerCount: 1 });
+    s.money = 500;
+    expect(build(s, at(s, { x: 4, y: 12 }, { x: 0, y: -1 }), 'amp')).toBe(true);
+    expect(windTiles(s.map, s.towers[0]!, 0)).toContainEqual({ x: 4, y: 10 });
+    at(s, { x: 22, y: 14 }, { x: 0, y: 1 });
+    const past = spawnBro(s, 'bro');
+    past.pos = tileCenter({ x: 4, y: 10 });
+    past.tile = { x: 4, y: 9 };
+    const d0 = past.drunk;
+    const y0 = past.pos.y;
+    run(s, 10);
+    expect(past.inWind).toBe(false);
+    expect(past.windTo).toBeNull();
+    expect(past.drunk).toBe(d0);
+    expect(past.pos.y).toBeLessThan(y0); // walked on up the lane
+    expect(s.events.some((e) => e.type === 'windEnter')).toBe(false);
+  });
+
+  it('level 2 recomputes the walls, and every bro still finishes his walk', () => {
+    // Reviewer's case: an upgraded amp at (4,12) facing north. Its wider cone used to
+    // graze the x=2 lane without walling it, and bros looped there forever.
+    const s = createState({ seed: 1, playerCount: 1 });
+    s.money = 500;
+    const p = at(s, { x: 4, y: 12 }, { x: 0, y: -1 });
+    expect(build(s, p, 'amp')).toBe(true);
+    const before = s.distToStatueBros.slice();
+    expect(upgradeTower(s, p)).toBe(true);
+    expect(s.towers[0]!.level).toBe(1);
+    expect(s.distToStatueBros).not.toEqual(before);
+    at(s, { x: 22, y: 14 }, { x: 0, y: 1 });
+    for (let i = 0; i < 4; i++) {
+      const b = spawnBro(s, 'bro');
+      b.pos = tileCenter({ x: 2, y: 4 + i });
+      b.tile = { x: 2, y: 5 + i };
+    }
+    let t = 0;
+    while (s.bros.length > 0 && s.statueHp > 0 && t++ < 60 * 90) step(s, []);
+    expect(t).toBeLessThan(60 * 90); // they all got to the statue or sobered out
+  });
+
+  it('a second amp built while a bro is mid-shove cannot ping-pong him forever', () => {
+    // Reviewer's case: amp at (7,5) facing east walls (8,5); a bro there is shoved north
+    // with a target up the lane; a second amp at (10,2) facing west then walls (8,3).
+    const s = createState({ seed: 1, playerCount: 1 });
+    s.money = 500;
+    expect(build(s, at(s, { x: 7, y: 5 }, { x: 1, y: 0 }), 'amp')).toBe(true);
+    at(s, { x: 22, y: 14 }, { x: 0, y: 1 });
+    const b = spawnBro(s, 'bro');
+    b.pos = tileCenter({ x: 8, y: 5 });
+    b.tile = { x: 8, y: 5 };
+    run(s, 3);
+    expect(b.windTo).not.toBeNull();
+    const r = canBuild(s, at(s, { x: 10, y: 2 }, { x: -1, y: 0 }), 'amp');
+    if (r.ok) build(s, s.players[0]!, 'amp');
+    at(s, { x: 22, y: 14 }, { x: 0, y: 1 });
+    let t = 0;
+    while (s.bros.length > 0 && s.statueHp > 0 && t++ < 60 * 120) step(s, []);
+    expect(t).toBeLessThan(60 * 120);
+  });
+
+  it('round-trips through serialize/restore with an amp and a bro mid-shove', () => {
+    const s = createState({ seed: 1, playerCount: 1 });
+    s.money = 500;
+    build(s, at(s, { x: 1, y: 8 }, { x: 1, y: 0 }), 'amp');
+    at(s, { x: 22, y: 14 }, { x: 0, y: 1 });
+    const b = spawnBro(s, 'bro');
+    b.pos = tileCenter({ x: 2, y: 8 });
+    b.tile = { x: 2, y: 8 };
+    run(s, 2);
+    expect(b.windTo).not.toBeNull();
+    const copy = restore(serialize(s));
+    run(s, 200);
+    run(copy, 200);
+    expect(serialize(copy)).toBe(serialize(s));
+  });
+
   it('is priced and keyed like the others', () => {
     expect(TOWERS.amp.cost).toBeGreaterThan(TOWERS.dig.cost);
     expect(AMP.halfAngleDeg.length).toBe(TOWERS.amp.levels.length);
@@ -111,20 +190,17 @@ describe('the amp', () => {
 });
 
 describe('the amp cannot soft-lock a wave', () => {
-  it('refuses to box a bro in between two winds', () => {
+  it('refuses two winds that would box a stretch of lane in', () => {
     const s = createState({ seed: 1, playerCount: 1 });
     s.money = 500;
     build(s, at(s, { x: 1, y: 6 }, { x: 1, y: 0 }), 'amp');
-    const b = spawnBro(s, 'bro');
-    b.pos = tileCenter({ x: 2, y: 9 });
-    b.tile = { x: 2, y: 9 };
-    // A second amp below him would leave (2,7)-(2,11) with no way out.
+    // A second amp lower on the same lane would leave (2,7)-(2,11) with no way out,
+    // bro there or not: a bro shoved into it later would bounce forever.
     const r = canBuild(s, at(s, { x: 1, y: 12 }, { x: 1, y: 0 }), 'amp');
     expect(r.ok).toBe(false);
-    expect(r.why).toBe('a bro is in the way');
-    // With him gone, the same build is fine (gates still reach the statue the long way).
-    s.bros = [];
-    expect(canBuild(s, at(s, { x: 1, y: 12 }, { x: 1, y: 0 }), 'amp').ok).toBe(true);
+    expect(r.why).toBe('would box a lane in');
+    // The same tile blowing the other way (into the building wall) is fine.
+    expect(canBuild(s, at(s, { x: 1, y: 12 }, { x: -1, y: 0 }), 'amp').ok).toBe(true);
   });
 
   it('a bro standing on the wind tile itself still has a way out', () => {

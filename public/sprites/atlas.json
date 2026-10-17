@@ -541,7 +541,7 @@
   },
   "amp": {
     "file": "amp.png",
-    "w": 16,
+    "w": 32,
     "h": 24,
     "frames": 10,
     "anims": {

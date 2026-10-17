@@ -3,9 +3,9 @@
 // treats those tiles as walls so new arrivals take another way in.
 //
 // Rules (DESIGN.md): the wind can never seal a gate off from the statue (the
-// build or upgrade that would do it is refused); a bro the wind would only
-// push toward the statue is "past it" and is left alone; a chucker is too fat
-// to blow and only loses his footing.
+// build or upgrade that would do it is refused), nor box a bro in; a bro the
+// wind would only push toward the statue is "past it" and is left alone; a
+// chucker is tower-immune and ignores the wind entirely (routing still applies).
 
 import { TILE } from '../config/game';
 import { AMP, TOWERS } from '../config/towers';
@@ -20,7 +20,8 @@ export function snapCardinal(v: Vec): Vec {
   return { x: 0, y: Math.sign(v.y) };
 }
 
-// Is a pixel position inside this amp's wind cone?
+// Is a pixel position inside this amp's wind cone? Used to pick the wind tiles;
+// the sim itself goes by tiles (see updateAmps), never by this directly.
 export function inWind(t: TowerState, level: number, pos: Vec): boolean {
   const c = tileCenter(t.tile);
   const dx = pos.x - c.x;
@@ -49,6 +50,11 @@ export function windTiles(map: MapData, t: TowerState, level: number): Vec[] {
 // The bro routing field with every amp's wind tiles walled off. `extra` lets a
 // build/upgrade ask "what if" before committing.
 export function computeBroField(state: GameState, extra?: { tower: TowerState; level: number }): number[] {
+  return computeDistField(state.map, statueAdjacentLaneTiles(state.map), blockedTiles(state, extra));
+}
+
+// Every wind tile on the map, as field indices; `extra` swaps in a what-if amp.
+export function blockedTiles(state: GameState, extra?: { tower: TowerState; level: number }): Set<number> {
   const blocked = new Set<number>();
   const add = (t: TowerState, level: number) => {
     for (const w of windTiles(state.map, t, level)) blocked.add(w.y * state.map.w + w.x);
@@ -59,7 +65,7 @@ export function computeBroField(state: GameState, extra?: { tower: TowerState; l
     add(t, t.level);
   }
   if (extra) add(extra.tower, extra.level);
-  return computeDistField(state.map, statueAdjacentLaneTiles(state.map), blocked);
+  return blocked;
 }
 
 // Every gate still reaches the statue on this field.
@@ -67,24 +73,26 @@ export function allGatesReach(state: GameState, field: number[]): boolean {
   return state.map.gates.every((g) => (field[g.y * state.map.w + g.x] ?? -1) >= 0);
 }
 
-// Would this field leave a bro with nowhere to go? A bro whose own tile and every
-// lane neighbor are walled off would bounce in the wind forever and the wave
-// could never end. (A bro standing on a wind tile with a way out is fine.)
-export function trapsBro(state: GameState, field: number[]): boolean {
+// Would this field strand a stretch of lane? Walls may only ever remove the wind
+// tiles themselves: if any other lane tile that reaches the statue today stops
+// reaching it, two winds have boxed a corridor in, and a bro shoved into it
+// would bounce there forever (the wave could never end).
+export function strandsLane(state: GameState, field: number[], blocked: Set<number>): boolean {
   const w = state.map.w;
-  const at = (x: number, y: number) => (isLaneTile(tileAt(state.map, x, y)) ? (field[y * w + x] ?? -1) : -2);
-  return state.bros.some((b) => {
-    if (b.phase === 'leaving') return false;
-    const { x, y } = b.tile;
-    if (at(x, y) >= 0) return false;
-    return [at(x + 1, y), at(x - 1, y), at(x, y + 1), at(x, y - 1)].every((d) => d < 0);
-  });
+  for (let y = 0; y < state.map.h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (!isLaneTile(tileAt(state.map, x, y)) || blocked.has(i)) continue;
+      if ((state.distToStatue[i] ?? -1) >= 0 && (field[i] ?? -1) < 0) return true;
+    }
+  }
+  return false;
 }
 
 // Why an amp can't go here with this field, or '' if it can.
-export function windObjection(state: GameState, field: number[]): string {
+export function windObjection(state: GameState, field: number[], blocked: Set<number>): string {
   if (!allGatesReach(state, field)) return 'would block the Yard';
-  if (trapsBro(state, field)) return 'a bro is in the way';
+  if (strandsLane(state, field, blocked)) return 'would box a lane in';
   return '';
 }
 

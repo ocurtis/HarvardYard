@@ -11,7 +11,7 @@ import { emit } from './events';
 import { isBuildable, tileAt } from './map';
 import { retreatTile } from './path';
 import type { BoneState, BroState, GameState, PlayerState, TowerState, Vec } from './types';
-import { computeBroField, inWind, recomputeBroField, snapCardinal, windObjection } from './wind';
+import { blockedTiles, computeBroField, recomputeBroField, snapCardinal, windObjection, windTiles } from './wind';
 
 export function playerTile(p: PlayerState): Vec {
   return { x: Math.floor(p.pos.x / TILE), y: Math.floor(p.pos.y / TILE) };
@@ -27,7 +27,8 @@ export function canBuild(state: GameState, player: PlayerState, kind: TowerKind)
   if (towerAt(state, tile)) return { ok: false, why: 'occupied' };
   if (state.money < TOWERS[kind].cost) return { ok: false, why: 'too poor' };
   if (kind === 'amp') {
-    const why = windObjection(state, computeBroField(state, { tower: proposedAmp(state, player), level: 0 }));
+    const what = { tower: proposedAmp(state, player), level: 0 };
+    const why = windObjection(state, computeBroField(state, what), blockedTiles(state, what));
     if (why) return { ok: false, why };
   }
   return { ok: true, why: '' };
@@ -54,7 +55,10 @@ export function upgradeTower(state: GameState, player: PlayerState): boolean {
   if (!t) return false;
   const cost = TOWERS[t.kind].levels[t.level]!.upgradeCost;
   if (cost === null || state.money < cost) return false;
-  if (t.kind === 'amp' && windObjection(state, computeBroField(state, { tower: t, level: t.level + 1 }))) return false;
+  if (t.kind === 'amp') {
+    const what = { tower: t, level: t.level + 1 };
+    if (windObjection(state, computeBroField(state, what), blockedTiles(state, what))) return false;
+  }
   state.money -= cost;
   t.level++;
   if (t.kind === 'amp') recomputeBroField(state);
@@ -83,26 +87,37 @@ export function updateTowers(state: GameState): void {
   updateBones(state);
 }
 
-// The wind. Every bro in any amp's cone loses his footing the tick he enters,
-// sobers a little per second, and slides back along the lane toward the gate
-// while he is in it. A chucker is a tower-immune wall of meat and ignores it. A bro
-// the wind would only push toward the statue is past the amp and is left alone.
+// The wind. The wind "has" a bro when the tile he is standing on is one of an
+// amp's wind tiles: the same tiles the routing walls off, so the two can never
+// disagree and route a bro into a graze he can't get out of. On entry he loses
+// his footing; while he's in it he sobers a little per second and slides back
+// along the lane toward the gate. A chucker is a tower-immune wall of meat and
+// ignores it. A bro the wind would only push toward the statue is past the amp
+// and is left alone. `inWind` on the bro means "being blown this tick".
 function updateAmps(state: GameState): void {
   const amps = state.towers.filter((t) => t.kind === 'amp');
+  const zones = amps.map((t) => new Set(windTiles(state.map, t, t.level).map((w) => w.y * state.map.w + w.x)));
   for (const b of state.bros) {
     if (b.phase === 'leaving' || towerImmune(b)) continue; // a chucker is too heavy for the wind
-    const amp = amps.find((t) => inWind(t, t.level, b.pos));
+    const here = standingTile(b);
+    const k = amps.findIndex((_, i) => zones[i]!.has(here.y * state.map.w + here.x));
+    const amp = k >= 0 ? amps[k]! : null;
     if (!amp) {
       b.inWind = false;
       if (b.windTo) slide(b, b.windTo); // finish the shove he was given
       continue;
     }
     const lvl = TOWERS.amp.levels[amp.level]!;
-    const here = { x: Math.floor(b.pos.x / TILE), y: Math.floor(b.pos.y / TILE) };
     const back = retreatTile(state.map, state.distToStatue, here, amp.facing);
+    if (back === null) {
+      // Past it: the wind is at his back. Drop any shove from elsewhere too, or a
+      // stale target drags him back and forth between two amps forever.
+      b.inWind = false;
+      b.windTo = null;
+      continue;
+    }
     if (!b.inWind) {
       b.inWind = true;
-      if (back === null) continue; // past it: the wind is at his back
       emit(state, { type: 'windEnter', kind: b.kind, pos: { ...b.pos } });
       if (AMP.entryStagger) {
         // Even a walker loses his footing here (discipline only slows a walker).
@@ -111,12 +126,16 @@ function updateAmps(state: GameState): void {
         b.timer = BRO.staggerTicks;
       }
     }
-    if (back === null) continue;
     sober(b, lvl.sober / 60);
     b.windTo = back;
     b.facing = { x: -amp.facing.x, y: -amp.facing.y }; // braced against the wind
     slide(b, back);
   }
+}
+
+// The tile under a bro's feet (his `tile` is where he is heading).
+export function standingTile(b: BroState): Vec {
+  return { x: Math.floor(b.pos.x / TILE), y: Math.floor(b.pos.y / TILE) };
 }
 
 // One tick of being shoved toward a tile. He stays off balance while sliding so the

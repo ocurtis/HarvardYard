@@ -9,7 +9,7 @@ import type { BroState, MapData, PlayerState, TileKind, TouristState } from '../
 import { canStartWave } from '../sim/waves';
 import { SELF_UPGRADE, TOWERS } from '../config/towers';
 import { canBuild, playerTile, towerAt, towerRange } from '../sim/towers';
-import { inWind, snapCardinal, windTiles } from '../sim/wind';
+import { snapCardinal, windTiles } from '../sim/wind';
 import { AMP } from '../config/towers';
 import { isBuildable, tileAt } from '../sim/map';
 import { shoutRange } from '../sim/shout';
@@ -502,7 +502,7 @@ export class YardScene extends Phaser.Scene {
           }
           anim = v.anim.startsWith('fire') ? v.anim : `idle${level}`;
         } else if (t.kind === 'amp') {
-          const blowing = s.bros.some((b) => b.phase !== 'leaving' && inWind(t, t.level, b.pos));
+          const blowing = s.bros.some((b) => b.inWind && this.inWindOf(t, b));
           anim = (blowing ? 'play' : 'idle') + (t.level > 0 ? '2' : '');
         } else {
           anim = t.level > 0 ? 'spin2' : 'spin';
@@ -601,6 +601,19 @@ export class YardScene extends Phaser.Scene {
     }
   }
 
+  // Is this bro standing on one of this amp's wind tiles? (Render-side mirror of the sim's test.)
+  private inWindOfCache = new Map<string, Set<number>>();
+  private inWindOf(t: { tile: { x: number; y: number }; facing: { x: number; y: number }; level: number; id: number }, b: BroState): boolean {
+    const key = `${t.id}:${t.level}`;
+    let set = this.inWindOfCache.get(key);
+    if (!set) {
+      const probe = { id: t.id, kind: 'amp' as const, tile: t.tile, level: t.level, cooldown: 0, facing: t.facing };
+      set = new Set(windTiles(this.loop.state.map, probe, t.level).map((w) => w.y * this.loop.state.map.w + w.x));
+      this.inWindOfCache.set(key, set);
+    }
+    return set.has(Math.floor(b.pos.y / TILE) * this.loop.state.map.w + Math.floor(b.pos.x / TILE));
+  }
+
   // The Amp's wind cone: two edge lines and an arc, plus a hatch on the lane tiles
   // it walls off (that is the part the player is really buying).
   private drawWindCone(g: Phaser.GameObjects.Graphics, tile: { x: number; y: number }, facing: { x: number; y: number }, level: number, alpha: number, color = PALETTE.amp): void {
@@ -674,7 +687,7 @@ export class YardScene extends Phaser.Scene {
     // has somebody, sparse while it idles.
     for (const t of this.loop.state.towers) {
       if (t.kind !== 'amp') continue;
-      const blowing = this.loop.state.bros.some((b) => b.phase !== 'leaving' && inWind(t, t.level, b.pos));
+      const blowing = this.loop.state.bros.some((b) => b.inWind && this.inWindOf(t, b));
       const r = TOWERS.amp.levels[t.level]!.rangePx;
       const half = (AMP.halfAngleDeg[t.level] ?? AMP.halfAngleDeg[0]!) * (Math.PI / 180);
       const a0 = Math.atan2(t.facing.y, t.facing.x);
