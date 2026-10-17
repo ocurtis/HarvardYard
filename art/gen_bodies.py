@@ -174,48 +174,72 @@ def chucker():
 
 
 def finals():
-    """The Finals Club Member: bro body in a tuxedo (black jacket, white shirt front,
-    the red stripe becomes a bow tie) holding a champagne flute instead of a cup."""
+    """The Finals Club Member: bro body in a tuxedo. Black jacket with a lit-black
+    lapel shade (never outline navy), white shirt front touching the chin so no
+    black sits on the face, a one-row bow tie, red cummerbund, black pants, and a
+    champagne flute with a real bowl. Art-director notes, 2026-10-16."""
     header, frames = read_frames(BRO)
     header = [h.replace("# name: bro_body", "# name: finals_body") for h in header]
-    header = [h + " J=#000000 G=#c8c8c8" if h.startswith("# K=") else h for h in header]
+    header = [
+        "# K=#202040 S=#feb854 B=#8a6042 L=#000000 Q=#340058 R=#e03c32 W=#ffffff D=#991515 G=#c8c8c8 J=#000000  (L/Q set by build.py COMPOSITES)"
+        if h.startswith("# K=") else h
+        for h in header
+    ]
     for f in frames:
         rows = f["rows"]
+        head_y = next((int(m.split(":")[1].split(",")[1]) for m in f["meta"] if m.startswith("# head:")), 1)
+        collar = head_y + 8  # first body row under the chin
         top = next((y for y, r in enumerate(rows) if "".join(r[12:16]) == "WWWW"), None)
-        # Shirt front: the column pair under the tie becomes white, the tie a bow.
+        # Jacket: no shade on the silhouette edge; the old red stripe is gone.
         for y, r in enumerate(rows):
             for x, ch in enumerate(r):
-                if ch == "L" and 6 <= x <= 8 and y >= 9:
-                    r[x] = "W"
-                elif ch == "R" and x < 12:
-                    r[x] = "W" if y > 10 else "R"
-        # Black pants: shorts and legs go black, shoes stay outlined.
+                if x < 12 and ch in "QR":
+                    r[x] = "L"
+        # Shirt front under the collar.
+        for y in range(collar, 18):
+            for x in (6, 7, 8):
+                if rows[y][x] == "L":
+                    rows[y][x] = "W"
+        # Collar row: jacket, shirt, jacket. White is what touches the chin.
+        if collar < 24 and rows[collar][3] == "K":
+            for x, ch in zip(range(4, 11), "LLWWWLL"):
+                if rows[collar][x] != ".":
+                    rows[collar][x] = ch
+        # Bow tie: one row, knot by shade.
+        if collar + 1 < 24:
+            for x, ch in zip((6, 7, 8), "RDR"):
+                if rows[collar + 1][x] != ".":
+                    rows[collar + 1][x] = ch
+        # Lapel shade on the jacket beside the shirt.
+        for y in range(collar + 2, collar + 6):
+            for x in (5, 9):
+                if 0 <= y < 24 and rows[y][x] == "L":
+                    rows[y][x] = "Q"
+        # Cummerbund: the belt row goes red between its outlines.
+        for y, r in enumerate(rows):
+            if "".join(r).strip(".") in ("KQQQQK", "KLLLLK") and y >= 16:
+                for x, ch in enumerate(r):
+                    if ch in "QL":
+                        r[x] = "R"
+        # Black pants, shoes outlined.
         for y in range(18, 23):
             for x, ch in enumerate(rows[y]):
                 if ch in "SB":
                     rows[y][x] = "J"
-        tie = next((y for y, r in enumerate(rows) if "W" in r[6:9]), None)
-        if tie is not None:
-            rows[tie][6] = "R"
-            rows[tie][7] = "K"
-            rows[tie][8] = "R"
         if top is None:
             continue
-        for y in range(top, min(top + 6, 24)):
+        # Clear the cup, keep the arm.
+        for y in range(top - 1, min(top + 6, 24)):
             for x in range(12, 16):
                 if rows[y][x] in "WR":
                     rows[y][x] = "."
-        # A flute: a narrow glass, gold fizz on top.
-        rows[top - 2][13] = "p" if False else "G"
-        rows[top - 1][13] = "W"
-        rows[top][12] = "W"
-        rows[top][13] = "G"
-        rows[top][14] = "W"
-        rows[top + 1][13] = "G"
-        rows[top + 2][13] = "G"
-        rows[top + 3][12] = "G"
-        rows[top + 3][13] = "G"
-        rows[top + 3][14] = "G"
+        # Champagne flute: bowl, stem, foot; the hand grips the stem.
+        put = lambda y, x, ch: rows.__getitem__(y).__setitem__(x, ch) if 0 <= y < 24 else None
+        put(top - 2, 12, "W"); put(top - 2, 13, "W")
+        put(top - 1, 12, "W"); put(top - 1, 13, "G")
+        put(top, 13, "G"); put(top + 1, 13, "G")
+        put(top + 2, 12, "G"); put(top + 2, 13, "G"); put(top + 2, 14, "G")
+        put(top, 11, "S"); put(top, 12, "S"); put(top + 1, 11, "S"); put(top + 1, 12, "S")
     write(os.path.join(HERE, "finals_body.txt"), header, frames)
 
 

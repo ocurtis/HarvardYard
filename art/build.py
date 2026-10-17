@@ -144,7 +144,7 @@ TOURIST_GROUP_COLORS = [("#fe7000", "#ca4a00"), ("#e8ea4a", "#a3a324"), ("#9600d
 COMPOSITES = {
     "longshot": ("longshot_body", "bro_heads", [("#d10f4c", "#991515")]),  # the Longshot Bro: crimson, beer funnel held high
     "chucker": ("chucker_body", "bro_heads", [("#9600dc", "#340058")]),  # the Cup Chucker: fat, purple, cradling a big cup
-    "finals": ("finals_body", "bro_heads", [("#000000", "#202040")]),  # the Finals Club Member: tuxedo
+    "finals": ("finals_body", "bro_heads", [("#000000", "#340058")]),  # the Finals Club Member: black tux, lit-black lapels (never outline navy)
 }
 
 SHIRTS = {
