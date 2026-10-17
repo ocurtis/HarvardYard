@@ -70,6 +70,7 @@ export interface BroState {
   pos: Vec; // pixel center
   tile: Vec; // the tile he is walking toward (or standing on when arrived)
   drunk: number; // health bar; 0 = sober = removed
+  maxDrunk: number; // what he spawned with (wave-scaled), for the bar
   phase: BroPhase;
   timer: number; // ticks left in windup/stagger
   slow: number; // ticks of slow remaining (shout on a walker)

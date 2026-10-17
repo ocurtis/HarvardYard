@@ -244,7 +244,7 @@ export class YardScene extends Phaser.Scene {
         v.bar.setPosition(x - (TILE - 4) / 2, y - TILE / 2 - 1).setDepth(feet + 0.1);
         v.body!.setFillStyle(b.phase === 'stagger' || b.slow > 0 ? PALETTE.broStagger : PALETTE.bro);
       }
-      v.bar.width = Math.max(0, (TILE - 4) * (b.drunk / (b.kind === 'chucker' ? CHUCKER.drunk : b.kind === 'longshot' ? LONGSHOT.drunk : BRO.drunk)));
+      v.bar.width = Math.max(0, (TILE - 4) * (b.drunk / b.maxDrunk));
     }
     for (const [id, v] of this.broViews) {
       if (!seen.has(id)) {

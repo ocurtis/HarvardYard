@@ -29,6 +29,14 @@ export const WAVES: WaveDef[] = [
   { bros: 35, longshots: 10, chuckers: 4, spacingTicks: 18, groups: 4, touristSpacingTicks: 26 },
 ];
 
+// Every bro of every kind spawns this much drunker per wave (wave 1 = 1.0x).
+// It's what keeps a defense that solved wave 7 from solving wave 15.
+export const DRUNK_PER_WAVE = 0.06;
+
+export function drunkMultiplier(waveIndex: number): number {
+  return 1 + DRUNK_PER_WAVE * Math.max(0, waveIndex);
+}
+
 export function scaleWaveForPlayers(w: WaveDef, playerCount: number): WaveDef {
   // Placeholder scaling until co-op is tuned: +50% bros per extra player.
   const mult = 1 + 0.5 * (playerCount - 1);

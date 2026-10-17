@@ -5,6 +5,7 @@
 // the player or towers.
 
 import { BOUNTY, BRO, CHUCKER, CUP, LONGSHOT, TILE } from '../config/game';
+import { drunkMultiplier } from '../config/waves';
 import { nextTileToward } from './path';
 import { nextInt } from './rng';
 import type { BroKind, BroState, GameState, Vec } from './types';
@@ -45,7 +46,8 @@ export function spawnBro(state: GameState, kind: BroKind = 'bro'): BroState {
     kind,
     pos: tileCenter(gate),
     tile: { ...gate },
-    drunk: stats(kind).drunk,
+    drunk: stats(kind).drunk * drunkMultiplier(state.wave.index),
+    maxDrunk: stats(kind).drunk * drunkMultiplier(state.wave.index),
     phase: 'walking',
     timer: 0,
     slow: 0,
