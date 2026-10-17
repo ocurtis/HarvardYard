@@ -15,6 +15,15 @@ export const LOGICAL_H = GRID_H * TILE; // 288
 export const PLAYER_COUNT_DEFAULT = 1;
 export const PLAYER_COUNT_MAX = 4;
 
+// The ghost of John Harvard: a soft halo under him, breathing. Render-only.
+export const GHOST = {
+  glowRadiusPx: 11,
+  glowAlpha: 0.22,
+  glowPulse: 0.08, // added alpha at the top of the breath
+  glowPeriodMs: 1400,
+  spriteAlpha: 0.92,
+};
+
 export const PLAYER = {
   speedPxPerTick: 1.25, // 75 px/s; Rock On! feel is brisk but not twitchy
   // Collision box is smaller than the 16px sprite so corners don't snag.

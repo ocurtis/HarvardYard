@@ -15,6 +15,7 @@ export const PALETTE = {
   exit: 0x5a4a8a,
   guide: 0x3b7bd4,
   player: 0xf2f2f2,
+  ghostGlow: 0x58f5b1, // the player's halo: palette mint
   bro: 0xe03c32,
   broStagger: 0xfe626e,
   broCup: 0xe03c32,

@@ -1,7 +1,7 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, CHUCKER, CUP, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
+import { BRO, CHUCKER, CUP, GHOST, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
 import { PALETTE } from '../config/palette';
 import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
@@ -111,7 +111,7 @@ export class YardScene extends Phaser.Scene {
     for (const p of this.loop.state.players) {
       if (this.atlas['player']?.file) {
         // John Harvard. Faces right in the sheet; flipped for left. Up/down keep the last horizontal facing.
-        const sprite = this.add.sprite(p.pos.x, p.pos.y + TILE / 2, 'player', 0).setOrigin(0.5, 1);
+        const sprite = this.add.sprite(p.pos.x, p.pos.y + TILE / 2, 'player', 0).setOrigin(0.5, 1).setAlpha(GHOST.spriteAlpha);
         this.world.add(sprite);
         this.playerSprites.push(sprite);
         this.playerAnim.push('');
@@ -553,6 +553,18 @@ export class YardScene extends Phaser.Scene {
     const g = this.fx;
     g.clear();
     this.overhead.clear();
+    if (this.playerSprites.length > 0) {
+      // Ghost halo: a mint pool of light under the player, breathing slowly.
+      const breath = (Math.sin((this.time.now / GHOST.glowPeriodMs) * Math.PI * 2) + 1) / 2;
+      for (const p of players) {
+        const gx = Math.round(p.pos.x);
+        const gy = Math.round(p.pos.y) + TILE / 2 - 2;
+        this.fx.fillStyle(PALETTE.ghostGlow, GHOST.glowAlpha + GHOST.glowPulse * breath);
+        this.fx.fillEllipse(gx, gy, GHOST.glowRadiusPx * 2, GHOST.glowRadiusPx);
+        this.fx.fillStyle(PALETTE.ghostGlow, (GHOST.glowAlpha + GHOST.glowPulse * breath) * 0.6);
+        this.fx.fillEllipse(gx, gy, GHOST.glowRadiusPx * 3, GHOST.glowRadiusPx * 1.5);
+      }
+    }
     for (const p of players) {
       if (!p.shouting) continue;
       // The shout cone, drawn as a translucent wedge so range and width are readable.
