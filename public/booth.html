@@ -40,7 +40,7 @@
 <body>
 <main>
   <h1>Yard Voice Booth</h1>
-  <p class="sub">Record a take, name it, save it. Saved WAVs go in <code>art/audio/voice/</code>; push them and Claude chip-crushes them.</p>
+  <p class="sub">Record a take, name it, Save & push. It lands in the repo on GitHub; Claude pulls it and chip-crushes it.</p>
   <div class="booth">
     <div class="row">
       <button class="rec" id="rec">● Record</button>
@@ -113,7 +113,7 @@
       const take = { name: uniqueName(name), wav, url: URL.createObjectURL(new Blob([wav], { type: 'audio/wav' })), state: 'ready' };
       takes.unshift(take);
       render();
-      status.textContent = 'Listen back, then Save. Move the WAV from Downloads into art/audio/voice/.';
+      status.textContent = 'Listen back, then Save & push.';
       nameEl.select();
     } catch (e) {
       status.textContent = 'Could not decode that recording: ' + (e && e.message ? e.message : e);
@@ -158,14 +158,15 @@
     return buf;
   }
 
-  function save(take) {
-    const a = document.createElement('a');
-    a.href = take.url;
-    a.download = take.name + '.wav';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    take.state = 'saved';
+  async function save(take) {
+    take.state = 'saving…'; render();
+    try {
+      const r = await fetch('/__booth/save?name=' + encodeURIComponent(take.name), { method: 'POST', body: take.wav });
+      const j = await r.json();
+      take.state = j.pushed ? 'pushed' : 'saved locally (push failed: ' + (j.error || '?').split('\n')[0] + ')';
+    } catch (e) {
+      take.state = 'failed: ' + e;
+    }
     render();
   }
 
@@ -176,9 +177,9 @@
       const name = document.createElement('span'); name.className = 'name'; name.textContent = t.name;
       const play = document.createElement('button'); play.textContent = '▶';
       play.onclick = () => { const a = new Audio(t.url); a.play(); };
-      const state = document.createElement('span'); state.className = 'state' + (t.state === 'saved' ? ' sent' : ''); state.textContent = t.state === 'saved' ? 'saved ✓' : t.state;
+      const state = document.createElement('span'); state.className = 'state' + (t.state === 'pushed' ? ' sent' : ''); state.textContent = t.state === 'pushed' ? 'pushed to GitHub ✓' : t.state;
       li.append(play, name, state);
-      const btn = document.createElement('button'); btn.textContent = t.state === 'saved' ? 'Save again' : 'Save'; btn.onclick = () => save(t); li.append(btn);
+      const btn = document.createElement('button'); btn.textContent = t.state === 'pushed' ? 'Push again' : 'Save & push'; btn.onclick = () => save(t); li.append(btn);
       takesEl.append(li);
     }
   }
