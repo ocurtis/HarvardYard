@@ -51,6 +51,11 @@ function voiceBooth(): Plugin {
           req.on('end', () => resolve(Buffer.concat(chunks)));
         });
 
+      // The booth page itself lives outside public/ so it never ships in the build.
+      server.middlewares.use('/booth.html', (_req, res) => {
+        res.setHeader('content-type', 'text/html');
+        res.end(readFileSync(join(root, 'dev', 'booth.html')));
+      });
       server.middlewares.use('/__booth', async (req, res) => {
         const url = new URL(req.url ?? '', 'http://x');
         mkdirSync(dir, { recursive: true });
@@ -120,6 +125,9 @@ export default defineConfig({
   build: {
     target: 'es2022',
     assetsInlineLimit: 0,
+    rollupOptions: {
+      input: { index: 'index.html', play: 'play.html' },
+    },
   },
   server: {
     port: 5173,

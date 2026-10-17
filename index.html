@@ -1,17 +1,79 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Yard Defense</title>
-    <style>
-      html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-      #game { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-      canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
-    </style>
-  </head>
-  <body>
-    <div id="game"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gahd The Yahd</title>
+  <meta name="description" content="Gahd The Yahd: a tower defense in Harvard Yard. You are the ghost of John Harvard. Sermon the drunk frat bros off your statue and shepherd lost tourists to their photos." />
+  <style>
+    :root { --bg: #202040; --card: #340058; --ink: #ffffff; --muted: #c8c8c8; --grass: #63b31d; --mint: #58f5b1; --cyan: #27badb; --red: #e03c32; --gold: #e8ea4a; --path: #707070; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    main { max-width: 720px; margin: 0 auto; padding: 28px 16px 64px; }
+    h1 { font-size: clamp(34px, 8vw, 56px); line-height: 1; margin: 0; letter-spacing: .02em; color: var(--gold); text-shadow: 3px 3px 0 #000; }
+    .tag { color: var(--mint); margin: 8px 0 20px; }
+    .play { display: inline-block; background: var(--red); color: #fff; text-decoration: none; font-size: 20px; padding: 12px 26px; border: 3px solid #fff; box-shadow: 4px 4px 0 #000; margin: 6px 0 28px; }
+    .play:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #000; }
+    h2 { font-size: 16px; color: var(--cyan); margin: 26px 0 8px; text-transform: uppercase; letter-spacing: .08em; }
+    p { margin: 0 0 10px; }
+    .goal { font-size: 17px; background: var(--card); border-left: 4px solid var(--gold); padding: 10px 14px; }
+    table { border-collapse: collapse; width: 100%; }
+    td { padding: 5px 8px; vertical-align: top; border-bottom: 1px solid #4430ba; }
+    td:first-child { white-space: nowrap; color: var(--gold); }
+    kbd { background: #000; border: 1px solid #707070; padding: 1px 6px; border-radius: 3px; font: inherit; color: #fff; }
+    .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+    .who { display: flex; gap: 12px; align-items: flex-start; background: var(--card); padding: 10px; }
+    .sprite { width: 48px; height: 72px; flex: 0 0 48px; image-rendering: pixelated; background-repeat: no-repeat; background-size: auto 72px; background-color: var(--grass); border: 2px solid #000; }
+    .sprite.wide { width: 64px; height: 64px; flex-basis: 64px; background-size: auto 64px; }
+    .who b { display: block; color: var(--mint); }
+    .who small { color: var(--muted); }
+    footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
+    a { color: var(--cyan); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>GAHD THE YAHD</h1>
+  <p class="tag">A tower defense in Harvard Yard, with bells.</p>
+  <a class="play" href="play.html">▶ PLAY</a>
+
+  <p class="goal">You are the ghost of John Harvard: keep the drunk frat bros from pissing on your statue through fifteen rounds, and pay for it by shepherding lost tourists to their photos.</p>
+
+  <h2>Controls</h2>
+  <table>
+    <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</td><td>Move.</td></tr>
+    <tr><td><kbd>J</kbd> / <kbd>X</kbd> / <kbd>Shift</kbd></td><td>Hold to deliver a sermon. Sobers and stops bros in a cone in front of you. Also scares tourists, so mind your aim.</td></tr>
+    <tr><td>Walk into a guide</td><td>Hand a lost tourist group a brochure. They pay when they reach their photo spot. Leave them confused and they storm out and cost you.</td></tr>
+    <tr><td><kbd>Space</kbd></td><td>Start the next round. Rounds never start on their own.</td></tr>
+    <tr><td><kbd>1</kbd> / <kbd>2</kbd></td><td>Build a Dig ($30) or a Sprinkler ($20) on the grass you're standing on, any time.</td></tr>
+    <tr><td><kbd>U</kbd></td><td>Upgrade the turret you're standing on.</td></tr>
+    <tr><td><kbd>3</kbd> / <kbd>4</kbd> / <kbd>5</kbd></td><td>Upgrade your sermon's power, its range, or your speed.</td></tr>
+    <tr><td><kbd>M</kbd></td><td>Mute.</td></tr>
+  </table>
+
+  <h2>Enemies</h2>
+  <div class="roster">
+    <div class="who"><div class="sprite" style="background-image:url(sprites/bro_v00.png)"></div><div><b>Bro</b>Walks the whole path to the statue, unzips, lets go. Turrets and sermons both work. <small>Every round.</small></div></div>
+    <div class="who"><div class="sprite" style="background-image:url(sprites/longshot_v00.png)"></div><div><b>Longshot</b>Fast, with a beer funnel. Stops the moment the statue is in range and arcs it over everything. Shakes because he has to go. <small>From round 3.</small></div></div>
+    <div class="who"><div class="sprite" style="background-image:url(sprites/chucker_v00.png)"></div><div><b>Cup Chucker</b>Fat, slow, stops near the gate and lobs full cups at the statue. Turrets can't touch him. Catch a cup by running under its shadow, or sermon it out of the air. <small>From round 5.</small></div></div>
+    <div class="who"><div class="sprite" style="background-image:url(sprites/finals_v00.png)"></div><div><b>Finals Club Member</b>Tuxedo, champagne, nearly your speed, and takes a lot of sobering. Walks straight in mid-round. <small>From round 8.</small></div></div>
+  </div>
+  <p style="margin-top:10px"><small>Every bro gets 6% drunker each round. Sobering one out pays $1.</small></p>
+
+  <h2>Turrets</h2>
+  <div class="roster">
+    <div class="who"><div class="sprite" style="background-image:url(sprites/dig.png)"></div><div><b>Dig · $30</b>An archaeological dig that lobs bones at the nearest bro in range. Upgrade for range, rate and punch.</div></div>
+    <div class="who"><div class="sprite" style="background-image:url(sprites/sprinkler.png)"></div><div><b>Sprinkler · $20</b>Soaks everyone in a small circle: bros slow down and sober a little; tourists just walk slower for a moment.</div></div>
+  </div>
+  <p style="margin-top:10px"><small>Turrets never hurt tourists. Only your sermon can scare money away.</small></p>
+
+  <h2>Tourists</h2>
+  <div class="roster">
+    <div class="who"><div class="sprite" style="background-image:url(sprites/tourist_v00.png)"></div><div><b>Tour groups</b>Arrive in threes to fives behind a guide and stop, confused, a few tiles in. Their value ticks down while they wait. Touch the guide to send them to the statue ($10 a head) or a building ($7 a head).</div></div>
+    <div class="who"><div class="sprite wide" style="background-image:url(sprites/statue.png)"></div><div><b>The statue</b>100 HP. When it's gone, so are you.</div></div>
+  </div>
+
+  <footer>Keyboard only for now. Made in the UFO 50 spirit; music after the Lowell House bells. <a href="https://github.com/ocurtis/HarvardYard">Source</a>.</footer>
+</main>
+</body>
 </html>

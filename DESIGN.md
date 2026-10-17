@@ -1,4 +1,4 @@
-# Yard Defense (working title)
+# Gahd The Yahd (working title)
 
 One-liner: A top-down pixel-art action tower defense where you defend the John Harvard statue from drunk frat bros while herding tourists to its foot to fund your defenses.
 
@@ -159,3 +159,4 @@ Sorority wave (fast, erratic). Tour groups that clog lanes. Tour Guide as a plac
 - 2026-10-17: Sound effects. The sim emits one-shot events (brochure, paid, stormOut, bounty, spawn, windup, stagger, boneThrow, boneHit, cupThrow, cupCaught, cupLanded, waveStart, statueLow, won, lost) as plain data on GameState.events, pruned after a few ticks; the render-side Sfx layer plays them and runs loops (shout, walk, stream, cup in flight) off state flags. Owen's voice takes (art/audio/voice, chip-crushed by art/audio/crush.py at 9 kHz/5-bit, 1.3x speed) cover arrivals, bones, cups, hits, walking and the stream; synthesized cues cover the rest. Mapping in src/config/audio.ts.
 - 2026-10-17: The sermon's visual is dashed pixel arcs rippling out across the cone from the book (white/mint, fading with distance), plus a "!" spark over each bro it staggers. The painted wedge is gone. Wave start is the tower tolling three times (Owen's pick). Tourist takes: asking_for_directions when a guide stops confused, getting_directions on the brochure, flash on a photo.
 - 2026-10-17: Live build. GitHub Actions builds and publishes dist/ to GitHub Pages on every push to main (.github/workflows/pages.yml), so the hosted game tracks the repo. Round banner "Round X: Protect Your Statue!" for 2s at each wave start. Music 0.3 so the bells and voice cues sit over it; walk loop 0.15.
+- 2026-10-17: Title is "Gahd The Yahd" (Owen). index.html is the launch page (goal in one sentence, controls, enemies, turrets, tourists, sprites from the sheets); the game is play.html. The voice booth moved to dev/ and is served only by the dev server, so it never ships.
