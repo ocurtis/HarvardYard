@@ -1,7 +1,7 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, CHUCKER, CUP, GHOST, GRID_H, GRID_W, HUD_W, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
+import { BRO, CHUCKER, CUP, GHOST, GRID_H, GRID_W, HUD_W, SERMON_FX, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
 import { PALETTE } from '../config/palette';
 import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
@@ -57,6 +57,7 @@ export class YardScene extends Phaser.Scene {
   private players: Phaser.GameObjects.Rectangle[] = [];
   private facingDots: Phaser.GameObjects.Rectangle[] = [];
   private halo!: Phaser.GameObjects.Graphics;
+  private sparks: { x: number; y: number; tick: number }[] = [];
   private playerSprites: Phaser.GameObjects.Sprite[] = [];
   private playerAnim: string[] = [];
   private playerFlip: boolean[] = [];
@@ -577,15 +578,42 @@ export class YardScene extends Phaser.Scene {
         this.halo.strokeEllipse(gx, gy, GHOST.glowRadiusPx * 2, GHOST.glowRadiusPx);
       }
     }
+    const tick = this.loop.state.tick;
     for (const p of players) {
       if (!p.shouting) continue;
-      // The shout cone, drawn as a translucent wedge so range and width are readable.
+      // The sermon: dashed pixel arcs ripple out from him across the cone. Range and
+      // width still read (the arcs stop at the range) without a painted wedge.
       const fl = Math.hypot(p.facing.x, p.facing.y) || 1;
       const a = Math.atan2(p.facing.y / fl, p.facing.x / fl);
       const half = (SHOUT.halfAngleDeg * Math.PI) / 180;
-      g.fillStyle(PALETTE.shout, 0.35);
-      g.slice(Math.round(p.pos.x), Math.round(p.pos.y), shoutRange(p), a - half, a + half, false);
-      g.fillPath();
+      const range = shoutRange(p);
+      const ox = Math.round(p.pos.x);
+      const oy = Math.round(p.pos.y) - 4;
+      for (let i = 0; i < SERMON_FX.arcs; i++) {
+        const r = ((tick * SERMON_FX.speedPxPerTick + (i * range) / SERMON_FX.arcs) % range) + 4;
+        const fade = 1 - r / (range + 4);
+        g.fillStyle(i % 2 === 0 ? 0xffffff : PALETTE.ghostGlow, 0.55 + 0.45 * fade);
+        const steps = Math.max(6, Math.round(r * 2 * half));
+        for (let k = 0; k <= steps; k++) {
+          const t = a - half + (2 * half * k) / steps;
+          if (Math.floor((k * (r * 2 * half)) / steps / SERMON_FX.dashPx) % 2 === 1) continue;
+          g.fillRect(Math.round(ox + Math.cos(t) * r) - 1, Math.round(oy + Math.sin(t) * r) - 1, 2, 2);
+        }
+      }
+    }
+    // "!" sparks over bros the sermon just staggered.
+    for (const e of this.loop.state.events) {
+      if (e.type !== 'stagger' || e.by !== 'shout' || !e.pos) continue;
+      if (!this.sparks.some((s) => s.tick === e.tick && s.x === e.pos!.x)) this.sparks.push({ x: e.pos.x, y: e.pos.y, tick: e.tick });
+    }
+    this.sparks = this.sparks.filter((s) => tick - s.tick < SERMON_FX.sparkTicks);
+    for (const s of this.sparks) {
+      const age = tick - s.tick;
+      const y = Math.round(s.y) - TILE - Math.floor(age / 3);
+      const x = Math.round(s.x);
+      this.overhead.fillStyle(0xffffff, 1);
+      this.overhead.fillRect(x - 1, y - 6, 2, 4);
+      this.overhead.fillRect(x - 1, y - 1, 2, 2);
     }
     // Cups in flight: a shadow on the ground (that's what you run under) and the
     // cup itself on the overhead layer, arcing up and back down to the statue.

@@ -164,6 +164,7 @@ function updateGuide(state: GameState, t: TouristState): boolean {
       const next = t.stepsLeft > 0 ? nextTileToward(state.map, state.distToStatue, t.tile) : null;
       if (next === null) {
         t.phase = 'confused';
+        emit(state, { type: 'confused', pos: { ...t.pos } });
         return true;
       }
       advance(t, next, g.path);
@@ -243,7 +244,10 @@ function updateFollower(state: GameState, t: TouristState): boolean {
     // Caught up to the line. If the guide is gone and we're at the end, we're out.
     if (g.guideGone && t.pathIndex >= lastHalf) return false;
     // Standing around: snap a photo now and then.
-    if (t.photo === 0 && nextInt(state, Math.round(1 / TOURIST.photoChancePerTick)) === 0) t.photo = TOURIST.photoTicks;
+    if (t.photo === 0 && nextInt(state, Math.round(1 / TOURIST.photoChancePerTick)) === 0) {
+      t.photo = TOURIST.photoTicks;
+      emit(state, { type: 'photo', pos: { ...t.pos } });
+    }
     return true;
   }
   t.photo = 0;

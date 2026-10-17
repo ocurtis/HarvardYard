@@ -132,6 +132,8 @@ export interface WaveState {
 // One-shot things that happened this tick, for the audio layer (and tests). Plain
 // data; the sim prunes anything older than EVENT_KEEP_TICKS. Render reads, never clears.
 export type SimEventType =
+  | 'confused' // a guide stopped, lost
+  | 'photo' // a tourist took a picture
   | 'brochure' // player handed a guide a brochure
   | 'paid' // a group paid at its destination
   | 'stormOut' // a group gave up and left

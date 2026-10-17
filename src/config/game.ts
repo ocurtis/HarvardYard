@@ -97,6 +97,15 @@ export const CUP = {
 // economy, kills are pocket change.
 export const BOUNTY: Record<'bro' | 'longshot' | 'chucker' | 'finals', number> = { bro: 1, longshot: 1, chucker: 1, finals: 1 };
 
+// How the sermon looks: pixel arcs rippling out from the book across the cone,
+// and a "!" spark over each bro it staggers. Render-only.
+export const SERMON_FX = {
+  arcs: 3, // arcs in flight at once
+  speedPxPerTick: 1.2, // how fast an arc travels outward
+  dashPx: 6, // dash length along the arc (gap is the same)
+  sparkTicks: 20, // how long a "!" spark lasts
+};
+
 export const SHOUT = {
   rangePx: 30, // just under two tiles
   halfAngleDeg: 40, // cone half-width; 40 = an 80-degree cone
