@@ -359,6 +359,186 @@
       }
     }
   },
+  "finals_v00": {
+    "file": "finals_v00.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "finals_v10": {
+    "file": "finals_v10.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "finals_v20": {
+    "file": "finals_v20.png",
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
+  "finals": {
+    "variants": [
+      "finals_v00",
+      "finals_v10",
+      "finals_v20"
+    ],
+    "w": 16,
+    "h": 24,
+    "frames": 11,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "windup": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 4
+      },
+      "piss": {
+        "frames": [
+          6,
+          7
+        ],
+        "fps": 6
+      },
+      "stagger": {
+        "frames": [
+          8
+        ],
+        "fps": 6
+      },
+      "sober": {
+        "frames": [
+          9,
+          10
+        ],
+        "fps": 4
+      }
+    }
+  },
   "bone": {
     "file": "bone.png",
     "w": 8,

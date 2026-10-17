@@ -4,7 +4,7 @@
 // as the statue is in range and arcs it from there. Nothing here touches
 // the player or towers.
 
-import { BOUNTY, BRO, CHUCKER, CUP, LONGSHOT, TILE } from '../config/game';
+import { BOUNTY, BRO, CHUCKER, CUP, FINALS, LONGSHOT, TILE } from '../config/game';
 import { drunkMultiplier } from '../config/waves';
 import { nextTileToward } from './path';
 import { nextInt } from './rng';
@@ -15,6 +15,8 @@ function stats(kind: BroKind) {
   switch (kind) {
     case 'longshot':
       return { speed: LONGSHOT.speedPxPerTick, drunk: LONGSHOT.drunk, windup: LONGSHOT.windupTicks, piss: LONGSHOT.pissPerTick, range: LONGSHOT.rangePx };
+    case 'finals':
+      return { speed: FINALS.speedPxPerTick, drunk: FINALS.drunk, windup: FINALS.windupTicks, piss: FINALS.pissPerTick, range: 0 };
     case 'chucker':
       return { speed: CHUCKER.speedPxPerTick, drunk: CHUCKER.drunk, windup: CHUCKER.windupTicks, piss: 0, range: CHUCKER.rangePx };
     default:

@@ -173,7 +173,54 @@ def chucker():
     write(os.path.join(HERE, "chucker_body.txt"), header, frames)
 
 
+def finals():
+    """The Finals Club Member: bro body in a tuxedo (black jacket, white shirt front,
+    the red stripe becomes a bow tie) holding a champagne flute instead of a cup."""
+    header, frames = read_frames(BRO)
+    header = [h.replace("# name: bro_body", "# name: finals_body") for h in header]
+    header = [h + " J=#000000 G=#c8c8c8" if h.startswith("# K=") else h for h in header]
+    for f in frames:
+        rows = f["rows"]
+        top = next((y for y, r in enumerate(rows) if "".join(r[12:16]) == "WWWW"), None)
+        # Shirt front: the column pair under the tie becomes white, the tie a bow.
+        for y, r in enumerate(rows):
+            for x, ch in enumerate(r):
+                if ch == "L" and 6 <= x <= 8 and y >= 9:
+                    r[x] = "W"
+                elif ch == "R" and x < 12:
+                    r[x] = "W" if y > 10 else "R"
+        # Black pants: shorts and legs go black, shoes stay outlined.
+        for y in range(18, 23):
+            for x, ch in enumerate(rows[y]):
+                if ch in "SB":
+                    rows[y][x] = "J"
+        tie = next((y for y, r in enumerate(rows) if "W" in r[6:9]), None)
+        if tie is not None:
+            rows[tie][6] = "R"
+            rows[tie][7] = "K"
+            rows[tie][8] = "R"
+        if top is None:
+            continue
+        for y in range(top, min(top + 6, 24)):
+            for x in range(12, 16):
+                if rows[y][x] in "WR":
+                    rows[y][x] = "."
+        # A flute: a narrow glass, gold fizz on top.
+        rows[top - 2][13] = "p" if False else "G"
+        rows[top - 1][13] = "W"
+        rows[top][12] = "W"
+        rows[top][13] = "G"
+        rows[top][14] = "W"
+        rows[top + 1][13] = "G"
+        rows[top + 2][13] = "G"
+        rows[top + 3][12] = "G"
+        rows[top + 3][13] = "G"
+        rows[top + 3][14] = "G"
+    write(os.path.join(HERE, "finals_body.txt"), header, frames)
+
+
 if __name__ == "__main__":
     longshot()
     chucker()
+    finals()
     print("wrote longshot_body.txt, chucker_body.txt")

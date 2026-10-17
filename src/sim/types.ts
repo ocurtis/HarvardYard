@@ -62,7 +62,7 @@ export interface CupState {
 
 export type BroPhase = 'walking' | 'windup' | 'pissing' | 'stagger' | 'leaving';
 
-export type BroKind = 'bro' | 'longshot' | 'chucker';
+export type BroKind = 'bro' | 'longshot' | 'chucker' | 'finals';
 
 export interface BroState {
   id: number;
@@ -122,6 +122,7 @@ export interface WaveState {
   toSpawn: number; // bros still to spawn in this wave
   longshotsToSpawn: number; // of those, how many are longshots (spawned interleaved)
   chuckersToSpawn: number; // and how many are chuckers
+  finalsToSpawn: number; // and finals club members
   nextSpawnTick: number;
   groupsToSpawn: number;
   nextTouristTick: number;

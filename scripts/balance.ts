@@ -7,7 +7,7 @@
 //   npm run balance -- 50      # 50 seeds
 //   npm run balance -- 20 digs # one policy
 
-import { BRO, CUP, LONGSHOT, STATUE, TOURIST } from '../src/config/game';
+import { BRO, CUP, FINALS, LONGSHOT, STATUE, TOURIST } from '../src/config/game';
 import { WAVES } from '../src/config/waves';
 import { createState, step } from '../src/sim/sim';
 import { Bot, POLICIES } from './bot';
@@ -25,14 +25,14 @@ interface GameLog {
   towers: number[]; // towers standing at the end of each wave
   lost: number; // groups that stormed out
   ticks: number;
-  dmg: { bro: number; longshot: number; cup: number }; // statue HP lost, by source
+  dmg: { bro: number; longshot: number; cup: number; finals: number }; // statue HP lost, by source
 }
 
 function play(policyName: string, seed: number): GameLog {
   const pol = POLICIES.find((p) => p.name === policyName)!;
   const s = createState({ seed, playerCount: 1 });
   const bot = new Bot(s, pol);
-  const log: GameLog = { seed, won: false, breakWave: WAVES.length + 1, hp: [], bank: [], towers: [], lost: 0, ticks: 0, dmg: { bro: 0, longshot: 0, cup: 0 } };
+  const log: GameLog = { seed, won: false, breakWave: WAVES.length + 1, hp: [], bank: [], towers: [], lost: 0, ticks: 0, dmg: { bro: 0, longshot: 0, cup: 0, finals: 0 } };
   let lastWave = -1;
   let waveStart = 0;
   let lossPopups = 0;
@@ -44,6 +44,7 @@ function play(policyName: string, seed: number): GameLog {
       if (b.phase !== 'pissing') continue;
       if (b.kind === 'bro') log.dmg.bro += BRO.pissPerTick;
       else if (b.kind === 'longshot') log.dmg.longshot += LONGSHOT.pissPerTick;
+      else if (b.kind === 'finals') log.dmg.finals += FINALS.pissPerTick;
     }
     if (s.cups.length < cupsBefore && hpBefore - s.statueHp >= CUP.damage - 0.5) log.dmg.cup += CUP.damage;
     // Count storm-outs by their popup (one per group).
@@ -85,8 +86,8 @@ for (const name of names) {
   console.log('   bank  ' + WAVES.map((_, i) => fmt(avg((l) => l.bank, i))).join(''));
   console.log('   twrs  ' + WAVES.map((_, i) => fmt(avg((l) => l.towers, i))).join(''));
   console.log('   alive ' + WAVES.map((_, i) => String(logs.filter((l) => l.hp.length > i).length).padStart(4)).join(''));
-  const d = logs.reduce((a, l) => ({ bro: a.bro + l.dmg.bro, longshot: a.longshot + l.dmg.longshot, cup: a.cup + l.dmg.cup }), { bro: 0, longshot: 0, cup: 0 });
-  console.log(`   damage/game: bros ${(d.bro / seeds).toFixed(0)}, longshots ${(d.longshot / seeds).toFixed(0)}, cups ${(d.cup / seeds).toFixed(0)}`);
+  const d = logs.reduce((a, l) => ({ bro: a.bro + l.dmg.bro, longshot: a.longshot + l.dmg.longshot, cup: a.cup + l.dmg.cup, finals: a.finals + l.dmg.finals }), { bro: 0, longshot: 0, cup: 0, finals: 0 });
+  console.log(`   damage/game: bros ${(d.bro / seeds).toFixed(0)}, longshots ${(d.longshot / seeds).toFixed(0)}, cups ${(d.cup / seeds).toFixed(0)}, finals ${(d.finals / seeds).toFixed(0)}`);
   console.log();
 }
 console.log(`${((performance.now() - t0) / 1000).toFixed(1)}s. Statue starts at ${STATUE.hp} HP.`);

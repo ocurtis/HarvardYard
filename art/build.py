@@ -114,7 +114,7 @@ def check_waist(path, frames):
                 hi += 1
             xs += [lo, hi]
         return (min(xs) + max(xs)) / 2 if xs else None
-    for i, fr in enumerate(frames[:4]):  # the walk cycle is frames 0-3 by convention
+    for i, fr in enumerate(frames):  # every frame: a lean is drawn with the head, never by shearing the body
         hips = center(fr[16:19])  # the hip rows, below the arms and the cup
         legs = center(fr[19:23])
         if hips is None or legs is None:
@@ -144,6 +144,7 @@ TOURIST_GROUP_COLORS = [("#fe7000", "#ca4a00"), ("#e8ea4a", "#a3a324"), ("#9600d
 COMPOSITES = {
     "longshot": ("longshot_body", "bro_heads", [("#d10f4c", "#991515")]),  # the Longshot Bro: crimson, beer funnel held high
     "chucker": ("chucker_body", "bro_heads", [("#9600dc", "#340058")]),  # the Cup Chucker: fat, purple, cradling a big cup
+    "finals": ("finals_body", "bro_heads", [("#000000", "#202040")]),  # the Finals Club Member: tuxedo
 }
 
 SHIRTS = {

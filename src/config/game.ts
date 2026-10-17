@@ -66,6 +66,16 @@ export const CHUCKER = {
   firstWave: 5,
 };
 
+// The Finals Club Member: tuxedo, fast, and mega tough. A regular pisser in
+// every other way: walks all the way in and goes point-blank. Rare, late.
+export const FINALS = {
+  speedPxPerTick: 1.0, // nearly the player's speed
+  drunk: 160, // ~2.7 bros of sobering
+  windupTicks: 45,
+  pissPerTick: 9 / 60, // a heavy stream
+  firstWave: 8,
+};
+
 export const CUP = {
   speedPxPerTick: 0.44, // about a third of the player's run; ~7s from a far gate
   damage: 15, // statue HP on landing
@@ -75,7 +85,7 @@ export const CUP = {
 
 // What a bro pays when he sobers out. A dollar, whoever he is: tourists are the
 // economy, kills are pocket change.
-export const BOUNTY: Record<'bro' | 'longshot' | 'chucker', number> = { bro: 1, longshot: 1, chucker: 1 };
+export const BOUNTY: Record<'bro' | 'longshot' | 'chucker' | 'finals', number> = { bro: 1, longshot: 1, chucker: 1, finals: 1 };
 
 export const SHOUT = {
   rangePx: 30, // just under two tiles
