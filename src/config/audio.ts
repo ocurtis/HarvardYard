@@ -58,5 +58,9 @@ export const SFX_LOOPS = {
   stream: { key: 'voice_pissing_on_statue', volume: 0.45 },
   cupFlying: { key: 'voice_cup_flying', volume: 0.4 },
 };
+// Per-key gain on top of SFX_VOLUME (1 = unchanged).
+export const SFX_GAIN: Record<string, number> = {
+  voice_tourist_flash: 0.4,
+};
 // Minimum ms between plays of the same one-shot key, so a crowd doesn't stack it.
 export const SFX_MIN_GAP_MS = 70;

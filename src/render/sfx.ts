@@ -4,7 +4,7 @@
 // ticks. Missing files fail quietly.
 
 import Phaser from 'phaser';
-import { SFX_LOOPS, SFX_MIN_GAP_MS, SFX_ONESHOT, SFX_VOLUME } from '../config/audio';
+import { SFX_GAIN, SFX_LOOPS, SFX_MIN_GAP_MS, SFX_ONESHOT, SFX_VOLUME } from '../config/audio';
 import type { GameState, SimEvent } from '../sim/types';
 
 export class Sfx {
@@ -39,7 +39,7 @@ export class Sfx {
     this.lastPlayed.set(key, now);
     if (!this.scene.cache.audio.exists(key) || this.scene.sound.locked) return;
     try {
-      this.scene.sound.play(key, { volume: SFX_VOLUME });
+      this.scene.sound.play(key, { volume: SFX_VOLUME * (SFX_GAIN[key] ?? 1) });
     } catch {
       /* audio unavailable */
     }
