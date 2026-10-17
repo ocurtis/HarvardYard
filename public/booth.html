@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yard Voice Booth</title>
+<style>
+  :root {
+    --bg: #f6f3ea; --ink: #1d1b16; --muted: #6b665a; --card: #fffdf7; --line: #e2dccb;
+    --accent: #b5121b; --accent-ink: #fff; --ok: #1e7f4f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141311; --ink: #f1ece0; --muted: #a39d8e; --card: #1f1d19; --line: #332f28; --accent: #e03c32; --ok: #58c28a; }
+  }
+  :root[data-theme="dark"] { --bg: #141311; --ink: #f1ece0; --muted: #a39d8e; --card: #1f1d19; --line: #332f28; --accent: #e03c32; --ok: #58c28a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 ui-monospace, "SF Mono", Menlo, monospace; padding: 24px 16px 48px; }
+  main { max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .02em; }
+  p.sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  .booth { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 10px 14px; border-radius: 8px; cursor: pointer; }
+  button.rec { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); min-width: 140px; }
+  button.rec[data-on="1"] { animation: pulse 1s infinite; }
+  button:disabled { opacity: .5; cursor: default; }
+  @keyframes pulse { 50% { opacity: .6; } }
+  input[type=text] { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); flex: 1; min-width: 160px; }
+  #meter { height: 8px; background: var(--line); border-radius: 4px; margin: 14px 0 6px; overflow: hidden; }
+  #meter i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .05s; }
+  ul.takes { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; }
+  ul.takes li { display: flex; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+  ul.takes li .name { flex: 1; }
+  ul.takes li .state { color: var(--muted); }
+  ul.takes li .state.sent { color: var(--ok); }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 12px; }
+  .lines { margin: 14px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Yard Voice Booth</h1>
+  <p class="sub">Record a take, name it, save it. Saved WAVs go in <code>art/audio/voice/</code>; push them and Claude chip-crushes them.</p>
+  <div class="booth">
+    <div class="row">
+      <button class="rec" id="rec">● Record</button>
+      <input type="text" id="name" placeholder="take name (shout, ugh, woo, splat)" value="shout">
+    </div>
+    <div id="meter"><i></i></div>
+    <div class="hint" id="status">Allow the microphone when asked. Each take: one sound, under a second or two.</div>
+    <ol class="lines">
+      <li><b>shout</b>: the player yelling at a bro ("HEY!")</li>
+      <li><b>ugh</b>: a bro sobering up and giving up</li>
+      <li><b>woo</b>: a frat "wooo" for the wind-up</li>
+      <li><b>splat</b>: mouth splat for the cup landing</li>
+      <li>anything else you think belongs</li>
+    </ol>
+  </div>
+  <ul class="takes" id="takes"></ul>
+</main>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const recBtn = $('#rec'), nameEl = $('#name'), meter = $('#meter i'), status = $('#status'), takesEl = $('#takes');
+  let stream = null, recorder = null, chunks = [], analyser = null, raf = 0;
+  const takes = [];
+
+
+  async function ensureStream() {
+    if (stream) return stream;
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const ctx = new AudioContext();
+    const src = ctx.createMediaStreamSource(stream);
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    src.connect(analyser);
+    const buf = new Uint8Array(analyser.fftSize);
+    const tick = () => {
+      analyser.getByteTimeDomainData(buf);
+      let peak = 0;
+      for (const v of buf) peak = Math.max(peak, Math.abs(v - 128) / 128);
+      meter.style.width = Math.min(100, peak * 140) + '%';
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return stream;
+  }
+
+  recBtn.addEventListener('click', async () => {
+    if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
+    try { await ensureStream(); } catch (e) {
+      status.textContent = 'Microphone blocked: allow it for localhost in the browser\'s site settings and try again.';
+      return;
+    }
+    chunks = [];
+    recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    recorder.onstop = onStop;
+    recorder.start();
+    recBtn.dataset.on = '1';
+    recBtn.textContent = '■ Stop';
+    status.textContent = 'Recording… tap Stop when done.';
+  });
+
+  async function onStop() {
+    recBtn.dataset.on = '0';
+    recBtn.textContent = '● Record';
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+    status.textContent = 'Processing…';
+    try {
+      const wav = await toWav(blob);
+      const name = (nameEl.value.trim() || 'take').replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
+      const take = { name: uniqueName(name), wav, url: URL.createObjectURL(new Blob([wav], { type: 'audio/wav' })), state: 'ready' };
+      takes.unshift(take);
+      render();
+      status.textContent = 'Listen back, then Save. Move the WAV from Downloads into art/audio/voice/.';
+      nameEl.select();
+    } catch (e) {
+      status.textContent = 'Could not decode that recording: ' + (e && e.message ? e.message : e);
+    }
+  }
+
+  function uniqueName(base) {
+    let n = base, i = 2;
+    while (takes.some((t) => t.name === n)) n = base + '_' + i++;
+    return n;
+  }
+
+  // Decode whatever the browser recorded and write 16 kHz mono 16-bit PCM WAV.
+  async function toWav(blob) {
+    const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 1, 16000);
+    const decoded = await new AudioContext().decodeAudioData(await blob.arrayBuffer());
+    const sr = 16000;
+    const len = Math.ceil(decoded.duration * sr);
+    const off = new OfflineAudioContext(1, len, sr);
+    const src = off.createBufferSource();
+    src.buffer = decoded;
+    src.connect(off.destination);
+    src.start();
+    const out = await off.startRendering();
+    const pcm = out.getChannelData(0);
+    // Trim silence at both ends (below -40 dB), keep 30 ms of air.
+    let s = 0, e = pcm.length - 1;
+    const thr = 0.01;
+    while (s < e && Math.abs(pcm[s]) < thr) s++;
+    while (e > s && Math.abs(pcm[e]) < thr) e--;
+    s = Math.max(0, s - sr * 0.03 | 0); e = Math.min(pcm.length - 1, e + sr * 0.03 | 0);
+    const n = e - s + 1;
+    const buf = new ArrayBuffer(44 + n * 2);
+    const v = new DataView(buf);
+    const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    w(36, 'data'); v.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[s + i])) * 32767, true);
+    void ctx;
+    return buf;
+  }
+
+  function save(take) {
+    const a = document.createElement('a');
+    a.href = take.url;
+    a.download = take.name + '.wav';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    take.state = 'saved';
+    render();
+  }
+
+  function render() {
+    takesEl.innerHTML = '';
+    for (const t of takes) {
+      const li = document.createElement('li');
+      const name = document.createElement('span'); name.className = 'name'; name.textContent = t.name;
+      const play = document.createElement('button'); play.textContent = '▶';
+      play.onclick = () => { const a = new Audio(t.url); a.play(); };
+      const state = document.createElement('span'); state.className = 'state' + (t.state === 'saved' ? ' sent' : ''); state.textContent = t.state === 'saved' ? 'saved ✓' : t.state;
+      li.append(play, name, state);
+      const btn = document.createElement('button'); btn.textContent = t.state === 'saved' ? 'Save again' : 'Save'; btn.onclick = () => save(t); li.append(btn);
+      takesEl.append(li);
+    }
+  }
+})();
+</script>
+</body>
+</html>
