@@ -479,7 +479,12 @@ export class YardScene extends Phaser.Scene {
           v = { sprite, anim: '', cooldown: t.cooldown };
           this.towerSprites.set(t.id, v);
         }
-        v.sprite.setPosition(c.x, c.y).setDepth(c.y);
+        // A sheet wider than a tile (the Amp: the man on his tile, the stack a tile
+        // over) is anchored on its left tile; the stack goes on the wind side.
+        const wide = (this.atlas[t.kind]?.w ?? TILE) > TILE;
+        const flip = wide && t.kind === 'amp' && t.facing.x < 0;
+        v.sprite.setOrigin(wide ? TILE / 2 / (this.atlas[t.kind]!.w) : 0.5, 1).setFlipX(flip);
+        v.sprite.setPosition(flip ? c.x - TILE : c.x, c.y).setDepth(c.y); // flip mirrors within the frame box, so shift the box a tile west
         let anim: string;
         if (t.kind === 'dig') {
           // A bone just left when the cooldown jumps up; play the fire frames once, then idle.
