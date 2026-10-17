@@ -12,7 +12,7 @@ OUT = os.path.join(os.path.dirname(__file__), "sprites", "tiles.txt")
 KEY = {
     "g": "#63b31d",  # grass
     "l": "#a4f022",  # grass light dot
-    "d": "#008456",  # grass dark dot
+    "d": "#008456",  # grass dark
     "y": "#707070",  # path: asphalt
     "o": "#202040",  # path speck dark / rim
     "e": "#c8c8c8",  # path speck light
@@ -47,15 +47,21 @@ def put(g, x, y, ch):
 INNER = range(1, 15)
 
 
-def grass(seed, dots):
+def grass(seed, dots=0):
+    """Grass is a dense three-tone mosaic (Owen's reference): mostly mid green, with
+    light and dark pixels and short 2px runs scattered everywhere, including the
+    edges. Uniform noise has no seams; a flat fill with dots has nothing but."""
     rng = random.Random(seed)
     g = grid("g")
-    for _ in range(dots):
-        x, y = rng.choice(INNER), rng.choice(INNER)
-        put(g, x, y, "l")
-        if rng.random() < 0.35 and x + 1 in INNER:
-            put(g, x + 1, y, "l")
-    put(g, rng.choice(INNER), rng.choice(INNER), "d")
+    for y in range(16):
+        x = 0
+        while x < 16:
+            r = rng.random()
+            run = 2 if rng.random() < 0.35 else 1
+            ch = "l" if r < 0.26 else ("d" if r < 0.44 else "g")
+            for i in range(run):
+                put(g, x + i, y, ch)
+            x += run
     return g
 
 
