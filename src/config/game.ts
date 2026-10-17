@@ -17,9 +17,10 @@ export const PLAYER_COUNT_MAX = 4;
 
 // The ghost of John Harvard: a soft halo under him, breathing. Render-only.
 export const GHOST = {
-  glowRadiusPx: 11,
-  glowAlpha: 0.22,
+  glowRadiusPx: 10,
+  glowAlpha: 0.16,
   glowPulse: 0.08, // added alpha at the top of the breath
+  rimAlpha: 0.45, // a 1px cyan rim so the soft ellipse has an edge among the pixels
   glowPeriodMs: 1400,
   spriteAlpha: 0.92,
 };

@@ -55,6 +55,7 @@ interface TouristView {
 export class YardScene extends Phaser.Scene {
   private players: Phaser.GameObjects.Rectangle[] = [];
   private facingDots: Phaser.GameObjects.Rectangle[] = [];
+  private halo!: Phaser.GameObjects.Graphics;
   private playerSprites: Phaser.GameObjects.Sprite[] = [];
   private playerAnim: string[] = [];
   private playerFlip: boolean[] = [];
@@ -104,6 +105,8 @@ export class YardScene extends Phaser.Scene {
     this.world.add(this.cursor);
     this.fx = this.add.graphics().setDepth(-1);
     this.world.add(this.fx);
+    this.halo = this.add.graphics().setDepth(-1.5).setBlendMode(Phaser.BlendModes.ADD);
+    this.world.add(this.halo);
     // Overhead layer: the longshot's arc flies over everyone, including the player.
     this.overhead = this.add.graphics().setDepth(9000);
     this.world.add(this.overhead);
@@ -554,15 +557,20 @@ export class YardScene extends Phaser.Scene {
     g.clear();
     this.overhead.clear();
     if (this.playerSprites.length > 0) {
-      // Ghost halo: a mint pool of light under the player, breathing slowly.
+      // Ghost halo: a pool of light under the player, breathing slowly. Additive so it
+      // brightens grass and asphalt alike; a thin cyan rim gives the soft shape an edge.
       const breath = (Math.sin((this.time.now / GHOST.glowPeriodMs) * Math.PI * 2) + 1) / 2;
+      const a = GHOST.glowAlpha + GHOST.glowPulse * breath;
       for (const p of players) {
         const gx = Math.round(p.pos.x);
         const gy = Math.round(p.pos.y) + TILE / 2 - 2;
-        this.fx.fillStyle(PALETTE.ghostGlow, GHOST.glowAlpha + GHOST.glowPulse * breath);
-        this.fx.fillEllipse(gx, gy, GHOST.glowRadiusPx * 2, GHOST.glowRadiusPx);
-        this.fx.fillStyle(PALETTE.ghostGlow, (GHOST.glowAlpha + GHOST.glowPulse * breath) * 0.6);
-        this.fx.fillEllipse(gx, gy, GHOST.glowRadiusPx * 3, GHOST.glowRadiusPx * 1.5);
+        this.halo.clear();
+        this.halo.fillStyle(PALETTE.ghostGlow, a * 0.6);
+        this.halo.fillEllipse(gx, gy, GHOST.glowRadiusPx * 3, GHOST.glowRadiusPx * 1.5);
+        this.halo.fillStyle(PALETTE.ghostGlow, a);
+        this.halo.fillEllipse(gx, gy, GHOST.glowRadiusPx * 2, GHOST.glowRadiusPx);
+        this.halo.lineStyle(1, PALETTE.ghostRim, GHOST.rimAlpha);
+        this.halo.strokeEllipse(gx, gy, GHOST.glowRadiusPx * 2, GHOST.glowRadiusPx);
       }
     }
     for (const p of players) {
