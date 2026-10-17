@@ -33,6 +33,12 @@
   ul.takes li .name { flex: 1; }
   .hint { color: var(--muted); font-size: 13px; margin-top: 12px; }
   .lines { margin: 14px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  h2 { font-size: 15px; margin: 24px 0 8px; letter-spacing: .02em; }
+  .keys { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; user-select: none; touch-action: manipulation; }
+  .key { height: 64px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); font-size: 11px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; cursor: pointer; }
+  .key.black { background: var(--ink); color: var(--bg); height: 44px; align-self: start; }
+  .key.down { background: var(--accent); color: #fff; }
+  .log { font-size: 13px; color: var(--muted); margin-top: 8px; min-height: 1.4em; word-break: break-all; }
 </style>
 </head>
 <body>
@@ -56,6 +62,19 @@
     </ol>
   </div>
   <ul class="takes" id="takes"></ul>
+
+  <h2>Tune pad</h2>
+  <div class="booth">
+    <div class="row">
+      <input type="text" id="tuneName" placeholder="tune name" value="fight_song">
+      <button id="tuneStart">Start</button>
+      <button id="tuneStop" disabled>Stop & push</button>
+      <button id="tuneClear">Clear</button>
+    </div>
+    <div class="hint">Tap the melody in rhythm; timing is captured and snapped to the beat later. Start the clock, tap, then Stop &amp; push. Letters are white keys from C3 (left) to B4 (right).</div>
+    <div class="keys" id="keys"></div>
+    <div class="log" id="tuneLog"></div>
+  </div>
 </main>
 <script>
 (() => {
@@ -226,6 +245,47 @@
       takesEl.append(li);
     }
   }
+
+  // ---- tune pad: taps become {midi, t} events pushed as <name>.taps.json
+  const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const keysEl = $('#keys'), tuneLog = $('#tuneLog');
+  let taps = [], clock0 = 0, running = false, actx = null;
+  for (let midi = 48; midi <= 71; midi++) {
+    const name = NAMES[midi % 12];
+    const k = document.createElement('div');
+    k.className = 'key' + (name.includes('#') ? ' black' : '');
+    k.textContent = name + (midi / 12 - 1 | 0);
+    k.dataset.midi = midi;
+    const down = (e) => { e.preventDefault(); tap(midi, k); };
+    k.addEventListener('pointerdown', down);
+    keysEl.append(k);
+  }
+  function beep(midi) {
+    actx = actx || new AudioContext();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'square'; o.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
+    g.gain.setValueAtTime(0.08, actx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.25);
+    o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + 0.25);
+  }
+  function tap(midi, k) {
+    beep(midi);
+    k.classList.add('down'); setTimeout(() => k.classList.remove('down'), 120);
+    if (!running) return;
+    taps.push({ midi, t: (performance.now() - clock0) / 1000 });
+    tuneLog.textContent = taps.map((x) => NAMES[x.midi % 12]).join(' ');
+  }
+  $('#tuneStart').onclick = () => { taps = []; clock0 = performance.now(); running = true; $('#tuneStop').disabled = false; tuneLog.textContent = 'recording taps…'; };
+  $('#tuneClear').onclick = () => { taps = []; running = false; $('#tuneStop').disabled = true; tuneLog.textContent = ''; };
+  $('#tuneStop').onclick = async () => {
+    running = false; $('#tuneStop').disabled = true;
+    if (!taps.length) { tuneLog.textContent = 'no taps'; return; }
+    const name = clean($('#tuneName').value) || 'tune';
+    const body = JSON.stringify({ name, taps });
+    tuneLog.textContent = 'pushing ' + taps.length + ' taps…';
+    const r = await fetch('/__booth/tune?name=' + encodeURIComponent(name), { method: 'POST', body });
+    const j = await r.json();
+    tuneLog.textContent = j.pushed ? name + '.taps.json pushed ✓ (' + taps.length + ' notes)' : 'saved; push failed: ' + j.error;
+  };
 
   refresh();
 })();

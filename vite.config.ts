@@ -80,6 +80,11 @@ function voiceBooth(): Plugin {
             return json(res, { pushed: false, error: describe(e) });
           }
         }
+        if (url.pathname === '/tune') {
+          const name = clean(url.searchParams.get('name')) || 'tune';
+          writeFileSync(join(dir, `${name}.taps.json`), await body(req));
+          return json(res, { saved: name, ...(await commitPush(`Tune taps: ${name}`)) });
+        }
         if (url.pathname === '/save') {
           const name = clean(url.searchParams.get('name')) || 'take';
           writeFileSync(join(dir, `${name}.wav`), await body(req));
