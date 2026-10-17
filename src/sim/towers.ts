@@ -7,6 +7,7 @@
 import { TILE } from '../config/game';
 import { BONE, SELF_UPGRADE, SPRINKLER, TOWERS, type SelfStat, type TowerKind } from '../config/towers';
 import { discipline, sober, tileCenter } from './bros';
+import { emit } from './events';
 import { isBuildable, tileAt } from './map';
 import type { BoneState, GameState, PlayerState, TowerState, Vec } from './types';
 
@@ -74,6 +75,7 @@ function updateDig(state: GameState, t: TowerState): void {
   const target = nearestBro(state, c, lvl.rangePx);
   if (!target) return;
   state.bones.push({ id: state.nextEntityId++, pos: { ...c }, target, sober: lvl.sober });
+  emit(state, { type: 'boneThrow', pos: { ...c } });
   t.cooldown = lvl.fireTicks;
 }
 
@@ -107,7 +109,8 @@ function updateBones(state: GameState): void {
     const d = Math.hypot(dx, dy);
     if (d <= BONE.speedPxPerTick) {
       sober(target, bone.sober);
-      discipline(target);
+      emit(state, { type: 'boneHit', kind: target.kind, pos: { ...target.pos } });
+      discipline(state, target, 'bone');
       continue;
     }
     bone.pos.x += (dx / d) * BONE.speedPxPerTick;

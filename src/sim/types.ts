@@ -129,6 +129,35 @@ export interface WaveState {
   active: boolean; // true from call until every bro of the wave is gone
 }
 
+// One-shot things that happened this tick, for the audio layer (and tests). Plain
+// data; the sim prunes anything older than EVENT_KEEP_TICKS. Render reads, never clears.
+export type SimEventType =
+  | 'brochure' // player handed a guide a brochure
+  | 'paid' // a group paid at its destination
+  | 'stormOut' // a group gave up and left
+  | 'bounty' // a bro sobered out (any kind)
+  | 'spawn' // a bro entered the map (kind in `kind`)
+  | 'windup' // a bro started winding up
+  | 'stagger' // a bro was interrupted (by shout or bone); `by` says which
+  | 'boneThrow' // a dig fired
+  | 'boneHit' // a bone landed
+  | 'cupThrow'
+  | 'cupCaught'
+  | 'cupLanded'
+  | 'waveStart'
+  | 'statueLow' // crossed below the low-HP line
+  | 'won'
+  | 'lost';
+
+export interface SimEvent {
+  type: SimEventType;
+  tick: number;
+  pos?: Vec;
+  kind?: BroKind;
+  by?: 'shout' | 'bone' | 'sprinkler';
+  amount?: number;
+}
+
 export type GamePhase = 'playing' | 'lost' | 'won';
 
 export interface GameState {
@@ -158,6 +187,7 @@ export interface GameState {
   money: number;
   notice: { text: string; tick: number } | null; // last shop result, for the HUD
   popups: Popup[];
+  events: SimEvent[];
   wave: WaveState;
 }
 

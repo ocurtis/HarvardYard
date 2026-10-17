@@ -2,14 +2,15 @@
 // Advance it only through step(). Mutates state in place for speed;
 // snapshot() gives you an exact copy.
 
-import { GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, POPUP_TICKS, STATUE, TILE } from '../config/game';
+import { EVENT_KEEP_TICKS, GRID_H, GRID_W, PLAYER, PLAYER_COUNT_MAX, POPUP_TICKS, STATUE, STATUE_LOW_HP, TILE } from '../config/game';
 import { BUILDINGS, YARD_MAP } from '../config/maps/yard';
 import { updateBros, updateCups } from './bros';
 import { applyShout } from './shout';
 import { blocksMovement, parseMap, tileAt } from './map';
 import { computeDistField, computeDistToExit, computeDistToFoot, computeDistToStatue } from './path';
 import { seedRng } from './rng';
-import type { Command, GameState, MapData, PlayerState, SimConfig, Vec } from './types';
+import type { Command, GamePhase, GameState, MapData, PlayerState, SimConfig, Vec } from './types';
+import { emit } from './events';
 import { build, canBuild, speedAdd, updateTowers, upgradeSelf, upgradeTower } from './towers';
 import { updateTourists } from './tourists';
 import { startWave, updateWave } from './waves';
@@ -52,6 +53,7 @@ export function createState(config: SimConfig): GameState {
     money: 0,
     notice: null,
     popups: [],
+    events: [],
     wave: { index: -1, toSpawn: 0, longshotsToSpawn: 0, chuckersToSpawn: 0, finalsToSpawn: 0, nextSpawnTick: 0, groupsToSpawn: 0, nextTouristTick: 0, active: false },
   };
 }
@@ -76,7 +78,11 @@ export function step(state: GameState, commands: Command[]): void {
     const player = state.players[cmd.playerId];
     if (!player) continue;
     if (cmd.type === 'move') applyMove(state.map, player, cmd.dx, cmd.dy);
-    if (cmd.type === 'startWave') startWave(state);
+    if (cmd.type === 'startWave') {
+      const before = state.wave.index;
+      startWave(state);
+      if (state.wave.index !== before) emit(state, { type: 'waveStart' });
+    }
     if (cmd.type === 'shout') applyShout(state, player);
     if (cmd.type === 'build') {
       const r = canBuild(state, player, cmd.kind);
@@ -94,13 +100,19 @@ export function step(state: GameState, commands: Command[]): void {
   }
 
   if (state.phase === 'playing') {
+    const hpBefore = state.statueHp;
     updateWave(state);
     updateBros(state);
     updateCups(state);
     updateTourists(state);
     updateTowers(state);
+    if (hpBefore >= STATUE_LOW_HP && state.statueHp < STATUE_LOW_HP) emit(state, { type: 'statueLow' });
+    const after = state.phase as GamePhase;
+    if (after === 'lost') emit(state, { type: 'lost' });
+    if (after === 'won') emit(state, { type: 'won' });
     state.popups = state.popups.filter((p) => state.tick - p.tick < POPUP_TICKS);
   }
+  state.events = state.events.filter((e) => state.tick - e.tick < EVENT_KEEP_TICKS);
 
   state.tick++;
 }

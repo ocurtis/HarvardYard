@@ -7,6 +7,7 @@
 import { BOUNTY, BRO, CHUCKER, CUP, FINALS, LONGSHOT, TILE } from '../config/game';
 import { drunkMultiplier } from '../config/waves';
 import { nextTileToward } from './path';
+import { emit } from './events';
 import { nextInt } from './rng';
 import type { BroKind, BroState, GameState, Vec } from './types';
 
@@ -57,6 +58,7 @@ export function spawnBro(state: GameState, kind: BroKind = 'bro'): BroState {
     variant: nextInt(state, BRO.variants),
   };
   state.bros.push(bro);
+  emit(state, { type: 'spawn', kind, pos: { ...bro.pos } });
   return bro;
 }
 
@@ -72,6 +74,7 @@ function updateBro(state: GameState, b: BroState): void {
     const bounty = BOUNTY[b.kind];
     state.money += bounty;
     state.popups.push({ id: state.nextEntityId++, text: `+$${bounty}`, pos: { ...b.pos }, tick: state.tick, kind: 'gain' });
+    emit(state, { type: 'bounty', kind: b.kind, pos: { ...b.pos } });
     return;
   }
 
@@ -90,6 +93,7 @@ function updateBro(state: GameState, b: BroState): void {
           b.phase = 'windup';
           b.timer = stats(b.kind).windup;
           b.facing = faceStatue(state, b.tile);
+          emit(state, { type: 'windup', kind: b.kind, pos: { ...b.pos } });
         } else {
           b.facing = { x: Math.sign(next.x - b.tile.x), y: Math.sign(next.y - b.tile.y) };
           b.tile = next;
@@ -114,6 +118,7 @@ function updateBro(state: GameState, b: BroState): void {
         // One throw, then back to winding up for the next one.
         const to = statueCenter(state);
         state.cups.push({ id: state.nextEntityId++, from: { ...b.pos }, to, pos: { ...b.pos }, progress: 0 });
+        emit(state, { type: 'cupThrow', pos: { ...b.pos } });
         b.phase = 'windup';
         b.timer = CHUCKER.reloadTicks;
         return;
@@ -133,6 +138,7 @@ function updateBro(state: GameState, b: BroState): void {
         if (atStatue) {
           b.phase = 'windup';
           b.timer = stats(b.kind).windup;
+          emit(state, { type: 'windup', kind: b.kind, pos: { ...b.pos } });
         } else {
           b.phase = 'walking';
         }
@@ -155,11 +161,13 @@ export function updateCups(state: GameState): void {
     const caught = state.players.some((p) => Math.hypot(p.pos.x - c.pos.x, p.pos.y - c.pos.y) <= CUP.catchRadiusPx);
     if (caught) {
       state.popups.push({ id: state.nextEntityId++, text: 'caught!', pos: { ...c.pos }, tick: state.tick, kind: 'info' });
+      emit(state, { type: 'cupCaught', pos: { ...c.pos } });
       continue;
     }
     if (c.progress >= 1) {
       state.statueHp = Math.max(0, state.statueHp - CUP.damage);
       state.popups.push({ id: state.nextEntityId++, text: `-${CUP.damage}`, pos: { ...c.pos }, tick: state.tick, kind: 'loss' });
+      emit(state, { type: 'cupLanded', pos: { ...c.pos } });
       if (state.statueHp <= 0 && state.phase === 'playing') state.phase = 'lost';
       continue;
     }
@@ -175,12 +183,13 @@ export function sober(b: BroState, amount: number): void {
 
 // The shout's effect on him: a walker slows but keeps going; a bro at the
 // statue (winding up or pissing) is interrupted and has to start over.
-export function discipline(b: BroState): void {
+export function discipline(state: GameState, b: BroState, by: 'shout' | 'bone' | 'sprinkler'): void {
   if (b.phase === 'leaving') return;
   if (b.phase === 'walking') {
     b.slow = BRO.slowTicks;
     return;
   }
+  if (b.phase !== 'stagger') emit(state, { type: 'stagger', kind: b.kind, pos: { ...b.pos }, by });
   b.phase = 'stagger';
   b.timer = BRO.staggerTicks;
 }

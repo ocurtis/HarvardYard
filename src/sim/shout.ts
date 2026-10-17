@@ -3,6 +3,7 @@
 
 import { SHOUT } from '../config/game';
 import { discipline, sober } from './bros';
+import { emit } from './events';
 import { spook } from './tourists';
 import { shoutMult, shoutRangeAdd } from './towers';
 import type { BroState, GameState, PlayerState, Vec } from './types';
@@ -14,13 +15,14 @@ export function applyShout(state: GameState, player: PlayerState): void {
   for (const b of state.bros) {
     if (inCone(player.pos, player.facing, b.pos, range)) {
       sober(b, amount);
-      discipline(b);
+      discipline(state, b, 'shout');
     }
   }
   // A cup in the cone is shouted out of the air.
   state.cups = state.cups.filter((c) => {
     if (!inCone(player.pos, player.facing, c.pos, range)) return true;
     state.popups.push({ id: state.nextEntityId++, text: 'caught!', pos: { ...c.pos }, tick: state.tick, kind: 'info' });
+    emit(state, { type: 'cupCaught', pos: { ...c.pos } });
     return false;
   });
   // Tourists in the cone get spooked: dollars off their group's value. This

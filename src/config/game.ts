@@ -126,4 +126,6 @@ export const TOURIST = {
   photoTicks: 24, // how long the photo pose lasts; the flash is the first third
 };
 
-export const POPUP_TICKS = 75; // how long a floating "+$40" lives
+export const POPUP_TICKS = 75;
+export const EVENT_KEEP_TICKS = 12; // events older than this are pruned; the renderer reads them within a frame or two
+export const STATUE_LOW_HP = 50; // the 'statueLow' event fires crossing below this // how long a floating "+$40" lives

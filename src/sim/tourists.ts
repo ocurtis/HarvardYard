@@ -8,6 +8,7 @@
 import { TILE, TOURIST } from '../config/game';
 import { SPRINKLER } from '../config/towers';
 import { tileCenter } from './bros';
+import { emit } from './events';
 import { nextTileToward } from './path';
 import { nextInt } from './rng';
 import type { GameState, Popup, TouristState, Vec } from './types';
@@ -123,6 +124,7 @@ export function updateTourists(state: GameState): void {
     for (const p of state.players) {
       if (Math.hypot(p.pos.x - t.pos.x, p.pos.y - t.pos.y) <= TOURIST.touchRadiusPx) {
         t.phase = 'pamphleted';
+        emit(state, { type: 'brochure', pos: { ...t.pos } });
         const g = state.groups[t.group];
         if (g) {
           g.locked = true;
@@ -175,6 +177,7 @@ function updateGuide(state: GameState, t: TouristState): boolean {
         // Storm out. The penalty pops where the guide stands.
         state.money = Math.max(0, state.money - TOURIST.stormOutPenalty);
         pushPopup(state, `-$${TOURIST.stormOutPenalty}`, t.pos, 'loss');
+        emit(state, { type: 'stormOut', pos: { ...t.pos } });
         t.phase = 'leaving';
       }
       return true;
@@ -187,6 +190,7 @@ function updateGuide(state: GameState, t: TouristState): boolean {
         const pay = groupValue(state, t.group);
         state.money += pay;
         if (pay > 0) pushPopup(state, `+$${pay}`, t.pos, 'gain');
+        emit(state, { type: 'paid', pos: { ...t.pos }, amount: pay });
         t.phase = 'posing';
         g.poseTimer = TOURIST.poseTicks;
         return true;
