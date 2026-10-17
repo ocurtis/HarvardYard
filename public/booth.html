@@ -42,6 +42,7 @@
   <div class="booth">
     <div class="row">
       <button class="rec" id="rec">● Record</button>
+      <button id="push" title="Pull, then push everything committed">Push now</button>
       <input type="text" id="name" placeholder="take name (shout, ugh, woo, splat)" value="shout">
     </div>
     <div id="meter"><i></i></div>
@@ -111,6 +112,13 @@
   }
 
   recBtn.addEventListener('click', () => startRecording(null));
+  $('#push').addEventListener('click', async () => {
+    status.textContent = 'Pulling and pushing…';
+    const r = await fetch('/__booth/push', { method: 'POST' });
+    const j = await r.json();
+    status.textContent = j.pushed ? 'Everything pushed to GitHub ✓' : 'Push failed: ' + j.error;
+    await refresh();
+  });
 
   async function onStop() {
     recBtn.dataset.on = '0';

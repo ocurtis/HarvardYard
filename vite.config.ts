@@ -19,14 +19,25 @@ function voiceBooth(): Plugin {
       const dir = join(root, 'art', 'audio', 'voice');
       const clean = (v: string | null) => (v ?? '').replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
       const git = async (args: string[]) => run('git', args, { cwd: root });
+      const describe = (e: unknown) => {
+        const err = e as { stderr?: string; message?: string };
+        return (err.stderr || err.message || String(e)).trim().split('\n').slice(-3).join(' ');
+      };
+      const push = async () => {
+        // Pull first: the branch is usually behind after Claude pushes, and git refuses
+        // a non-fast-forward push. Rebase keeps the takes as their own commits.
+        await git(['pull', '--rebase', '--autostash']);
+        await git(['push']);
+      };
       const commitPush = async (msg: string) => {
         try {
           await git(['add', '-A', 'art/audio/voice']);
-          await git(['commit', '-m', msg]);
-          await git(['push']);
+          const status = (await git(['status', '--porcelain', 'art/audio/voice'])).stdout.trim();
+          if (status) await git(['commit', '-m', msg]);
+          await push();
           return { pushed: true, error: '' };
         } catch (e) {
-          return { pushed: false, error: e instanceof Error ? e.message : String(e) };
+          return { pushed: false, error: describe(e) };
         }
       };
       const json = (res: ServerResponse, body: unknown) => {
@@ -60,6 +71,14 @@ function voiceBooth(): Plugin {
         if (req.method !== 'POST') {
           res.statusCode = 405;
           return res.end();
+        }
+        if (url.pathname === '/push') {
+          try {
+            await push();
+            return json(res, { pushed: true, error: '' });
+          } catch (e) {
+            return json(res, { pushed: false, error: describe(e) });
+          }
         }
         if (url.pathname === '/save') {
           const name = clean(url.searchParams.get('name')) || 'take';
