@@ -1,0 +1,353 @@
+{
+ "bpm": 128,
+ "notes": [
+  {
+   "note": "E4",
+   "midi": 64,
+   "start": 7.5,
+   "len": 0.5
+  },
+  {
+   "note": "D3",
+   "midi": 50,
+   "start": 10.5,
+   "len": 0.5
+  },
+  {
+   "note": "D3",
+   "midi": 50,
+   "start": 11.0,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 11.5,
+   "len": 0.5
+  },
+  {
+   "note": "A4",
+   "midi": 69,
+   "start": 11.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 12.5,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 13.5,
+   "len": 0.5
+  },
+  {
+   "note": "F4",
+   "midi": 65,
+   "start": 14.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 16.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 16.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 17.0,
+   "len": 0.5
+  },
+  {
+   "note": "A#3",
+   "midi": 58,
+   "start": 18.5,
+   "len": 0.5
+  },
+  {
+   "note": "F4",
+   "midi": 65,
+   "start": 20.0,
+   "len": 0.5
+  },
+  {
+   "note": "E4",
+   "midi": 64,
+   "start": 22.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 23.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 23.5,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 24.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 24.5,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 25.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 26.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 26.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 27.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 27.5,
+   "len": 1.0
+  },
+  {
+   "note": "A#3",
+   "midi": 58,
+   "start": 28.5,
+   "len": 0.5
+  },
+  {
+   "note": "D#4",
+   "midi": 63,
+   "start": 29.5,
+   "len": 0.5
+  },
+  {
+   "note": "F4",
+   "midi": 65,
+   "start": 30.5,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 32.5,
+   "len": 0.5
+  },
+  {
+   "note": "D#3",
+   "midi": 51,
+   "start": 34.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 35.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 35.5,
+   "len": 0.5
+  },
+  {
+   "note": "C4",
+   "midi": 60,
+   "start": 37.0,
+   "len": 0.5
+  },
+  {
+   "note": "C4",
+   "midi": 60,
+   "start": 38.0,
+   "len": 0.5
+  },
+  {
+   "note": "C4",
+   "midi": 60,
+   "start": 38.5,
+   "len": 0.5
+  },
+  {
+   "note": "A#3",
+   "midi": 58,
+   "start": 40.0,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 42.0,
+   "len": 0.5
+  },
+  {
+   "note": "C4",
+   "midi": 60,
+   "start": 42.5,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 44.5,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 45.0,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 45.5,
+   "len": 0.5
+  },
+  {
+   "note": "D4",
+   "midi": 62,
+   "start": 46.5,
+   "len": 0.5
+  },
+  {
+   "note": "C4",
+   "midi": 60,
+   "start": 47.5,
+   "len": 0.5
+  },
+  {
+   "note": "C4",
+   "midi": 60,
+   "start": 51.0,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 52.0,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 52.5,
+   "len": 0.5
+  },
+  {
+   "note": "A4",
+   "midi": 69,
+   "start": 53.0,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 53.0,
+   "len": 0.5
+  },
+  {
+   "note": "A4",
+   "midi": 69,
+   "start": 53.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 53.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 54.5,
+   "len": 0.5
+  },
+  {
+   "note": "A4",
+   "midi": 69,
+   "start": 54.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 55.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 56.0,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 56.5,
+   "len": 0.5
+  },
+  {
+   "note": "A#3",
+   "midi": 58,
+   "start": 58.0,
+   "len": 0.5
+  },
+  {
+   "note": "A#3",
+   "midi": 58,
+   "start": 58.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 60.0,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 60.5,
+   "len": 0.5
+  },
+  {
+   "note": "A3",
+   "midi": 57,
+   "start": 60.5,
+   "len": 0.5
+  }
+ ]
+}
