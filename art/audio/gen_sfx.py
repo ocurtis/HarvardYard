@@ -71,12 +71,41 @@ def cue(name):
 
 @cue("shout")
 def shout():
-    # Held buzz: 25% pulse with a fast pitch wobble, 0.4s (loops while held in game).
-    t = np.arange(int(0.4 * SR)) / SR
-    f = 220 + 12 * np.sign(np.sin(2 * np.pi * 28 * t))
+    # Held sermon, candidate A: a low 25% pulse, two octaves under the old one, with a
+    # slow vibrato and a soft noise breath on top. 0.8s loop.
+    t = np.arange(int(0.8 * SR)) / SR
+    f = 110 * (1 + 0.012 * np.sin(2 * np.pi * 5 * t))
     ph = np.cumsum(f) / SR
     w = np.where((ph % 1.0) < 0.25, 1.0, -1.0)
-    return w * adsr(len(t), 0.01, 0.05, 0.9, 0.05) * 0.22 + noise(0.4, vol=0.05, env=(0.01, 0.1, 0.5, 0.05))
+    body = w * adsr(len(t), 0.03, 0.1, 0.9, 0.05) * 0.09
+    breath = noise(0.8, vol=0.03, env=(0.05, 0.2, 0.8, 0.05))
+    return body + breath
+
+
+@cue("shout_b")
+def shout_b():
+    # Candidate B: triangle drone (soft) with a quiet pulse ticking every 1/8s, like a
+    # preacher's cadence. 1.0s loop.
+    t = np.arange(int(1.0 * SR)) / SR
+    tri_w = 2 * np.abs(2 * ((t * 147) % 1.0) - 1) - 1
+    drone = tri_w * adsr(len(t), 0.05, 0.1, 0.9, 0.05) * 0.08
+    out = drone.copy()
+    for k in range(8):
+        tick = tone(220 if k % 2 == 0 else 196, 0.06, duty=0.125, vol=0.05, env=(0.002, 0.02, 0.5, 0.03))
+        i = int(k * 0.125 * SR)
+        out[i : i + len(tick)] += tick[: max(0, len(out) - i)]
+    return out
+
+
+@cue("shout_c")
+def shout_c():
+    # Candidate C: low-passed noise "shh" with a slow swell, almost no pitch. 0.9s loop.
+    n = int(0.9 * SR)
+    rng = np.random.default_rng(11)
+    w = rng.normal(0, 1, n)
+    w = np.convolve(w, np.ones(24) / 24, mode="same")
+    t = np.arange(n) / SR
+    return w * (0.6 + 0.4 * np.sin(2 * np.pi * 1.1 * t)) * 0.25
 
 
 @cue("brochure")

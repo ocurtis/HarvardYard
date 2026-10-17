@@ -22,7 +22,7 @@ export const MUSIC_FORMATS = ['ogg', 'mp3']; // Phaser picks the first the brows
 // An event maps to one or more keys; several = pick one at random per play.
 export const SFX_VOLUME = 0.8;
 export const SFX_FILES = [
-  'brochure', 'paid', 'stormout', 'bounty', 'zipper', 'sober', 'cup_catch', 'wave_start', 'statue_low', 'lose', 'win', 'shout', 'stream',
+  'brochure', 'paid', 'stormout', 'bounty', 'zipper', 'sober', 'cup_catch', 'wave_start', 'statue_low', 'lose', 'win', 'shout', 'shout_b', 'shout_c', 'stream',
   'voice_bone_throw', 'voice_bone_toss', 'voice_bone_hit', 'voice_hit', 'voice_chubby_arival', 'voice_long_range_arrival', 'voice_tuxedo_arrival',
   'voice_cup_toss', 'voice_cup_flying', 'voice_cup_landing', 'voice_hero_hitting_things', 'voice_hero_walk', 'voice_pissing_on_statue',
   'voice_bro_getting_first_hit_by_hero', 'voice_bro_getting_stopped_by_hero',
@@ -50,8 +50,8 @@ export const SFX_ONESHOT: Record<string, string[] | ((e: { kind?: string; by?: s
 
 // Loops that follow state rather than events: on while the condition holds.
 export const SFX_LOOPS = {
-  shout: { key: 'shout', volume: 0.5 },
-  walk: { key: 'voice_hero_walk', volume: 0.35 },
+  shout: { key: 'shout', volume: 0.35 },
+  walk: { key: 'voice_hero_walk', volume: 0.17 },
   stream: { key: 'voice_pissing_on_statue', volume: 0.45 },
   cupFlying: { key: 'voice_cup_flying', volume: 0.4 },
 };
