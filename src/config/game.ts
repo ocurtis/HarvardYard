@@ -27,7 +27,7 @@ export const STATUE = {
 };
 
 export const BRO = {
-  speedPxPerTick: 0.6, // 36 px/s; a stumbling drunk, slower than the player
+  speedPxPerTick: 0.66, // 40 px/s; a stumbling drunk, slower than the player (+10% on 2026-10-16)
   drunk: 60, // the health bar: sobering it to 0 is the kill
   windupTicks: 60, // 1s from reaching the statue to the stream starting
   pissPerTick: 6 / 60, // statue damage per tick while the stream is on (6/s)
@@ -46,7 +46,7 @@ export const LONGSHOT = {
   speedPxPerTick: 0.95, // 57 px/s, about 1.6x a bro
   drunk: 34, // 25% under the first cut of 45
   rangePx: 104, // 6.5 tiles from the statue's center: the bottoms of both inner loops are in range; he stops on the first lane tile inside it
-  windupTicks: 40,
+  windupTicks: 60, // 1s: enough to reach him from the statue if you move now
   pissPerTick: 5 / 60, // a little weaker than a bro's point-blank stream
   shakePx: 1, // sprite jitter amplitude while walking and winding up
   shakeEveryTicks: 3,
@@ -56,9 +56,10 @@ export const LONGSHOT = {
 // The Cup Chucker: a slow walker who stops almost at the gate and lobs a full
 // solo cup at the statue. The cup floats in slowly; the player catches it by
 // running under it or shouting it down. If it lands, it's a lot of damage.
+// Towers ignore him: he is the player's problem, by design.
 export const CHUCKER = {
   speedPxPerTick: 0.4, // a waddle; two-thirds of a bro
-  drunk: 50,
+  drunk: 58, // player-only kill, so he needs to be worth the walk
   rangePx: 192, // 12 tiles: he stops a few tiles in from any gate
   windupTicks: 90, // 1.5s wind-up before each throw
   reloadTicks: 300, // 5s between throws
@@ -66,7 +67,7 @@ export const CHUCKER = {
 };
 
 export const CUP = {
-  speedPxPerTick: 0.4, // about a third of the player's run; ~8s from a far gate
+  speedPxPerTick: 0.44, // about a third of the player's run; ~7s from a far gate
   damage: 15, // statue HP on landing
   arcPx: 24, // how high the arc peaks, for the renderer
   catchRadiusPx: 10, // player-to-cup-shadow distance that counts as a catch

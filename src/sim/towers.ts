@@ -77,12 +77,17 @@ function updateDig(state: GameState, t: TowerState): void {
   t.cooldown = lvl.fireTicks;
 }
 
+// Towers can't touch a chucker: he's the player's job.
+function towerImmune(b: { kind: string }): boolean {
+  return b.kind === 'chucker';
+}
+
 // Nearest bro within range.
 function nearestBro(state: GameState, from: Vec, range: number): BoneState['target'] | null {
   let best: BoneState['target'] | null = null;
   let bestD = range;
   for (const b of state.bros) {
-    if (b.phase === 'leaving') continue;
+    if (b.phase === 'leaving' || towerImmune(b)) continue;
     const d = Math.hypot(b.pos.x - from.x, b.pos.y - from.y);
     if (d <= bestD) {
       bestD = d;
@@ -116,7 +121,7 @@ function updateSprinkler(state: GameState, t: TowerState): void {
   const lvl = TOWERS.sprinkler.levels[t.level]!;
   const c = tileCenter(t.tile);
   for (const b of state.bros) {
-    if (b.phase === 'leaving') continue;
+    if (b.phase === 'leaving' || towerImmune(b)) continue;
     if (Math.hypot(b.pos.x - c.x, b.pos.y - c.y) <= lvl.rangePx) {
       sober(b, lvl.sober / 60);
       if (b.phase === 'walking') b.slow = Math.max(b.slow, SPRINKLER.slowTicks);

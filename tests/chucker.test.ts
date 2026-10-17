@@ -3,6 +3,8 @@ import { BOUNTY, CHUCKER, CUP, STATUE, TILE } from '../src/config/game';
 import { WAVES } from '../src/config/waves';
 import { sober, spawnBro, statueCenter } from '../src/sim/bros';
 import { createState, step } from '../src/sim/sim';
+import { build } from '../src/sim/towers';
+import { TILE as T } from '../src/config/game';
 import type { Command, GameState } from '../src/sim/types';
 
 const run = (s: GameState, ticks: number, cmdFor: (t: number) => Command[] = () => []) => {
@@ -103,5 +105,33 @@ describe('cup chucker', () => {
     s.cups = [];
     step(s, []);
     expect(s.wave.active).toBe(false);
+  });
+
+  it('towers ignore a chucker; only the player can sober him', () => {
+    const s = createState({ seed: 7, playerCount: 1 });
+    farAway(s);
+    const b = spawnBro(s, 'chucker');
+    while (b.phase === 'walking') step(s, []);
+    // A dig and a sprinkler right next to him, on grass.
+    const p = s.players[0]!;
+    s.money = 1000;
+    const spots = [
+      { x: b.tile.x + 1, y: b.tile.y },
+      { x: b.tile.x - 1, y: b.tile.y },
+      { x: b.tile.x, y: b.tile.y + 1 },
+      { x: b.tile.x, y: b.tile.y - 1 },
+    ];
+    let placed = 0;
+    for (const t of spots) {
+      p.pos = { x: t.x * T + T / 2, y: t.y * T + T / 2 };
+      if (build(s, p, placed === 0 ? 'dig' : 'sprinkler')) placed++;
+      if (placed === 2) break;
+    }
+    expect(placed).toBe(2);
+    farAway(s);
+    const before = b.drunk;
+    run(s, 240);
+    expect(b.drunk).toBe(before);
+    expect(s.bones.length).toBe(0);
   });
 });
