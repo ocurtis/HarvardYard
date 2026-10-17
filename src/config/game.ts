@@ -136,5 +136,6 @@ export const TOURIST = {
 };
 
 export const POPUP_TICKS = 75;
+export const ROUND_BANNER_TICKS = 120; // "Round X: Protect Your Statue!" stays this long
 export const EVENT_KEEP_TICKS = 12; // events older than this are pruned; the renderer reads them within a frame or two
 export const STATUE_LOW_HP = 50; // the 'statueLow' event fires crossing below this // how long a floating "+$40" lives

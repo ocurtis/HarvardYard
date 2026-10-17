@@ -1,7 +1,7 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, CHUCKER, CUP, GHOST, GRID_H, GRID_W, HUD_W, SERMON_FX, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
+import { BRO, CHUCKER, CUP, GHOST, GRID_H, GRID_W, HUD_W, ROUND_BANNER_TICKS, SERMON_FX, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
 import { PALETTE } from '../config/palette';
 import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
@@ -68,6 +68,8 @@ export class YardScene extends Phaser.Scene {
   private fx!: Phaser.GameObjects.Graphics;
   private overlay!: Phaser.GameObjects.Container;
   private overlayText!: Phaser.GameObjects.Text;
+  private banner!: Phaser.GameObjects.Text;
+  private bannerTick = -1e9;
   private noticeText!: Phaser.GameObjects.Text;
   private fpsSamples: number[] = [];
   private world!: Phaser.GameObjects.Container;
@@ -166,6 +168,21 @@ export class YardScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setResolution(1);
     this.overlay.add(this.overlayText);
+
+    // Round banner: "Round X: Protect Your Statue!" for a couple of seconds at each wave start.
+    this.banner = this.add
+      .text(HUD_W + (GRID_W * TILE) / 2, LOGICAL_H / 3, '', {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#ffffff',
+        backgroundColor: '#202040',
+        padding: { x: 6, y: 3 },
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setResolution(1)
+      .setDepth(9500)
+      .setVisible(false);
   }
 
   override update(_time: number, delta: number): void {
@@ -229,6 +246,14 @@ export class YardScene extends Phaser.Scene {
 
     const n = s.notice;
     this.noticeText.setText(n && s.tick - n.tick < 120 ? ` ${n.text} ` : '');
+
+    for (const e of s.events) {
+      if (e.type === 'waveStart' && e.tick > this.bannerTick) {
+        this.bannerTick = e.tick;
+        this.banner.setText(`Round ${s.wave.index + 1}: Protect Your Statue!`);
+      }
+    }
+    this.banner.setVisible(s.tick - this.bannerTick < ROUND_BANNER_TICKS && s.phase === 'playing');
 
     if (s.phase !== 'playing') {
       this.overlay.setVisible(true);

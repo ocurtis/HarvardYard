@@ -13,7 +13,7 @@ export const MUSIC: MusicTrack[] = [
   { key: 'panic160', fromWave: 10 },
 ];
 
-export const MUSIC_VOLUME = 0.5;
+export const MUSIC_VOLUME = 0.3; // under the bells and the voice cues
 export const MUSIC_CROSSFADE_MS = 1500;
 export const MUSIC_FORMATS = ['ogg', 'mp3']; // Phaser picks the first the browser can play
 
@@ -54,7 +54,7 @@ export const SFX_ONESHOT: Record<string, string[] | ((e: { kind?: string; by?: s
 // Loops that follow state rather than events: on while the condition holds.
 export const SFX_LOOPS = {
   shout: { key: 'shout', volume: 0.35 },
-  walk: { key: 'voice_hero_walk', volume: 0.17 },
+  walk: { key: 'voice_hero_walk', volume: 0.15 },
   stream: { key: 'voice_pissing_on_statue', volume: 0.45 },
   cupFlying: { key: 'voice_cup_flying', volume: 0.4 },
 };
