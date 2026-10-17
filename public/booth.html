@@ -31,8 +31,6 @@
   ul.takes { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; }
   ul.takes li { display: flex; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
   ul.takes li .name { flex: 1; }
-  ul.takes li .state { color: var(--muted); }
-  ul.takes li .state.sent { color: var(--ok); }
   .hint { color: var(--muted); font-size: 13px; margin-top: 12px; }
   .lines { margin: 14px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
 </style>
@@ -40,14 +38,14 @@
 <body>
 <main>
   <h1>Yard Voice Booth</h1>
-  <p class="sub">Record a take, name it, Save & push. It lands in the repo on GitHub; Claude pulls it and chip-crushes it.</p>
+  <p class="sub">Record a take and it lands in the repo on GitHub. Redo, rename or delete any take below; every change is pushed. Claude pulls them and chip-crushes them.</p>
   <div class="booth">
     <div class="row">
       <button class="rec" id="rec">● Record</button>
       <input type="text" id="name" placeholder="take name (shout, ugh, woo, splat)" value="shout">
     </div>
     <div id="meter"><i></i></div>
-    <div class="hint" id="status">Allow the microphone when asked. Each take: one sound, under a second or two.</div>
+    <div class="hint" id="status">Allow the microphone when asked. Each take: one sound, under a second or two. Stop saves and pushes it.</div>
     <ol class="lines">
       <li><b>shout</b>: the player yelling at a bro ("HEY!")</li>
       <li><b>ugh</b>: a bro sobering up and giving up</li>
@@ -62,9 +60,21 @@
 (() => {
   const $ = (s) => document.querySelector(s);
   const recBtn = $('#rec'), nameEl = $('#name'), meter = $('#meter i'), status = $('#status'), takesEl = $('#takes');
-  let stream = null, recorder = null, chunks = [], analyser = null, raf = 0;
-  const takes = [];
+  let stream = null, recorder = null, chunks = [], analyser = null;
+  let takes = []; // {name, state} ; audio is served from the repo by name
+  let redoName = null;
 
+  async function refresh() {
+    try {
+      const r = await fetch('/__booth/list');
+      const j = await r.json();
+      const known = new Map(takes.map((t) => [t.name, t]));
+      takes = j.takes.map((n) => known.get(n) || { name: n, state: 'in repo' });
+    } catch (e) {
+      status.textContent = 'Booth server not reachable: run npm run dev and open this page from it.';
+    }
+    render();
+  }
 
   async function ensureStream() {
     if (stream) return stream;
@@ -80,18 +90,16 @@
       let peak = 0;
       for (const v of buf) peak = Math.max(peak, Math.abs(v - 128) / 128);
       meter.style.width = Math.min(100, peak * 140) + '%';
-      raf = requestAnimationFrame(tick);
+      requestAnimationFrame(tick);
     };
     tick();
     return stream;
   }
 
-  recBtn.addEventListener('click', async () => {
+  async function startRecording(name) {
     if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
-    try { await ensureStream(); } catch (e) {
-      status.textContent = 'Microphone blocked: allow it for localhost in the browser\'s site settings and try again.';
-      return;
-    }
+    try { await ensureStream(); } catch (e) { status.textContent = 'Microphone blocked: allow it for this page in the browser\'s site settings and try again.'; return; }
+    redoName = name || null;
     chunks = [];
     recorder = new MediaRecorder(stream);
     recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
@@ -99,8 +107,10 @@
     recorder.start();
     recBtn.dataset.on = '1';
     recBtn.textContent = '■ Stop';
-    status.textContent = 'Recording… tap Stop when done.';
-  });
+    status.textContent = (redoName ? 'Re-recording "' + redoName + '"… ' : 'Recording… ') + 'tap Stop when done.';
+  }
+
+  recBtn.addEventListener('click', () => startRecording(null));
 
   async function onStop() {
     recBtn.dataset.on = '0';
@@ -109,16 +119,17 @@
     status.textContent = 'Processing…';
     try {
       const wav = await toWav(blob);
-      const name = (nameEl.value.trim() || 'take').replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
-      const take = { name: uniqueName(name), wav, url: URL.createObjectURL(new Blob([wav], { type: 'audio/wav' })), state: 'ready' };
-      takes.unshift(take);
-      render();
-      status.textContent = 'Listen back, then Save & push.';
-      nameEl.select();
+      let name = redoName || clean(nameEl.value) || 'take';
+      if (!redoName) name = uniqueName(name);
+      await push(name, wav);
+      if (!redoName) nameEl.select();
     } catch (e) {
       status.textContent = 'Could not decode that recording: ' + (e && e.message ? e.message : e);
     }
+    redoName = null;
   }
+
+  const clean = (v) => (v || '').trim().replace(/[^a-z0-9_-]+/gi, '_').toLowerCase().replace(/^_+|_+$/g, '');
 
   function uniqueName(base) {
     let n = base, i = 2;
@@ -126,9 +137,38 @@
     return n;
   }
 
-  // Decode whatever the browser recorded and write 16 kHz mono 16-bit PCM WAV.
+  async function push(name, wav) {
+    status.textContent = 'Saving and pushing "' + name + '"…';
+    try {
+      const r = await fetch('/__booth/save?name=' + encodeURIComponent(name), { method: 'POST', body: wav });
+      const j = await r.json();
+      status.textContent = j.pushed ? '"' + name + '" pushed to GitHub ✓' : 'Saved, but push failed: ' + (j.error || '?').split('\n')[0];
+    } catch (e) {
+      status.textContent = 'Save failed: ' + e;
+    }
+    await refresh();
+  }
+
+  async function del(t) {
+    if (!confirm('Delete "' + t.name + '"?')) return;
+    status.textContent = 'Deleting…';
+    const r = await fetch('/__booth/delete?name=' + encodeURIComponent(t.name), { method: 'POST' });
+    const j = await r.json();
+    status.textContent = j.pushed ? '"' + t.name + '" deleted and pushed ✓' : 'Deleted locally; push failed: ' + (j.error || '?').split('\n')[0];
+    await refresh();
+  }
+
+  async function rename(t) {
+    const to = clean(prompt('New name for "' + t.name + '"', t.name));
+    if (!to || to === t.name) return;
+    const r = await fetch('/__booth/rename?from=' + encodeURIComponent(t.name) + '&to=' + encodeURIComponent(to), { method: 'POST' });
+    const j = await r.json();
+    status.textContent = j.pushed ? 'Renamed to "' + to + '" and pushed ✓' : 'Renamed locally; push failed: ' + (j.error || '?').split('\n')[0];
+    await refresh();
+  }
+
+  // Decode whatever the browser recorded and write 16 kHz mono 16-bit PCM WAV, trimmed.
   async function toWav(blob) {
-    const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 1, 16000);
     const decoded = await new AudioContext().decodeAudioData(await blob.arrayBuffer());
     const sr = 16000;
     const len = Math.ceil(decoded.duration * sr);
@@ -139,7 +179,6 @@
     src.start();
     const out = await off.startRendering();
     const pcm = out.getChannelData(0);
-    // Trim silence at both ends (below -40 dB), keep 30 ms of air.
     let s = 0, e = pcm.length - 1;
     const thr = 0.01;
     while (s < e && Math.abs(pcm[s]) < thr) s++;
@@ -154,20 +193,14 @@
     v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
     w(36, 'data'); v.setUint32(40, n * 2, true);
     for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[s + i])) * 32767, true);
-    void ctx;
     return buf;
   }
 
-  async function save(take) {
-    take.state = 'saving…'; render();
-    try {
-      const r = await fetch('/__booth/save?name=' + encodeURIComponent(take.name), { method: 'POST', body: take.wav });
-      const j = await r.json();
-      take.state = j.pushed ? 'pushed' : 'saved locally (push failed: ' + (j.error || '?').split('\n')[0] + ')';
-    } catch (e) {
-      take.state = 'failed: ' + e;
-    }
-    render();
+  function button(label, fn) {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.onclick = fn;
+    return b;
   }
 
   function render() {
@@ -175,14 +208,18 @@
     for (const t of takes) {
       const li = document.createElement('li');
       const name = document.createElement('span'); name.className = 'name'; name.textContent = t.name;
-      const play = document.createElement('button'); play.textContent = '▶';
-      play.onclick = () => { const a = new Audio(t.url); a.play(); };
-      const state = document.createElement('span'); state.className = 'state' + (t.state === 'pushed' ? ' sent' : ''); state.textContent = t.state === 'pushed' ? 'pushed to GitHub ✓' : t.state;
-      li.append(play, name, state);
-      const btn = document.createElement('button'); btn.textContent = t.state === 'pushed' ? 'Push again' : 'Save & push'; btn.onclick = () => save(t); li.append(btn);
+      li.append(
+        button('▶', () => { new Audio('/__booth/file?name=' + encodeURIComponent(t.name) + '&v=' + Date.now()).play(); }),
+        name,
+        button('Redo', () => startRecording(t.name)),
+        button('Rename', () => rename(t)),
+        button('Delete', () => del(t)),
+      );
       takesEl.append(li);
     }
   }
+
+  refresh();
 })();
 </script>
 </body>
