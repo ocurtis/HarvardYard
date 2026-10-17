@@ -76,18 +76,28 @@ def path(seed):
 
 
 def edge(side):
-    """A transparent tile with a 1px shade line on one side. Overlaid on a lane
-    tile wherever it borders grass, so a path reads as one surface with a rim."""
+    """The grass lip over a path tile's edge: a dark-green scalloped line with tufts
+    spilling 2px in, and on the north edge a shadow row under the lip. That's how
+    UFO 50 makes grass read as higher than the path. Drawn on the path tile."""
+    rng = random.Random(hash(side) & 0xFFFF)
     g = grid(".")
-    for i in range(16):
+
+    def rot(x, y):
         if side == "n":
-            put(g, i, 0, "o")
-        elif side == "s":
-            put(g, i, 15, "o")
-        elif side == "w":
-            put(g, 0, i, "o")
-        else:
-            put(g, 15, i, "o")
+            return x, y
+        if side == "s":
+            return x, 15 - y
+        if side == "w":
+            return y, x
+        return 15 - y, x  # e
+
+    for i in range(16):
+        r = rng.random()
+        put(g, *rot(i, 0), "d" if r < 0.75 else "g")
+        if r < 0.3:
+            put(g, *rot(i, 1), "d")  # a tuft reaching in
+        elif side == "n":
+            put(g, *rot(i, 1), "o")  # shadow under the lip
     return g
 
 

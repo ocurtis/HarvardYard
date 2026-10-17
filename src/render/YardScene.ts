@@ -601,13 +601,13 @@ export class YardScene extends Phaser.Scene {
         if (frame !== null) {
           const img = this.add.image(x * TILE, y * TILE, 'tiles', frame).setOrigin(0).setDepth(-2);
           this.world.add(img);
-          // A rim only where there's a height change (lane meets a building or hedge);
-          // grass and path are level, so nothing is drawn between them.
+          // Grass is a step above the path: where a lane tile meets grass, the grass lip
+          // spills over its edge (dark-green scallop, shadow under the north lip).
           if (isLaneTile(kind)) {
             const sides: Array<[string, number, number]> = [['edge_n', 0, -1], ['edge_e', 1, 0], ['edge_s', 0, 1], ['edge_w', -1, 0]];
             for (const [name, dx, dy] of sides) {
               const n = tileAt(map, x + dx, y + dy);
-              if (n === 'building' || n === 'tree') {
+              if (n === 'grass' || n === 'tree') {
                 const ef = tiles!.anims[name]?.frames[0];
                 if (ef !== undefined) this.world.add(this.add.image(x * TILE, y * TILE, 'tiles', ef).setOrigin(0).setDepth(-1.99));
               }
