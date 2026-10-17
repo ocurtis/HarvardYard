@@ -176,24 +176,16 @@ def cup_land():
     return seq([(mix(noise(0.12, vol=0.3, env=(0.001, 0.05, 0.3, 0.06)), tri_thud(120, 0.25, vol=0.45)), 0.02), (noise(0.2, vol=0.08, env=(0.01, 0.1, 0.3, 0.1), lo=True), 0)])
 
 
-def tolls(n, gap=0.55, vol=0.16):
-    # The Lowell House tower tolling the wave in: the same big bell, n times, quiet.
-    out = np.zeros(int((gap * (n - 1) + 2.4) * SR))
-    for i in range(n):
-        b = bell(freq("D3"), 2.2, vol=vol, big=True)
-        at = int(i * gap * SR)
-        out[at : at + len(b)] += b[: max(0, len(out) - at)]
-    return out
-
-
 @cue("wave_start")
 def wave_start():
-    return tolls(2)
-
-
-@cue("wave_start_3")
-def wave_start_3():
-    return tolls(3)
+    # Two distinct bells in succession: the big D, then the smaller A a fifth up.
+    out = np.zeros(int(3.0 * SR))
+    a = bell(freq("D3"), 2.2, vol=0.16, big=True)
+    b = bell(freq("A3"), 1.8, vol=0.13, big=False)
+    out[: len(a)] += a
+    at = int(0.5 * SR)
+    out[at : at + len(b)] += b[: len(out) - at]
+    return out
 
 
 @cue("finals")
