@@ -215,6 +215,67 @@ def win():
     return seq(parts)
 
 
+def chug(f, dur, vol=0.3):
+    """One palm-muted power-chord stab: a 50% pulse and its fifth, hard clipped,
+    with a fast decay and a noise click on the pick attack."""
+    t = np.arange(int(dur * SR)) / SR
+    w = np.where(((t * f) % 1.0) < 0.5, 1.0, -1.0) + 0.7 * np.where(((t * f * 1.5) % 1.0) < 0.5, 1.0, -1.0)
+    w = np.tanh(w * 2.2)
+    env = np.exp(-t * 22) * (t < dur)
+    body = w * env * vol
+    return mix(body, noise(min(0.02, dur), vol=0.12))
+
+
+@cue("amp_riff")
+def amp_riff():
+    # The Amp at work: a death-metal blast beat under a tremolo-picked low riff on the
+    # chip. 180 BPM, one bar of 4/4 = 1.333s, loops. Kick on every 8th, snare (noise
+    # burst) on the off-8ths, chugs on 16ths walking E1 - F1 - E1 - D#1 (a tritone's
+    # worth of menace, on the chip's lowest usable pulse).
+    bpm = 180
+    beat = 60 / bpm
+    bar = 4 * beat
+    out = np.zeros(int(bar * SR))
+
+    def put(sample, at):
+        i = int(at * SR)
+        j = min(len(out), i + len(sample))
+        out[i:j] += sample[: j - i]
+
+    riff = ["E2", "E2", "F2", "E2", "E2", "E2", "D#2", "E2", "E2", "E2", "F2", "F#2", "E2", "E2", "D#2", "D2"]
+    for k, n in enumerate(riff):
+        put(chug(freq(n) / 2, beat / 4 * 0.95, vol=0.22), k * beat / 4)
+    for k in range(8):
+        put(tri_thud(70, 0.09, vol=0.5), k * beat / 2)  # kick, every 8th
+        if k % 2 == 1:
+            put(noise(0.07, vol=0.22, env=(0.001, 0.03, 0.2, 0.03)), k * beat / 2)  # snare
+    for k in range(16):
+        put(noise(0.02, vol=0.05), k * beat / 4)  # hat on 16ths
+    return np.clip(out, -1, 1)
+
+
+@cue("amp_hum")
+def amp_hum():
+    # The Amp idling: a 60-cycle hum with a faint feedback whine riding on it, 1.2s loop.
+    t = np.arange(int(1.2 * SR)) / SR
+    hum = np.sin(2 * np.pi * 60 * t) * 0.5 + np.sin(2 * np.pi * 120 * t) * 0.25
+    hum = np.tanh(hum * 1.5) * 0.12
+    whine_f = freq("E5") * (1 + 0.004 * np.sin(2 * np.pi * 0.8 * t))
+    whine = np.sin(2 * np.pi * np.cumsum(whine_f) / SR) * 0.03 * (0.7 + 0.3 * np.sin(2 * np.pi * 1.7 * t))
+    return hum + whine
+
+
+@cue("amp_build")
+def amp_build():
+    # Plugging in: a pop, the hum rising, and one open low E ringing out.
+    pop = mix(noise(0.03, vol=0.3), tri_thud(90, 0.08, vol=0.4))
+    rise = sweep(40, 60, 0.3, duty=0.5, vol=0.08, env=(0.05, 0.05, 0.9, 0.05))
+    ring = chug(freq("E2") / 2, 1.1, vol=0.3)
+    t = np.arange(len(ring)) / SR
+    ring = ring / (np.exp(-t * 22) + 1e-6) * np.exp(-t * 2.2)  # swap the chug's fast decay for a long ring
+    return seq([(pop, 0.0), (rise, 0.0), (np.clip(ring, -1, 1), 0)])
+
+
 def write_wav(path, buf):
     buf = np.clip(buf, -1, 1)
     with wave.open(path, "wb") as w:

@@ -46,11 +46,12 @@ export function computeDistToExit(map: MapData): number[] {
 }
 
 // BFS distance over lane tiles from a set of source tiles.
-export function computeDistField(map: MapData, sources: Vec[]): number[] {
+export function computeDistField(map: MapData, sources: Vec[], blocked?: Set<number>): number[] {
   const dist = new Array<number>(map.w * map.h).fill(-1);
   const queue: Vec[] = [];
   for (const t of sources) {
     if (!isLaneTile(tileAt(map, t.x, t.y))) continue;
+    if (blocked?.has(t.y * map.w + t.x)) continue;
     dist[t.y * map.w + t.x] = 0;
     queue.push(t);
   }
@@ -63,7 +64,7 @@ export function computeDistField(map: MapData, sources: Vec[]): number[] {
       const ny = cur.y + dir.y;
       if (!isLaneTile(tileAt(map, nx, ny))) continue;
       const i = ny * map.w + nx;
-      if (dist[i] !== -1) continue;
+      if (dist[i] !== -1 || blocked?.has(i)) continue;
       dist[i] = d + 1;
       queue.push({ x: nx, y: ny });
     }
@@ -71,13 +72,39 @@ export function computeDistField(map: MapData, sources: Vec[]): number[] {
   return dist;
 }
 
+// The neighbor lane tile farther from the statue, preferring the one most in
+// line with `dir`: where the wind sends a bro. Null when the only way back is
+// straight into the wind (it is at his back; he is past the amp).
+export function retreatTile(map: MapData, dist: number[], from: Vec, dir: Vec): Vec | null {
+  const here = dist[from.y * map.w + from.x] ?? -1;
+  let best: Vec | null = null;
+  let bestScore = -Infinity;
+  for (const d of DIRS) {
+    const nx = from.x + d.x;
+    const ny = from.y + d.y;
+    if (!isLaneTile(tileAt(map, nx, ny))) continue;
+    const nd = dist[ny * map.w + nx] ?? -1;
+    if (nd === -1 || nd <= here) continue;
+    const along = d.x * dir.x + d.y * dir.y;
+    if (along < 0) continue; // only straight into the wind counts as "past it"; across it is fine
+    const score = along * 10 + nd;
+    if (score > bestScore) {
+      bestScore = score;
+      best = { x: nx, y: ny };
+    }
+  }
+  return best;
+}
+
 // Next tile toward the statue from `from`, or null if already adjacent or stuck.
-// Ties break in DIRS order, so the choice is deterministic.
+// Standing on a tile the field walls off (an amp's wind came up under him) still
+// steps to the best reachable neighbor. Ties break in DIRS order, so the choice
+// is deterministic.
 export function nextTileToward(map: MapData, dist: number[], from: Vec): Vec | null {
   const here = dist[from.y * map.w + from.x] ?? -1;
-  if (here <= 0) return null;
+  if (here === 0) return null;
   let best: Vec | null = null;
-  let bestD = here;
+  let bestD = here === -1 ? Infinity : here;
   for (const dir of DIRS) {
     const nx = from.x + dir.x;
     const ny = from.y + dir.y;

@@ -9,6 +9,8 @@ import type { BroState, MapData, PlayerState, TileKind, TouristState } from '../
 import { canStartWave } from '../sim/waves';
 import { SELF_UPGRADE, TOWERS } from '../config/towers';
 import { canBuild, playerTile, towerAt, towerRange } from '../sim/towers';
+import { inWind, snapCardinal, windTiles } from '../sim/wind';
+import { AMP } from '../config/towers';
 import { isBuildable, tileAt } from '../sim/map';
 import { shoutRange } from '../sim/shout';
 import { isLaneTile } from '../sim/path';
@@ -237,9 +239,9 @@ export class YardScene extends Phaser.Scene {
     const u = p0.upgrades;
     const selfCost = (lvl: number) => (SELF_UPGRADE.costs[lvl] !== undefined ? `$${SELF_UPGRADE.costs[lvl]}` : 'max');
     const shop =
-      `1 Dig\n $${TOWERS.dig.cost}\n2 Sprnk\n $${TOWERS.sprinkler.cost}\n` +
+      `1 Dig\n $${TOWERS.dig.cost}\n2 Sprnk\n $${TOWERS.sprinkler.cost}\n3 Amp\n $${TOWERS.amp.cost}\n` +
       (here ? `U upgr\n ${up === null ? 'max' : '$' + up}\n` : '') +
-      `3 shout\n ${selfCost(u.shout)}\n4 range\n ${selfCost(u.range)}\n5 speed\n ${selfCost(u.speed)}`;
+      `4 shout\n ${selfCost(u.shout)}\n5 range\n ${selfCost(u.range)}\n6 speed\n ${selfCost(u.speed)}`;
     this.hudText.setText(
       `HP ${Math.ceil(s.statueHp)}\n$${s.money}\nWAVE ${waveLabel}\n${prompt}\n${shop}\n\n${(1000 / avg).toFixed(0)}fps`,
     );
@@ -465,10 +467,10 @@ export class YardScene extends Phaser.Scene {
   private syncTowers(): void {
     const s = this.loop.state;
     const seen = new Set<number>();
-    const hasArt = !!this.atlas['dig'] && !!this.atlas['sprinkler'];
     for (const t of s.towers) {
       seen.add(t.id);
       const c = { x: t.tile.x * TILE + TILE / 2, y: t.tile.y * TILE + TILE };
+      const hasArt = !!this.atlas[t.kind]; // a kind without a sheet yet draws as its placeholder rectangle
       if (hasArt) {
         let v = this.towerSprites.get(t.id);
         if (!v) {
@@ -494,6 +496,9 @@ export class YardScene extends Phaser.Scene {
             continue;
           }
           anim = v.anim.startsWith('fire') ? v.anim : `idle${level}`;
+        } else if (t.kind === 'amp') {
+          const blowing = s.bros.some((b) => b.phase !== 'leaving' && inWind(t, t.level, b.pos));
+          anim = (blowing ? 'play' : 'idle') + (t.level > 0 ? '2' : '');
         } else {
           anim = t.level > 0 ? 'spin2' : 'spin';
         }
@@ -504,7 +509,7 @@ export class YardScene extends Phaser.Scene {
       } else {
         let r = this.towerViews.get(t.id);
         if (!r) {
-          r = this.add.rectangle(0, 0, TILE - 2, TILE - 2, t.kind === 'dig' ? PALETTE.dig : PALETTE.sprinkler).setOrigin(0.5, 1);
+          r = this.add.rectangle(0, 0, TILE - 2, TILE - 2, t.kind === 'dig' ? PALETTE.dig : t.kind === 'amp' ? PALETTE.amp : PALETTE.sprinkler).setOrigin(0.5, 1);
           this.world.add(r);
           this.towerViews.set(t.id, r);
         }
@@ -527,6 +532,10 @@ export class YardScene extends Phaser.Scene {
     // Range rings, always visible: this is the placement tax made legible.
     this.rings.clear();
     for (const t of s.towers) {
+      if (t.kind === 'amp') {
+        this.drawWindCone(this.rings, t.tile, t.facing, t.level, 0.5);
+        continue;
+      }
       this.rings.lineStyle(1, t.kind === 'dig' ? PALETTE.dig : PALETTE.sprinkler, 0.5);
       this.rings.strokeCircle(t.tile.x * TILE + TILE / 2, t.tile.y * TILE + TILE / 2, towerRange(t));
     }
@@ -579,6 +588,36 @@ export class YardScene extends Phaser.Scene {
         this.cursor.lineStyle(1, PALETTE.cursorOk, 0.25);
         this.cursor.strokeCircle(tile.x * TILE + TILE / 2, tile.y * TILE + TILE / 2, TOWERS.dig.levels[0]!.rangePx);
       }
+      if (ok && s.money >= TOWERS.amp.cost) {
+        // And where an Amp would blow: red if it would wall the Yard off.
+        const ampOk = canBuild(s, p0, 'amp').ok;
+        this.drawWindCone(this.cursor, tile, snapCardinal(p0.facing), 0, ampOk ? 0.25 : 0.6, ampOk ? undefined : PALETTE.cursorBad);
+      }
+    }
+  }
+
+  // The Amp's wind cone: two edge lines and an arc, plus a hatch on the lane tiles
+  // it walls off (that is the part the player is really buying).
+  private drawWindCone(g: Phaser.GameObjects.Graphics, tile: { x: number; y: number }, facing: { x: number; y: number }, level: number, alpha: number, color = PALETTE.amp): void {
+    const cx = tile.x * TILE + TILE / 2;
+    const cy = tile.y * TILE + TILE / 2;
+    const r = TOWERS.amp.levels[level]!.rangePx;
+    const half = (AMP.halfAngleDeg[level] ?? AMP.halfAngleDeg[0]!) * (Math.PI / 180);
+    const a0 = Math.atan2(facing.y, facing.x);
+    g.lineStyle(1, color, alpha);
+    g.beginPath();
+    g.moveTo(cx + Math.cos(a0 - half) * r, cy + Math.sin(a0 - half) * r);
+    g.lineTo(cx, cy);
+    g.lineTo(cx + Math.cos(a0 + half) * r, cy + Math.sin(a0 + half) * r);
+    g.strokePath();
+    g.beginPath();
+    g.arc(cx, cy, r, a0 - half, a0 + half, false);
+    g.strokePath();
+    const probe = { id: -1, kind: 'amp' as const, tile, level, cooldown: 0, facing };
+    g.fillStyle(color, alpha * 0.7);
+    for (const w of windTiles(this.loop.state.map, probe, level)) {
+      for (let i = 0; i < TILE; i += 4) g.fillRect(w.x * TILE + i, w.y * TILE + ((i / 4) % 2) * 2, 2, 1);
+      g.fillRect(w.x * TILE, w.y * TILE + TILE - 1, TILE, 1);
     }
   }
 
@@ -626,9 +665,35 @@ export class YardScene extends Phaser.Scene {
         }
       }
     }
-    // "!" sparks over bros the sermon just staggered.
+    // Wind streaks off every Amp: short dashes racing along the cone, dense while it
+    // has somebody, sparse while it idles.
+    for (const t of this.loop.state.towers) {
+      if (t.kind !== 'amp') continue;
+      const blowing = this.loop.state.bros.some((b) => b.phase !== 'leaving' && inWind(t, t.level, b.pos));
+      const r = TOWERS.amp.levels[t.level]!.rangePx;
+      const half = (AMP.halfAngleDeg[t.level] ?? AMP.halfAngleDeg[0]!) * (Math.PI / 180);
+      const a0 = Math.atan2(t.facing.y, t.facing.x);
+      const cx = t.tile.x * TILE + TILE / 2;
+      const cy = t.tile.y * TILE + TILE / 2;
+      const n = blowing ? 7 : 3;
+      const speed = blowing ? 2.2 : 0.9;
+      for (let i = 0; i < n; i++) {
+        // Each streak has its own lane in the cone and its own phase along it.
+        const ang = a0 + half * ((i / Math.max(1, n - 1)) * 2 - 1) * 0.85;
+        const d = ((tick * speed + i * 37 + t.id * 11) % (r - 6)) + 6;
+        const len = blowing ? 5 : 3;
+        const x0 = cx + Math.cos(ang) * d;
+        const y0 = cy + Math.sin(ang) * d;
+        g.lineStyle(1, PALETTE.wind, (1 - d / r) * (blowing ? 1 : 0.7));
+        g.beginPath();
+        g.moveTo(Math.round(x0), Math.round(y0));
+        g.lineTo(Math.round(x0 + Math.cos(ang) * len), Math.round(y0 + Math.sin(ang) * len));
+        g.strokePath();
+      }
+    }
+    // "!" sparks over bros the sermon just staggered (and the wind's).
     for (const e of this.loop.state.events) {
-      if (e.type !== 'stagger' || e.by !== 'shout' || !e.pos) continue;
+      if (e.type !== 'stagger' || (e.by !== 'shout' && e.by !== 'amp') || !e.pos) continue;
       if (!this.sparks.some((s) => s.tick === e.tick && s.x === e.pos!.x)) this.sparks.push({ x: e.pos.x, y: e.pos.y, tick: e.tick });
     }
     this.sparks = this.sparks.filter((s) => tick - s.tick < SERMON_FX.sparkTicks);

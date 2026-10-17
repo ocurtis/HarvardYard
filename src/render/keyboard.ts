@@ -36,10 +36,11 @@ export class KeyboardInput implements InputSource {
       if (k === ' ' || k === 'enter') out.push({ playerId: this.playerId, tick, type: 'startWave' });
       if (k === '1') out.push({ playerId: this.playerId, tick, type: 'build', kind: 'dig' });
       if (k === '2') out.push({ playerId: this.playerId, tick, type: 'build', kind: 'sprinkler' });
+      if (k === '3') out.push({ playerId: this.playerId, tick, type: 'build', kind: 'amp' });
       if (k === 'u') out.push({ playerId: this.playerId, tick, type: 'upgradeTower' });
-      if (k === '3') out.push({ playerId: this.playerId, tick, type: 'upgradeSelf', stat: 'shout' });
-      if (k === '4') out.push({ playerId: this.playerId, tick, type: 'upgradeSelf', stat: 'range' });
-      if (k === '5') out.push({ playerId: this.playerId, tick, type: 'upgradeSelf', stat: 'speed' });
+      if (k === '4') out.push({ playerId: this.playerId, tick, type: 'upgradeSelf', stat: 'shout' });
+      if (k === '5') out.push({ playerId: this.playerId, tick, type: 'upgradeSelf', stat: 'range' });
+      if (k === '6') out.push({ playerId: this.playerId, tick, type: 'upgradeSelf', stat: 'speed' });
     }
     this.pressed = [];
 

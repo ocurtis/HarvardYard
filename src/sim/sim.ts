@@ -37,6 +37,7 @@ export function createState(config: SimConfig): GameState {
     phase: 'playing',
     map,
     distToStatue: computeDistToStatue(map),
+    distToStatueBros: computeDistToStatue(map),
     distToFoot: computeDistToFoot(map),
     distToExit: computeDistToExit(map),
     distToSpot: map.buildings.map((b) => (b.spot ? computeDistField(map, [b.spot]) : [])),

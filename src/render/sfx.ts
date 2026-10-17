@@ -26,6 +26,10 @@ export class Sfx {
     this.loop('walk', !!p && p.moving && !p.shouting && state.phase === 'playing');
     this.loop('stream', state.phase === 'playing' && state.bros.some((b) => b.phase === 'pissing' && b.kind !== 'chucker'));
     this.loop('cupFlying', state.phase === 'playing' && state.cups.length > 0);
+    const hasAmp = state.towers.some((t) => t.kind === 'amp');
+    const blowing = hasAmp && state.bros.some((b) => b.inWind || b.windTo !== null);
+    this.loop('ampRiff', state.phase === 'playing' && blowing);
+    this.loop('ampHum', state.phase === 'playing' && hasAmp && !blowing);
   }
 
   private oneShot(e: SimEvent): void {

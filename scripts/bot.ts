@@ -16,7 +16,7 @@ import { SELF_UPGRADE, TOWERS, type SelfStat, type TowerKind } from '../src/conf
 import { blocksMovement, tileAt } from '../src/sim/map';
 import { isLaneTile } from '../src/sim/path';
 import { inCone } from '../src/sim/shout';
-import { playerTile, towerAt } from '../src/sim/towers';
+import { canBuild, playerTile, towerAt } from '../src/sim/towers';
 import type { Command, GameState, Vec } from '../src/sim/types';
 import { canStartWave } from '../src/sim/waves';
 
@@ -37,6 +37,7 @@ export const POLICIES: BotPolicy[] = [
   { name: 'shout-only', towerKind: 'dig', maxTowers: 0, reserve: 0, upgradeTowers: false, selfUpgrades: ['shout', 'range', 'speed'], chaseGuides: true, catchCups: true, callWavesEarly: true },
   { name: 'digs', towerKind: 'dig', maxTowers: 20, reserve: 0, upgradeTowers: true, selfUpgrades: [], chaseGuides: true, catchCups: true, callWavesEarly: true },
   { name: 'digs+self', towerKind: 'dig', maxTowers: 24, reserve: 0, upgradeTowers: true, selfUpgrades: ['speed', 'shout', 'range'], chaseGuides: true, catchCups: true, callWavesEarly: true },
+  { name: 'amps', towerKind: 'amp', maxTowers: 24, reserve: 0, upgradeTowers: true, selfUpgrades: [], chaseGuides: true, catchCups: true, callWavesEarly: true },
   { name: 'sprinklers', towerKind: 'sprinkler', maxTowers: 24, reserve: 0, upgradeTowers: true, selfUpgrades: [], chaseGuides: true, catchCups: true, callWavesEarly: true },
 ];
 
@@ -49,6 +50,7 @@ const DIRS: Vec[] = [
 
 export class Bot {
   private plan: Vec[] = [];
+  private dead = new Set<string>(); // sites the sim refused
   private fieldCache = new Map<string, number[]>();
   private pid: number;
 
@@ -143,10 +145,16 @@ export class Bot {
     const def = TOWERS[kind];
 
     // Next unbuilt site in the plan.
-    const site = this.plan.find((v) => !towerAt(s, v));
+    const site = this.plan.find((v) => !towerAt(s, v) && !this.dead.has(`${v.x},${v.y}`));
     if (site && s.towers.length < pol.maxTowers && money >= def.cost) {
       const here = playerTile(p);
       if (here.x === site.x && here.y === site.y && centered(p.pos, site)) {
+        const r = canBuild(s, p, kind);
+        if (!r.ok && r.why !== 'too poor') {
+          // The sim won't have it here (an Amp that would wall the Yard off, say): drop the site.
+          this.dead.add(`${site.x},${site.y}`);
+          return this.shopping();
+        }
         return { go: null, cmd: { playerId: this.pid, tick: s.tick, type: 'build', kind } };
       }
       return { go: tileCenter(site), cmd: null };

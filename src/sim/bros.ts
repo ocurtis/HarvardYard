@@ -54,6 +54,8 @@ export function spawnBro(state: GameState, kind: BroKind = 'bro'): BroState {
     phase: 'walking',
     timer: 0,
     slow: 0,
+    inWind: false,
+    windTo: null,
     facing: { x: 0, y: 1 },
     variant: nextInt(state, BRO.variants),
   };
@@ -86,15 +88,19 @@ function updateBro(state: GameState, b: BroState): void {
       const d = Math.hypot(dx, dy);
       if (d <= BRO.arriveEpsilon) {
         b.pos = target;
-        const next = nextTileToward(state.map, state.distToStatue, b.tile);
+        // Route around amp wind; if the wind has boxed this stretch of lane in on
+        // both sides, push on through it rather than stand forever (the wind will
+        // have him either way, and a wave must always be able to end).
+        const next =
+          nextTileToward(state.map, state.distToStatueBros, b.tile) ?? nextTileToward(state.map, state.distToStatue, b.tile);
         const inRange = rangedInRange(state, b.kind, b.tile);
-        if (next === null || inRange) {
+        if (atStatue(state, b.tile) || inRange) {
           // Adjacent to the statue (or a longshot with it in range): start the wind-up.
           b.phase = 'windup';
           b.timer = stats(b.kind).windup;
           b.facing = faceStatue(state, b.tile);
           emit(state, { type: 'windup', kind: b.kind, pos: { ...b.pos } });
-        } else {
+        } else if (next !== null) {
           b.facing = { x: Math.sign(next.x - b.tile.x), y: Math.sign(next.y - b.tile.y) };
           b.tile = next;
         }
@@ -132,10 +138,8 @@ function updateBro(state: GameState, b: BroState): void {
       if (b.timer <= 0) {
         // Resume. If he's adjacent to the statue, wind up again; otherwise keep walking.
         const arrived = Math.hypot(tileCenter(b.tile).x - b.pos.x, tileCenter(b.tile).y - b.pos.y) <= BRO.arriveEpsilon;
-        const atStatue =
-          arrived &&
-          (nextTileToward(state.map, state.distToStatue, b.tile) === null || rangedInRange(state, b.kind, b.tile));
-        if (atStatue) {
+        const here = arrived && (atStatue(state, b.tile) || rangedInRange(state, b.kind, b.tile));
+        if (here) {
           b.phase = 'windup';
           b.timer = stats(b.kind).windup;
           emit(state, { type: 'windup', kind: b.kind, pos: { ...b.pos } });
@@ -183,7 +187,7 @@ export function sober(b: BroState, amount: number): void {
 
 // The shout's effect on him: a walker slows but keeps going; a bro at the
 // statue (winding up or pissing) is interrupted and has to start over.
-export function discipline(state: GameState, b: BroState, by: 'shout' | 'bone' | 'sprinkler'): void {
+export function discipline(state: GameState, b: BroState, by: 'shout' | 'bone' | 'sprinkler' | 'amp'): void {
   if (b.phase === 'leaving') return;
   if (b.phase === 'walking') {
     b.slow = BRO.slowTicks;
@@ -192,6 +196,11 @@ export function discipline(state: GameState, b: BroState, by: 'shout' | 'bone' |
   if (b.phase !== 'stagger') emit(state, { type: 'stagger', kind: b.kind, pos: { ...b.pos }, by });
   b.phase = 'stagger';
   b.timer = BRO.staggerTicks;
+}
+
+// A lane tile touching the statue: dist 0 on the base field.
+function atStatue(state: GameState, tile: Vec): boolean {
+  return state.distToStatue[tile.y * state.map.w + tile.x] === 0;
 }
 
 function faceStatue(state: GameState, tile: Vec): Vec {

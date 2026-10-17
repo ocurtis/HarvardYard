@@ -1,7 +1,7 @@
 // Towers and upgrades. Costs are in tourist money (a 4-person group pays 40).
 // First numbers are guesses; the headless sim tunes them in session 6.
 
-export type TowerKind = 'dig' | 'sprinkler';
+export type TowerKind = 'dig' | 'sprinkler' | 'amp';
 
 export interface TowerLevel {
   rangePx: number;
@@ -36,6 +36,26 @@ export const TOWERS: Record<TowerKind, TowerDef> = {
       { rangePx: 36, fireTicks: 0, sober: 12, upgradeCost: null },
     ],
   },
+  // The Amp: a half-stack and a guitarist, facing the way the player faced when he
+  // built it. The wind coming off it blows bros back along the lane, and lane tiles
+  // in the wind count as walls for routing, so new arrivals go the other way.
+  // It can never seal a gate off from the statue (the build is refused).
+  amp: {
+    kind: 'amp',
+    name: 'Amp',
+    cost: 45,
+    levels: [
+      { rangePx: 40, fireTicks: 0, sober: 4, upgradeCost: 50 }, // sober: per second while in the wind
+      { rangePx: 56, fireTicks: 0, sober: 6, upgradeCost: null },
+    ],
+  },
+};
+
+export const AMP = {
+  halfAngleDeg: [30, 36], // wind cone half-width by level
+  pushPxPerTick: 0.9, // how fast a bro slides back along the lane in the wind
+  entryStagger: true, // a bro entering the wind drops what he's doing
+  windStaggerTicks: 8, // how long he stays off balance after the wind lets go
 };
 
 export const BONE = {

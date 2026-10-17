@@ -37,10 +37,11 @@ export interface PlayerState {
 
 export interface TowerState {
   id: number;
-  kind: 'dig' | 'sprinkler';
+  kind: 'dig' | 'sprinkler' | 'amp';
   tile: Vec;
   level: number; // index into TowerDef.levels
   cooldown: number; // dig: ticks until next bone
+  facing: Vec; // amp: which way the wind blows (cardinal); others: {0,1}
 }
 
 export interface BoneState {
@@ -74,6 +75,8 @@ export interface BroState {
   phase: BroPhase;
   timer: number; // ticks left in windup/stagger
   slow: number; // ticks of slow remaining (shout on a walker)
+  inWind: boolean; // was inside an amp's wind last tick (for the entry stagger)
+  windTo: Vec | null; // tile the wind is shoving him toward; he slides until he gets there
   facing: Vec;
   variant: number; // which look; the renderer maps it to a sprite variant
 }
@@ -141,6 +144,8 @@ export type SimEventType =
   | 'spawn' // a bro entered the map (kind in `kind`)
   | 'windup' // a bro started winding up
   | 'stagger' // a bro was interrupted (by shout or bone); `by` says which
+  | 'windEnter' // a bro got caught in an amp's wind
+  | 'towerBuilt' // a tower went up; `tower` says which kind
   | 'boneThrow' // a dig fired
   | 'boneHit' // a bone landed
   | 'cupThrow'
@@ -156,7 +161,8 @@ export interface SimEvent {
   tick: number;
   pos?: Vec;
   kind?: BroKind;
-  by?: 'shout' | 'bone' | 'sprinkler';
+  by?: 'shout' | 'bone' | 'sprinkler' | 'amp';
+  tower?: 'dig' | 'sprinkler' | 'amp';
   amount?: number;
 }
 
@@ -173,6 +179,7 @@ export interface GameState {
   // walkable tile, over walkable tiles only; -1 = unreachable. Derived from
   // the map at creation; kept on state so snapshots are self-contained.
   distToStatue: number[];
+  distToStatueBros: number[]; // same, but lane tiles in an amp's wind count as walls; bros route by this
   distToFoot: number[]; // same idea, target = the foot tile
   distToSpot: number[][]; // one field per building (empty for non-destinations)
   distToExit: number[]; // same idea, targets = every gate and exit
@@ -199,7 +206,7 @@ export type Command =
   | { playerId: number; tick: number; type: 'move'; dx: -1 | 0 | 1; dy: -1 | 0 | 1 }
   | { playerId: number; tick: number; type: 'startWave' }
   | { playerId: number; tick: number; type: 'shout' }
-  | { playerId: number; tick: number; type: 'build'; kind: 'dig' | 'sprinkler' } // at the player's tile
+  | { playerId: number; tick: number; type: 'build'; kind: 'dig' | 'sprinkler' | 'amp' } // at the player's tile, facing the player's way
   | { playerId: number; tick: number; type: 'upgradeTower' } // the tower at the player's tile
   | { playerId: number; tick: number; type: 'upgradeSelf'; stat: 'shout' | 'range' | 'speed' };
 

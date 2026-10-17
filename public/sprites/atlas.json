@@ -539,6 +539,44 @@
       }
     }
   },
+  "amp": {
+    "file": "amp.png",
+    "w": 16,
+    "h": 24,
+    "frames": 10,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 3
+      },
+      "play": {
+        "frames": [
+          2,
+          3,
+          4
+        ],
+        "fps": 10
+      },
+      "idle2": {
+        "frames": [
+          5,
+          6
+        ],
+        "fps": 3
+      },
+      "play2": {
+        "frames": [
+          7,
+          8,
+          9
+        ],
+        "fps": 10
+      }
+    }
+  },
   "bone": {
     "file": "bone.png",
     "w": 8,

@@ -33,6 +33,8 @@ export const PALETTE = {
   dig: 0x8a6042,
   digPit: 0x4c0000,
   sprinkler: 0x27badb,
+  amp: 0xfe626e, // the Amp's rings and wind streaks
+  wind: 0xffffff,
   bone: 0xffffff,
   ring: 0xffffff,
   cursorOk: 0xa4f022,
