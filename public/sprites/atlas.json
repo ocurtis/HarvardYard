@@ -1059,6 +1059,36 @@
       }
     }
   },
+  "player": {
+    "file": "player.png",
+    "w": 16,
+    "h": 24,
+    "frames": 7,
+    "anims": {
+      "walk": {
+        "frames": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fps": 8
+      },
+      "shout": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 6
+      },
+      "idle": {
+        "frames": [
+          6
+        ],
+        "fps": 6
+      }
+    }
+  },
   "sprinkler": {
     "file": "sprinkler.png",
     "w": 16,
