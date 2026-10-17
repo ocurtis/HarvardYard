@@ -15,6 +15,7 @@ Read `DESIGN.md` first, every session. It is the source of truth for what the ga
 - One system per session, from the build order in `DESIGN.md`. Each has a done-condition Owen verifies by playing.
 - Placeholders are real assets: colored rectangles with the final name and dimensions. Don't draw art until the mechanic is proven.
 - Before pushing: `npm test`, `npx tsc --noEmit`, `npm run build`, and a headless screenshot if rendering changed.
+- Cold review before telling Owen a push is done: a separate agent that has not seen the work reads the diff (and the screenshot, if any) with no knowledge of the intent and reports problems. Art changes get a pixel-level review (art-director brief); sim changes get a correctness review. Fix what it finds, then report.
 - Record every design decision in `DESIGN.md` under the decisions log with a date and a one-line reason.
 
 ## Commands
