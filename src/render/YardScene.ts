@@ -55,6 +55,9 @@ interface TouristView {
 export class YardScene extends Phaser.Scene {
   private players: Phaser.GameObjects.Rectangle[] = [];
   private facingDots: Phaser.GameObjects.Rectangle[] = [];
+  private playerSprites: Phaser.GameObjects.Sprite[] = [];
+  private playerAnim: string[] = [];
+  private playerFlip: boolean[] = [];
   private hudText!: Phaser.GameObjects.Text;
   private music!: Music;
   private hpFill!: Phaser.GameObjects.Rectangle;
@@ -106,6 +109,15 @@ export class YardScene extends Phaser.Scene {
     this.world.add(this.overhead);
 
     for (const p of this.loop.state.players) {
+      if (this.atlas['player']?.file) {
+        // John Harvard. Faces right in the sheet; flipped for left. Up/down keep the last horizontal facing.
+        const sprite = this.add.sprite(p.pos.x, p.pos.y + TILE / 2, 'player', 0).setOrigin(0.5, 1);
+        this.world.add(sprite);
+        this.playerSprites.push(sprite);
+        this.playerAnim.push('');
+        this.playerFlip.push(false);
+        continue;
+      }
       // Placeholder until the player has a sprite: a hollow outline, so it never looks like a backdrop.
       const rect = this.add.rectangle(p.pos.x, p.pos.y, TILE - 4, TILE - 4, PALETTE.player, 0.15).setStrokeStyle(1, PALETTE.player);
       rect.setOrigin(0.5);
@@ -160,6 +172,18 @@ export class YardScene extends Phaser.Scene {
       const y = Math.round(p.pos.y);
       this.players[i]?.setPosition(x, y).setDepth(y + TILE / 2);
       this.facingDots[i]?.setPosition(x + p.facing.x * 5, y + p.facing.y * 5).setDepth(y + TILE / 2 + 0.5);
+      const sprite = this.playerSprites[i];
+      if (sprite) {
+        const feet = y + TILE / 2;
+        sprite.setPosition(x, feet).setDepth(feet);
+        if (p.facing.x !== 0) this.playerFlip[i] = p.facing.x < 0;
+        sprite.setFlipX(this.playerFlip[i]!);
+        const anim = p.shouting ? 'shout' : p.moving ? 'walk' : 'idle';
+        if (anim !== this.playerAnim[i]) {
+          this.playerAnim[i] = anim;
+          sprite.play(`player:${anim}`, true);
+        }
+      }
     });
 
     this.syncBros(s.bros);
