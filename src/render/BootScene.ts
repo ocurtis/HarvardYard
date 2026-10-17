@@ -3,6 +3,7 @@
 // the game still runs with rectangles.
 
 import Phaser from 'phaser';
+import { MUSIC, MUSIC_FORMATS } from '../config/audio';
 import { ATLAS_URL, queueSheets, registerAnims, type Atlas } from './assets';
 
 export class BootScene extends Phaser.Scene {
@@ -12,6 +13,7 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     this.load.json('atlas', ATLAS_URL);
+    for (const t of MUSIC) this.load.audio(t.key, MUSIC_FORMATS.map((ext) => `audio/${t.key}.${ext}`));
   }
 
   create(): void {

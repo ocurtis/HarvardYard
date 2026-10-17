@@ -15,6 +15,7 @@ import { isLaneTile } from '../sim/path';
 import { variantKey, type Atlas } from './assets';
 import { destinationShort } from '../sim/tourists';
 import { statueCenter } from '../sim/bros';
+import { Music } from './music';
 
 const TILE_COLOR: Record<TileKind, number> = {
   grass: PALETTE.grass,
@@ -55,6 +56,7 @@ export class YardScene extends Phaser.Scene {
   private players: Phaser.GameObjects.Rectangle[] = [];
   private facingDots: Phaser.GameObjects.Rectangle[] = [];
   private hudText!: Phaser.GameObjects.Text;
+  private music!: Music;
   private hpFill!: Phaser.GameObjects.Rectangle;
   private fx!: Phaser.GameObjects.Graphics;
   private overlay!: Phaser.GameObjects.Container;
@@ -75,13 +77,18 @@ export class YardScene extends Phaser.Scene {
   private boneSprites = new Map<number, Phaser.GameObjects.Sprite>();
   private cursor!: Phaser.GameObjects.Graphics;
 
-  constructor(private readonly loop: GameLoop) {
+  constructor(
+    private readonly loop: GameLoop,
+    private readonly onMusic?: (music: Music) => void,
+  ) {
     super('yard');
   }
 
   create(): void {
     this.atlas = (this.registry.get('atlas') as Atlas | undefined) ?? {};
     this.cameras.main.setBackgroundColor(PALETTE.bg);
+    this.music = new Music(this);
+    this.onMusic?.(this.music);
     // Everything in the map lives in a container offset by the HUD column,
     // so sim coordinates stay map-relative.
     this.world = this.add.container(HUD_W, 0);
@@ -145,6 +152,7 @@ export class YardScene extends Phaser.Scene {
   override update(_time: number, delta: number): void {
     this.loop.advance(delta);
     const s = this.loop.state;
+    this.music.sync(s);
 
     s.players.forEach((p, i) => {
       // Round to whole pixels so the sprite sits on the pixel grid.

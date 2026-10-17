@@ -8,16 +8,26 @@ export class KeyboardInput implements InputSource {
   private held = new Set<string>();
   // Edge-triggered keys: queued on keydown, emitted once on the next tick.
   private pressed: string[] = [];
+  // Render-only keys (mute, etc.): they never become Commands and never reach the sim.
+  private renderKeys = new Map<string, () => void>();
 
   constructor(private readonly playerId: number, target: Window = window) {
     target.addEventListener('keydown', (e) => {
       const k = e.key.toLowerCase();
-      if (!e.repeat && !this.held.has(k)) this.pressed.push(k);
+      if (!e.repeat && !this.held.has(k)) {
+        this.pressed.push(k);
+        this.renderKeys.get(k)?.();
+      }
       this.held.add(k);
       if (isGameKey(e.key)) e.preventDefault();
     });
     target.addEventListener('keyup', (e) => this.held.delete(e.key.toLowerCase()));
     target.addEventListener('blur', () => this.held.clear());
+  }
+
+  // Register a key the renderer handles itself (lowercase). Fires once per press.
+  onRenderKey(key: string, cb: () => void): void {
+    this.renderKeys.set(key.toLowerCase(), cb);
   }
 
   commandsFor(tick: number): Command[] {
