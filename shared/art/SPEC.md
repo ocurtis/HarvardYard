@@ -42,8 +42,8 @@ spawn with the seeded RNG. Draw one body well; variety is the pipeline's job.
 ...
 ```
 `.` is transparent. One character per pixel. Palette keys are per-file. Frames are listed in order;
-`anim` lines name sequences by frame index. `art/build.py` compiles every file to a PNG strip in
-`public/sprites/` and writes `public/sprites/atlas.json`.
+`anim` lines name sequences by frame index. `shared/art/build.py <slug>` compiles every file to a PNG strip in
+`public/<slug>/sprites/` and writes `atlas.json` beside them.
 
 ## Asset list, in build order
 | asset | size | animations | notes |

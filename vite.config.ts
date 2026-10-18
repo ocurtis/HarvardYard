@@ -18,7 +18,12 @@ function voiceBooth(): Plugin {
       const root = server.config.root;
       const clean = (v: string | null) => (v ?? '').replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
       // One voice folder per game: games/<slug>/art/audio/voice (the booth passes ?game=).
-      const dirFor = (slug: string | null) => join(root, 'games', clean(slug) || 'yard', 'art', 'audio', 'voice');
+      // Only a real game (a folder with a play.html, not the template) gets a voice folder.
+      const dirFor = (slug: string | null) => {
+        const g = clean(slug) || 'yard';
+        if (g.startsWith('_') || !existsSync(join(root, 'games', g, 'play.html'))) throw new Error(`no such game: ${g}`);
+        return join(root, 'games', g, 'art', 'audio', 'voice');
+      };
       const git = async (args: string[]) => run('git', args, { cwd: root });
       const describe = (e: unknown) => {
         const err = e as { stderr?: string; message?: string };
@@ -33,7 +38,7 @@ function voiceBooth(): Plugin {
       const commitPush = async (msg: string) => {
         try {
           await git(['add', '-A', 'games/*/art/audio/voice']);
-          const status = (await git(['status', '--porcelain', 'games'])).stdout.trim();
+          const status = (await git(['status', '--porcelain', 'games/*/art/audio/voice'])).stdout.trim();
           if (status) await git(['commit', '-m', msg]);
           await push();
           return { pushed: true, error: '' };
@@ -59,7 +64,13 @@ function voiceBooth(): Plugin {
       });
       server.middlewares.use('/__booth', async (req, res) => {
         const url = new URL(req.url ?? '', 'http://x');
-        const dir = dirFor(url.searchParams.get('game'));
+        let dir: string;
+        try {
+          dir = dirFor(url.searchParams.get('game'));
+        } catch {
+          res.statusCode = 404;
+          return res.end();
+        }
         mkdirSync(dir, { recursive: true });
         if (url.pathname === '/list') {
           const names = readdirSync(dir).filter((f) => f.endsWith('.wav')).map((f) => f.slice(0, -4)).sort();
@@ -132,7 +143,7 @@ export default defineConfig({
       input: Object.fromEntries([
         ['index', 'index.html'],
         ...readdirSync('games')
-          .filter((g) => existsSync(join('games', g, 'play.html')))
+          .filter((g) => !g.startsWith('_') && existsSync(join('games', g, 'play.html'))) // _template never ships
           .flatMap((g) => [
             [`${g}-play`, `games/${g}/play.html`],
             [`${g}-manual`, `games/${g}/index.html`],

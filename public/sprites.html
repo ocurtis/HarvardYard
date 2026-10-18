@@ -21,7 +21,7 @@
 <body>
 <h1>Sprite review</h1>
 <p>
-  <label>Atlas <select id="src"><option value="sprites">public/sprites (approved)</option><option value="candidates">public/candidates (panel)</option></select></label>
+  <label>Atlas <select id="src"><option value="yard/sprites">public/yard/sprites (approved)</option><option value="candidates">public/candidates (panel)</option></select></label>
   <label>Zoom <input id="zoom" type="number" value="4" min="1" max="10"></label>
   <label><input id="grass" type="checkbox" checked> on grass</label>
   <label><input id="grid" type="checkbox"> grid</label>
@@ -38,7 +38,7 @@ async function load() {
   cards.innerHTML = '';
   try {
     atlas = await (await fetch(`/${srcDir}/atlas.json?${Date.now()}`)).json();
-  } catch { cards.textContent = `no ${srcDir}/atlas.json yet. Run: python3 art/build.py`; return; }
+  } catch { cards.textContent = `no ${srcDir}/atlas.json yet. Run: npm run art yard`; return; }
   images = {};
   await Promise.all(Object.entries(atlas).map(([name, a]) => new Promise(res => {
     const img = new Image(); img.onload = () => { images[name] = img; res(); }; img.onerror = res;

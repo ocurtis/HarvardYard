@@ -1,5 +1,5 @@
 // Music and sound tuning. Tracks are rendered by art/audio/gen_music.py into
-// public/audio; this picks which loop plays and how it changes.
+// public/yard/audio; this picks which loop plays and how it changes.
 
 export interface MusicTrack {
   key: string;
@@ -17,7 +17,7 @@ export const MUSIC_VOLUME = 0.3; // under the bells and the voice cues
 export const MUSIC_CROSSFADE_MS = 1500;
 export const MUSIC_FORMATS = ['ogg', 'mp3']; // Phaser picks the first the browser can play
 
-// Sound effects. Keys are files in public/audio/sfx (voice_* are Owen's takes,
+// Sound effects. Keys are files in public/yard/audio/sfx (voice_* are Owen's takes,
 // chip-crushed by art/audio/crush.py; the rest are synthesized by gen_sfx.py).
 // An event maps to one or more keys; several = pick one at random per play.
 export const SFX_VOLUME = 0.8;
