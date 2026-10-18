@@ -1,12 +1,10 @@
 // Reads GameState and draws it. Never mutates state.
 
 import Phaser from 'phaser';
-import { BRO, CHUCKER, CUP, GHOST, GRID_H, GRID_W, HUD_W, ROUND_BANNER_TICKS, SERMON_FX, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
+import { CHUCKER, CUP, GHOST, GRID_H, GRID_W, HUD_W, ROUND_BANNER_TICKS, SERMON_FX, LOGICAL_H, LOGICAL_W, LONGSHOT, POPUP_TICKS, SHOUT, STATUE, TILE, TOURIST } from '../config/game';
 import { PALETTE } from '../config/palette';
-import { WAVES } from '../config/waves';
 import type { GameLoop } from '../loop';
 import type { BroState, MapData, PlayerState, TileKind, TouristState } from '../sim/types';
-import { canStartWave } from '../sim/waves';
 import { SELF_UPGRADE, TOWERS } from '../config/towers';
 import { canBuild, playerTile, towerAt, towerRange } from '../sim/towers';
 import { snapCardinal, windTiles } from '../sim/wind';
@@ -19,6 +17,8 @@ import { destinationShort } from '../sim/tourists';
 import { statueCenter } from '../sim/bros';
 import { Music } from './music';
 import { Sfx } from './sfx';
+import { Hud } from './hud';
+import { FONT_KEY } from './assets';
 
 const TILE_COLOR: Record<TileKind, number> = {
   grass: PALETTE.grass,
@@ -63,16 +63,17 @@ export class YardScene extends Phaser.Scene {
   private playerSprites: Phaser.GameObjects.Sprite[] = [];
   private playerAnim: string[] = [];
   private playerFlip: boolean[] = [];
-  private hudText!: Phaser.GameObjects.Text;
+  private hud!: Hud;
   private music!: Music;
   private sfx!: Sfx;
-  private hpFill!: Phaser.GameObjects.Rectangle;
+  private noticeBox!: Phaser.GameObjects.Graphics;
+  private bannerBox!: Phaser.GameObjects.Graphics;
   private fx!: Phaser.GameObjects.Graphics;
   private overlay!: Phaser.GameObjects.Container;
-  private overlayText!: Phaser.GameObjects.Text;
-  private banner!: Phaser.GameObjects.Text;
+  private overlayText!: Phaser.GameObjects.BitmapText;
+  private banner!: Phaser.GameObjects.BitmapText;
   private bannerTick = -1e9;
-  private noticeText!: Phaser.GameObjects.Text;
+  private noticeText!: Phaser.GameObjects.BitmapText;
   private fpsSamples: number[] = [];
   private world!: Phaser.GameObjects.Container;
   private broViews = new Map<number, BroView>();
@@ -141,48 +142,28 @@ export class YardScene extends Phaser.Scene {
       this.facingDots.push(dot);
     }
 
-    // HUD column on the left. Placeholder until the real HUD in session 5.
-    this.add.rectangle(0, 0, HUD_W, LOGICAL_H, PALETTE.hud).setOrigin(0);
-    this.add.rectangle(2, 2, HUD_W - 4, 6, 0x333333).setOrigin(0);
-    this.hpFill = this.add.rectangle(2, 2, HUD_W - 4, 6, PALETTE.playerFacing).setOrigin(0);
-    this.hudText = this.add
-      .text(1, 10, '', { fontFamily: 'monospace', fontSize: '7px', color: '#ffffff', lineSpacing: -1 })
-      .setOrigin(0)
-      .setResolution(1);
+    // HUD panel on the left (NES-style; see hud.ts).
+    this.hud = new Hud(this, this.atlas);
 
-    // Shop feedback, bottom of the map.
-    this.noticeText = this.add
-      .text(HUD_W + 2, LOGICAL_H - 9, '', { fontFamily: 'monospace', fontSize: '7px', color: '#e8ea4a', backgroundColor: '#000000' })
-      .setOrigin(0)
-      .setResolution(1)
-      .setDepth(1000);
+    // Shop feedback, bottom of the map: boxed bitmap text.
+    this.noticeBox = this.add.graphics().setDepth(999);
+    this.noticeText = this.add.bitmapText(HUD_W + 4, LOGICAL_H - 11, FONT_KEY, '').setTint(PALETTE.money).setDepth(1000);
 
     // Win/loss overlay.
-    this.overlay = this.add.container(0, 0).setVisible(false);
+    this.overlay = this.add.container(0, 0).setVisible(false).setDepth(9600);
     this.overlay.add(this.add.rectangle(0, 0, LOGICAL_W, LOGICAL_H, 0x000000, 0.6).setOrigin(0));
     this.overlayText = this.add
-      .text(HUD_W + (GRID_W * TILE) / 2, LOGICAL_H / 2, '', {
-        fontFamily: 'monospace',
-        fontSize: '16px',
-        color: '#ffffff',
-        align: 'center',
-      })
+      .bitmapText(HUD_W + (GRID_W * TILE) / 2, LOGICAL_H / 2, FONT_KEY, '')
       .setOrigin(0.5)
-      .setResolution(1);
+      .setCenterAlign()
+      .setScale(2);
     this.overlay.add(this.overlayText);
 
-    // Round banner: "Round X: Protect Your Statue!" for a couple of seconds at each wave start.
+    // Round banner: "ROUND X: PROTECT YOUR STATUE!" for a couple of seconds at each wave start.
+    this.bannerBox = this.add.graphics().setDepth(9499).setVisible(false);
     this.banner = this.add
-      .text(HUD_W + (GRID_W * TILE) / 2, LOGICAL_H / 3, '', {
-        fontFamily: 'monospace',
-        fontSize: '12px',
-        color: '#ffffff',
-        backgroundColor: '#202040',
-        padding: { x: 6, y: 3 },
-        align: 'center',
-      })
+      .bitmapText(HUD_W + (GRID_W * TILE) / 2, LOGICAL_H / 3, FONT_KEY, '')
       .setOrigin(0.5)
-      .setResolution(1)
       .setDepth(9500)
       .setVisible(false);
   }
@@ -227,43 +208,41 @@ export class YardScene extends Phaser.Scene {
     }
 
     // HUD.
-    this.hpFill.width = Math.max(0, (HUD_W - 4) * (s.statueHp / STATUE.hp));
     this.fpsSamples.push(delta);
     if (this.fpsSamples.length > 30) this.fpsSamples.shift();
     const avg = this.fpsSamples.reduce((a, b) => a + b, 0) / this.fpsSamples.length;
-    const waveLabel = s.wave.index < 0 ? '-' : `${s.wave.index + 1}/${WAVES.length}`;
-    const prompt = canStartWave(s) ? 'SPACE\nnext\nwave\n' : '';
-    const p0 = s.players[0]!;
-    const here = towerAt(s, playerTile(p0));
-    const up = here ? TOWERS[here.kind].levels[here.level]!.upgradeCost : null;
-    const u = p0.upgrades;
-    // Self-upgrades show their level next to the price, so paying for one is visible.
-    const selfLine = (lvl: number) => ` ${lvl}/${SELF_UPGRADE.costs.length}${SELF_UPGRADE.costs[lvl] !== undefined ? '$' + SELF_UPGRADE.costs[lvl] : 'max'}`; // 7 chars: the column is 32px
-    const shop =
-      `1 Dig\n $${TOWERS.dig.cost}\n2 Sprnk\n $${TOWERS.sprinkler.cost}\n3 Amp\n $${TOWERS.amp.cost}\n` +
-      (here ? `U upgr\n ${up === null ? 'max' : '$' + up}\n` : '') +
-      `4 shout\n${selfLine(u.shout)}\n5 range\n${selfLine(u.range)}\n6 speed\n${selfLine(u.speed)}`;
-    this.hudText.setText(
-      `HP ${Math.ceil(s.statueHp)}\n$${s.money}\nWAVE ${waveLabel}\n${prompt}\n${shop}\n\n${(1000 / avg).toFixed(0)}fps`,
-    );
+    this.hud.sync(s, 1000 / avg);
 
     const n = s.notice;
-    this.noticeText.setText(n && s.tick - n.tick < 120 ? ` ${n.text} ` : '');
+    const showNotice = !!n && s.tick - n.tick < 120;
+    this.noticeText.setText(showNotice ? n!.text.toUpperCase() : '');
+    this.noticeBox.clear();
+    if (showNotice) {
+      this.noticeBox.fillStyle(0x000000, 1);
+      this.noticeBox.fillRect(HUD_W + 2, LOGICAL_H - 13, this.noticeText.width + 4, 12);
+    }
 
     for (const e of s.events) {
       if (e.type === 'waveStart' && e.tick > this.bannerTick) {
         this.bannerTick = e.tick;
-        this.banner.setText(`Round ${s.wave.index + 1}: Protect Your Statue!`);
+        this.banner.setText(`ROUND ${s.wave.index + 1}: PROTECT YOUR STATUE!`);
+        this.bannerBox.clear();
+        this.bannerBox.fillStyle(0x202040, 1);
+        this.bannerBox.fillRect(this.banner.x - this.banner.width / 2 - 6, this.banner.y - this.banner.height / 2 - 4, this.banner.width + 12, this.banner.height + 8);
+        this.bannerBox.lineStyle(1, 0xffffff, 1);
+        this.bannerBox.strokeRect(this.banner.x - this.banner.width / 2 - 5.5, this.banner.y - this.banner.height / 2 - 3.5, this.banner.width + 11, this.banner.height + 7);
       }
     }
-    this.banner.setVisible(s.tick - this.bannerTick < ROUND_BANNER_TICKS && s.phase === 'playing');
+    const bannerOn = s.tick - this.bannerTick < ROUND_BANNER_TICKS && s.phase === 'playing';
+    this.banner.setVisible(bannerOn);
+    this.bannerBox.setVisible(bannerOn);
 
     if (s.phase !== 'playing') {
       this.overlay.setVisible(true);
       this.overlayText.setText(
         s.phase === 'lost'
-          ? `JOHN HARVARD\nHAS BEEN PISSED ON\n\nwave ${s.wave.index + 1}\n\nreload to try again`
-          : `THE YARD IS SAFE\n\nreload to play again`,
+          ? `JOHN HARVARD\nHAS BEEN PISSED ON\n\nROUND ${s.wave.index + 1}\n\nRELOAD TO TRY AGAIN`
+          : `THE YARD IS SAFE\n\nRELOAD TO PLAY AGAIN`,
       );
     }
   }

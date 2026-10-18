@@ -20,6 +20,28 @@ export type Atlas = Record<string, AtlasEntry>;
 
 export const ATLAS_URL = 'sprites/atlas.json';
 
+// The HUD font: art/gen_font.py renders these glyphs, in this order, as 6x8 cells.
+export const FONT_URL = 'sprites/font.png';
+export const FONT_KEY = 'hudfont';
+export const FONT_CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+export function registerFont(scene: Phaser.Scene): void {
+  if (scene.cache.bitmapFont.exists(FONT_KEY) || !scene.textures.exists('font')) return;
+  const data = Phaser.GameObjects.RetroFont.Parse(scene, {
+    image: 'font',
+    width: 6,
+    height: 8,
+    chars: FONT_CHARS,
+    charsPerRow: FONT_CHARS.length,
+    'offset.x': 0,
+    'offset.y': 0,
+    'spacing.x': 0,
+    'spacing.y': 0,
+    lineSpacing: 1,
+  });
+  scene.cache.bitmapFont.add(FONT_KEY, data);
+}
+
 // Queue every PNG in the atlas as a spritesheet. Call from a scene's preload
 // after the atlas JSON itself has loaded.
 export function queueSheets(load: Phaser.Loader.LoaderPlugin, atlas: Atlas): void {

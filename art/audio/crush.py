@@ -28,6 +28,8 @@ DRIVE = 1.4  # soft clip gain before quantizing
 GATE_DB = -30  # below this (relative to peak) is treated as silence
 PAD_MS = 15
 SPEED = 1.3  # playback speed: faster and higher, the classic "chipmunk the sample" trick (+4.5 semitones)
+# Per-take overrides. Owen 2026-10-18: the longshot arrival faster.
+SPEED_BY_TAKE = {"long_range_arrival": 1.6}
 
 
 def read_wav(path):
@@ -115,7 +117,7 @@ if __name__ == "__main__":
         if name.startswith("music") or name.startswith("melody"):
             continue  # tunes go through the pitch tracker, not the crusher
         sr, d = read_wav(path)
-        c = crush(d, sr)
+        c = crush(d, sr, speed=SPEED_BY_TAKE.get(name, SPEED))
         out = resample(c, sr, SR_OUT) * 0.9
         tmp = os.path.join(OUT, f"voice_{name}.wav")
         write_wav(tmp, out, SR_OUT)

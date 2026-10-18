@@ -64,6 +64,7 @@ export const SFX_LOOPS = {
 // Per-key gain on top of SFX_VOLUME (1 = unchanged).
 export const SFX_GAIN: Record<string, number> = {
   voice_tourist_flash: 0.4,
+  voice_long_range_arrival: 0.5, // Owen: quieter
 };
 // Minimum ms between plays of the same one-shot key, so a crowd doesn't stack it.
 export const SFX_MIN_GAP_MS = 70;

@@ -6,7 +6,7 @@ export const TICK_MS = 1000 / TICK_RATE;
 // Logical resolution, integer-scaled by the renderer. 4:3 like the NES
 // (UFO 50 is 384x216; we trade its 16:9 for a taller map).
 export const TILE = 16;
-export const HUD_W = 2 * TILE; // left sidebar, Rock On! style
+export const HUD_W = 3 * TILE; // left sidebar, NES panel
 export const GRID_W = 24;
 export const GRID_H = 18;
 export const LOGICAL_W = HUD_W + GRID_W * TILE; // 416

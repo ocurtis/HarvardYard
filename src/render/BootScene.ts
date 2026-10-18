@@ -4,7 +4,7 @@
 
 import Phaser from 'phaser';
 import { MUSIC, MUSIC_FORMATS, SFX_FILES } from '../config/audio';
-import { ATLAS_URL, queueSheets, registerAnims, type Atlas } from './assets';
+import { ATLAS_URL, FONT_URL, queueSheets, registerAnims, registerFont, type Atlas } from './assets';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -13,6 +13,7 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     this.load.json('atlas', ATLAS_URL);
+    this.load.image('font', FONT_URL);
     for (const t of MUSIC) this.load.audio(t.key, MUSIC_FORMATS.map((ext) => `audio/${t.key}.${ext}`));
     for (const k of SFX_FILES) this.load.audio(k, MUSIC_FORMATS.map((ext) => `audio/sfx/${k}.${ext}`));
   }
@@ -22,6 +23,7 @@ export class BootScene extends Phaser.Scene {
     queueSheets(this.load, atlas);
     this.load.once(Phaser.Loader.Events.COMPLETE, () => {
       registerAnims(this.anims, atlas);
+      registerFont(this);
       this.registry.set('atlas', atlas);
       this.scene.start('yard');
     });
