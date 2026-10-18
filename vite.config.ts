@@ -126,7 +126,7 @@ export default defineConfig({
     target: 'es2022',
     assetsInlineLimit: 0,
     rollupOptions: {
-      input: { index: 'index.html', play: 'play.html' },
+      input: { index: 'index.html', play: 'play.html', yard: 'yard.html' },
     },
   },
   server: {

@@ -3,77 +3,157 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gahd The Yahd</title>
-  <meta name="description" content="Gahd The Yahd: a tower defense in Harvard Yard. You are the ghost of John Harvard. Preach the drunk frat bros off your statue and shepherd lost tourists to their photos." />
+  <title>Game Select</title>
+  <meta name="description" content="Five small games in one cartridge. Pick one." />
   <style>
-    :root { --bg: #202040; --card: #340058; --ink: #ffffff; --muted: #c8c8c8; --grass: #63b31d; --mint: #58f5b1; --cyan: #27badb; --red: #e03c32; --gold: #e8ea4a; --path: #707070; }
+    :root { --bg: #000000; --navy: #202040; --ink: #ffffff; --grey: #707070; --lt: #c8c8c8; --gold: #e8ea4a; --mint: #58f5b1; --red: #e03c32; --purple: #340058; }
     * { box-sizing: border-box; }
-    html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
-    main { max-width: 720px; margin: 0 auto; padding: 28px 16px 64px; }
-    h1 { font-size: clamp(34px, 8vw, 56px); line-height: 1; margin: 0; letter-spacing: .02em; color: var(--gold); text-shadow: 3px 3px 0 #000; }
-    .tag { color: var(--mint); margin: 8px 0 20px; }
-    .play { display: inline-block; background: var(--red); color: #fff; text-decoration: none; font-size: 20px; padding: 12px 26px; border: 3px solid #fff; box-shadow: 4px 4px 0 #000; margin: 6px 0 28px; }
-    .play:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #000; }
-    h2 { font-size: 16px; color: var(--cyan); margin: 26px 0 8px; text-transform: uppercase; letter-spacing: .08em; }
-    p { margin: 0 0 10px; }
-    .goal { font-size: 17px; background: var(--card); border-left: 4px solid var(--gold); padding: 10px 14px; }
-    table { border-collapse: collapse; width: 100%; }
-    td { padding: 5px 8px; vertical-align: top; border-bottom: 1px solid #4430ba; }
-    td:first-child { white-space: nowrap; color: var(--gold); }
-    kbd { background: #000; border: 1px solid #707070; padding: 1px 6px; border-radius: 3px; font: inherit; color: #fff; }
-    .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
-    .who { display: flex; gap: 12px; align-items: flex-start; background: var(--card); padding: 10px; }
-    .sprite { width: 48px; height: 72px; flex: 0 0 48px; image-rendering: pixelated; background-repeat: no-repeat; background-size: auto 72px; background-color: var(--grass); border: 2px solid #000; }
-    .sprite.wide { width: 64px; height: 64px; flex-basis: 64px; background-size: auto 64px; }
-    .who b { display: block; color: var(--mint); }
-    .who small { color: var(--muted); }
-    footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
-    a { color: var(--cyan); }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); min-height: 100%; }
+    body { display: flex; flex-direction: column; align-items: center; padding: 24px 16px 40px; user-select: none; }
+    /* Everything is drawn at a logical 1x and scaled up by an integer, like the games. */
+    #screen { --s: 3; image-rendering: pixelated; display: flex; flex-direction: column; align-items: center; }
+    canvas.t { display: block; image-rendering: pixelated; }
+    .title { margin: 8px 0 22px; }
+    .shelf { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(10px * var(--s)); max-width: calc(5 * 84px * var(--s)); }
+    .cart { width: calc(74px * var(--s)); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: calc(4px * var(--s)); }
+    .shell { position: relative; width: calc(74px * var(--s)); height: calc(70px * var(--s)); background: var(--navy); border: calc(1px * var(--s)) solid var(--ink); box-shadow: inset 0 0 0 calc(1px * var(--s)) var(--bg); }
+    .shell::before { /* cartridge grip ridges */ content: ""; position: absolute; left: calc(4px * var(--s)); right: calc(4px * var(--s)); bottom: calc(3px * var(--s)); height: calc(5px * var(--s)); background: repeating-linear-gradient(90deg, var(--bg) 0 calc(1px * var(--s)), transparent calc(1px * var(--s)) calc(3px * var(--s))); }
+    .label { position: absolute; left: calc(4px * var(--s)); top: calc(4px * var(--s)); width: calc(64px * var(--s)); height: calc(48px * var(--s)); background: var(--purple); border: calc(1px * var(--s)) solid var(--bg); overflow: hidden; }
+    .label img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+    .cart.dark .shell { background: #0c0c14; border-color: var(--grey); }
+    .cart.dark .label { background: #000; display: flex; align-items: center; justify-content: center; }
+    .cart.dark .label canvas { opacity: .9; }
+    .cart.dark .shell::before { background: repeating-linear-gradient(90deg, #000 0 calc(1px * var(--s)), transparent calc(1px * var(--s)) calc(3px * var(--s))); }
+    .cart .num { position: absolute; right: calc(4px * var(--s)); top: calc(56px * var(--s)); }
+    .cart.sel .shell { border-color: var(--gold); box-shadow: inset 0 0 0 calc(1px * var(--s)) var(--bg), 0 0 0 calc(1px * var(--s)) var(--gold); }
+    .cart.sel.blink .shell { border-color: var(--ink); box-shadow: inset 0 0 0 calc(1px * var(--s)) var(--bg), 0 0 0 calc(1px * var(--s)) var(--ink); }
+    .info { margin-top: calc(10px * var(--s)); min-height: calc(30px * var(--s)); display: flex; flex-direction: column; align-items: center; gap: calc(3px * var(--s)); }
+    .hint { margin-top: calc(10px * var(--s)); opacity: .8; }
+    .hint a { color: inherit; }
+    @media (max-width: 760px) { #screen { --s: 2; } }
+    @media (max-width: 420px) { #screen { --s: 2; } .shelf { max-width: calc(2 * 84px * var(--s)); } }
   </style>
 </head>
 <body>
-<main>
-  <h1>GAHD THE YAHD</h1>
-  <a class="play" href="play.html">▶ PLAY</a>
+<div id="screen">
+  <div class="title"><canvas class="t" data-text="SELECT A GAME" data-scale="2" data-color="#e8ea4a"></canvas></div>
+  <div class="shelf" id="shelf"></div>
+  <div class="info" id="info"></div>
+  <div class="hint"><canvas class="t" data-text="ARROWS OR TAP   ENTER PLAYS   I MANUAL" data-color="#707070"></canvas></div>
+</div>
 
-  <p class="goal">You are the ghost of John Harvard: keep the drunk frat bros from pissing on your statue through fifteen rounds, and pay for it by shepherding lost tourists to their photos.</p>
+<script>
+  // The five slots. A slot with no `play` is a dark cartridge: under construction.
+  const GAMES = [
+    { title: 'GAHD THE YAHD', blurb: 'TOWER DEFENSE IN HARVARD YARD', cover: 'covers/yard.png', play: 'play.html', manual: 'yard.html' },
+    { title: 'UNDER CONSTRUCTION' },
+    { title: 'UNDER CONSTRUCTION' },
+    { title: 'UNDER CONSTRUCTION' },
+    { title: 'UNDER CONSTRUCTION' },
+  ];
 
-  <h2>Controls</h2>
-  <table>
-    <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</td><td>Move.</td></tr>
-    <tr><td><kbd>J</kbd> / <kbd>X</kbd> / <kbd>Shift</kbd></td><td>Hold to deliver a sermon. Bros in the cone in front of you slow down, stop what they're doing and sober up. It also scares tourists, so mind your aim.</td></tr>
-    <tr><td>Walk into a tour guide</td><td>Hands the group a brochure. They pay when they reach their photo spot. Leave them confused too long and they storm out and cost you $10.</td></tr>
-    <tr><td><kbd>Space</kbd> / <kbd>Enter</kbd></td><td>Start the next round. Rounds never start on their own.</td></tr>
-    <tr><td><kbd>1</kbd> / <kbd>2</kbd> / <kbd>3</kbd></td><td>Build a Dig ($30), a Sprinkler ($20) or the Amp ($45) on the grass you're standing on, any time. The Amp faces the way you're facing.</td></tr>
-    <tr><td><kbd>U</kbd></td><td>Upgrade the tower you're standing on.</td></tr>
-    <tr><td><kbd>4</kbd> / <kbd>5</kbd> / <kbd>6</kbd></td><td>Upgrade your sermon's power, its range, or your speed.</td></tr>
-    <tr><td><kbd>M</kbd></td><td>Mute.</td></tr>
-  </table>
+  // Bitmap text: the games' own 5x7 font (sprites/font.png, art/gen_font.py), drawn
+  // onto a canvas per label and scaled by the screen's integer factor in CSS.
+  const CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const font = new Image();
+  font.src = 'sprites/font.png';
+  const fontReady = new Promise((r) => { font.onload = r; });
+  async function drawText(canvas, text, color = '#ffffff', scale = 1) {
+    await fontReady;
+    text = String(text).toUpperCase();
+    const w = text.length * 6, h = 8;
+    canvas.width = w; canvas.height = h;
+    canvas.style.width = `calc(${w * scale}px * var(--s))`;
+    canvas.style.height = `calc(${h * scale}px * var(--s))`;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    for (let i = 0; i < text.length; i++) {
+      const k = CHARS.indexOf(text[i]);
+      if (k >= 0) ctx.drawImage(font, k * 6, 0, 6, 8, i * 6, 0, 6, 8);
+    }
+    // Recolor: the font is white on transparent.
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, w, h);
+    return canvas;
+  }
+  function label(text, color, scale = 1) {
+    const c = document.createElement('canvas');
+    c.className = 't';
+    drawText(c, text, color, scale);
+    return c;
+  }
+  document.querySelectorAll('canvas.t[data-text]').forEach((c) => drawText(c, c.dataset.text, c.dataset.color || '#ffffff', +(c.dataset.scale || 1)));
 
-  <h2>Enemies</h2>
-  <div class="roster">
-    <div class="who"><div class="sprite" role="img" aria-label="Bro sprite" style="background-image:url(sprites/bro_v00.png)"></div><div><b>Bro</b>Walks the whole path to the statue, unzips, lets go. Towers and sermons both work. <small>Every round.</small></div></div>
-    <div class="who"><div class="sprite" role="img" aria-label="Longshot sprite" style="background-image:url(sprites/longshot_v00.png)"></div><div><b>Longshot</b>Fast, with a beer funnel. Stops the moment the statue is in range and arcs it over everything in between. He shakes the whole way in because he has to go. <small>From round 3.</small></div></div>
-    <div class="who"><div class="sprite" role="img" aria-label="Cup Chucker sprite" style="background-image:url(sprites/chucker_v00.png)"></div><div><b>Cup Chucker</b>Slow. Waddles a few tiles in, stops, and lobs full cups at the statue every five seconds. Towers can't touch him. Catch a cup by running under its shadow, or knock it down with a sermon. <small>From round 5.</small></div></div>
-    <div class="who"><div class="sprite" role="img" aria-label="Finals Club Member sprite" style="background-image:url(sprites/finals_v00.png)"></div><div><b>Finals Club Member</b>Tuxedo, champagne, almost as fast as you, and takes nearly three bros' worth of sobering. Walks straight in mid-round. <small>From round 8.</small></div></div>
-  </div>
-  <p style="margin-top:10px"><small>Every round, every bro arrives 6% drunker than the round before. Sobering one out pays $1, whoever he is.</small></p>
+  // Chip blips for moving and picking, on a square wave.
+  let actx;
+  function blip(f, dur = 0.05, type = 'square') {
+    try {
+      actx ??= new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.value = f;
+      g.gain.value = 0.08; g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+      o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + dur);
+    } catch {}
+  }
 
-  <h2>Towers</h2>
-  <div class="roster">
-    <div class="who"><div class="sprite" role="img" aria-label="Dig sprite" style="background-image:url(sprites/dig.png)"></div><div><b>Dig · $30</b>An archaeological dig site that lobs bones at the nearest bro in range. One upgrade: more range, faster bones, harder bones.</div></div>
-    <div class="who"><div class="sprite" role="img" aria-label="Sprinkler sprite" style="background-image:url(sprites/sprinkler.png)"></div><div><b>Sprinkler · $20</b>Soaks everyone in a small circle: bros slow down and sober a little; tourists just walk slower for a moment.</div></div>
-    <div class="who"><div class="sprite" role="img" aria-label="Amp sprite" style="background-image:url(sprites/amp.png)"></div><div><b>The Amp · $45</b>A half-stack and the man playing through it. Point it down a lane: the wind blows bros back the way they came, and new arrivals route around it and take the other way in. It can't wall the Yard off (the game won't let you build one that would), bros already past it don't turn around, and chuckers are too heavy to blow. Upgrade: longer, wider wind.</div></div>
-  </div>
-  <p style="margin-top:10px"><small>Towers never hurt tourists. Only your sermon can scare money away.</small></p>
+  const shelf = document.getElementById('shelf');
+  const info = document.getElementById('info');
+  const carts = GAMES.map((g, i) => {
+    const el = document.createElement('div');
+    el.className = 'cart' + (g.play ? '' : ' dark');
+    const shell = document.createElement('div');
+    shell.className = 'shell';
+    const lab = document.createElement('div');
+    lab.className = 'label';
+    if (g.cover) {
+      const img = document.createElement('img');
+      img.src = g.cover; img.alt = g.title;
+      lab.appendChild(img);
+    } else {
+      lab.appendChild(label('??', '#707070', 2));
+    }
+    shell.appendChild(lab);
+    const num = label(String(i + 1), g.play ? '#ffffff' : '#707070');
+    num.classList.add('num');
+    shell.appendChild(num);
+    el.appendChild(shell);
+    el.addEventListener('mouseenter', () => select(i));
+    el.addEventListener('click', () => { select(i); go(); });
+    shelf.appendChild(el);
+    return el;
+  });
 
-  <h2>Tourists</h2>
-  <div class="roster">
-    <div class="who"><div class="sprite" role="img" aria-label="Tour group sprite" style="background-image:url(sprites/tourist_v00.png)"></div><div><b>Tour groups</b>Arrive in threes to fives behind a guide and stop, confused, a few tiles in. Their value ticks down while they wait. Touch the guide to lock in what they're still worth and send them on their way. Groups headed for the statue pay $10 a head; groups headed for a building pay $7.</div></div>
-    <div class="who"><div class="sprite wide" role="img" aria-label="The statue sprite" style="background-image:url(sprites/statue.png)"></div><div><b>The statue</b>100 HP. When it's gone, so are you.</div></div>
-  </div>
-
-  <footer>Keyboard only for now. <a href="https://github.com/ocurtis/HarvardYard">Source on GitHub</a>.</footer>
-</main>
+  let sel = 0;
+  function select(i, sound = true) {
+    const was = sel;
+    sel = (i + GAMES.length) % GAMES.length;
+    carts.forEach((c, k) => c.classList.toggle('sel', k === sel));
+    const g = GAMES[sel];
+    const big = window.innerWidth >= 760 ? 2 : 1; // the long titles don't fit a phone at 2x
+    info.replaceChildren(label(g.title, g.play ? '#ffffff' : '#707070', big), label(g.blurb || (g.play ? '' : 'COMING SOON'), g.play ? '#58f5b1' : '#707070'));
+    if (sound && was !== sel) blip(g.play ? 660 : 220, 0.04);
+  }
+  function go() {
+    const g = GAMES[sel];
+    if (!g.play) { blip(110, 0.15); return; }
+    blip(880, 0.08); setTimeout(() => blip(1320, 0.12), 70);
+    setTimeout(() => { location.href = g.play; }, 220);
+  }
+  document.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'arrowright' || k === 'd') select(sel + 1);
+    else if (k === 'arrowleft' || k === 'a') select(sel - 1);
+    else if (k === 'arrowdown' || k === 's') select(sel + 3);
+    else if (k === 'arrowup' || k === 'w') select(sel - 3);
+    else if (k === 'enter' || k === ' ' || k === 'j' || k === 'x') go();
+    else if (k === 'i' && GAMES[sel].manual) location.href = GAMES[sel].manual;
+    else return;
+    e.preventDefault();
+  });
+  // The cursor blinks, NES style.
+  setInterval(() => carts[sel].classList.toggle('blink'), 400);
+  select(0, false);
+</script>
 </body>
 </html>
