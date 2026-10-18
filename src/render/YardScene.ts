@@ -74,7 +74,6 @@ export class YardScene extends Phaser.Scene {
   private banner!: Phaser.GameObjects.BitmapText;
   private bannerTick = -1e9;
   private noticeText!: Phaser.GameObjects.BitmapText;
-  private fpsSamples: number[] = [];
   private world!: Phaser.GameObjects.Container;
   private broViews = new Map<number, BroView>();
   private atlas: Atlas = {};
@@ -216,10 +215,7 @@ export class YardScene extends Phaser.Scene {
     }
 
     // HUD.
-    this.fpsSamples.push(delta);
-    if (this.fpsSamples.length > 30) this.fpsSamples.shift();
-    const avg = this.fpsSamples.reduce((a, b) => a + b, 0) / this.fpsSamples.length;
-    this.hud.sync(s, 1000 / avg);
+    this.hud.sync(s);
 
     const n = s.notice;
     const showNotice = !!n && s.tick - n.tick < 120;

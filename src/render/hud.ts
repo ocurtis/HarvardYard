@@ -1,32 +1,53 @@
 // The HUD: an NES-style side panel. Black, double-framed, bitmap font, a
-// segmented meter for the statue, the bank, the round, and a shop of boxed
-// keys with tower icons and prices that go grey when you can't afford them.
-// Reads state; never writes it. Layout numbers here are cosmetic (render-only).
+// segmented meter for the statue, the bank, the round, and one kind of row for
+// everything you can buy: an icon in a box on the left, the key and the price
+// to its right (self-upgrades add a pip line). Reads state; never writes it.
+// Layout numbers here are cosmetic (render-only).
 
 import Phaser from 'phaser';
 import { HUD_W, LOGICAL_H, STATUE, TILE } from '../config/game';
 import { PALETTE } from '../config/palette';
-import { SELF_UPGRADE, TOWERS, type TowerKind } from '../config/towers';
+import { SELF_UPGRADE, TOWERS, type SelfStat, type TowerKind } from '../config/towers';
 import { WAVES } from '../config/waves';
 import { playerTile, towerAt } from '../sim/towers';
 import type { GameState } from '../sim/types';
 import { canStartWave } from '../sim/waves';
 import { FONT_KEY, type Atlas } from './assets';
 
-const FRAME = 0xffffff; // outer frame
-const FRAME_IN = 0x202040; // inner frame, UFO 50 navy
+const FRAME = 0xffffff; // outer frame, labels
+const FRAME_IN = 0x202040; // inner frame, empty pips, rules
 const DIM = 0x707070; // can't afford / inactive
-const GOLD = 0xe8ea4a;
+const GOLD = 0xe8ea4a; // money, prompts
 const RED = 0xe03c32;
-const MINT = 0x58f5b1;
-const PIPS = 3; // self-upgrade levels
+const MINT = 0x58f5b1; // maxed, pips
 
-interface ShopRow {
-  kind: TowerKind;
-  key: string;
-  icon: Phaser.GameObjects.Sprite;
+// The grid. One margin (X), one text column (TX), one row shape.
+const X = 4; // left margin
+const TX = 26; // text column: right of the icon box, with a 4px gap
+const BOX_W = 18; // icon box, outer
+const BOX_H = 26;
+const LINE = 9; // text pitch
+const Y = {
+  title: 5,
+  meter: 14,
+  money: 24,
+  round: 33,
+  prompt: 45, // two lines
+  sections: 64, // first section rule; a label sits 2px under each rule, rows 10px under the label
+  label: 2,
+  rowsAfterLabel: 10,
+  row: 27, // row pitch: a 26px box and a 1px gap
+  sectionGap: 2,
+};
+
+type RowKind = { tower: TowerKind } | { self: SelfStat } | { upgrade: true };
+
+interface Row {
+  kind: RowKind;
+  y: number;
+  icon?: Phaser.GameObjects.Sprite;
+  key: Phaser.GameObjects.BitmapText;
   price: Phaser.GameObjects.BitmapText;
-  keyText: Phaser.GameObjects.BitmapText;
 }
 
 export class Hud {
@@ -36,67 +57,67 @@ export class Hud {
   private round: Phaser.GameObjects.BitmapText;
   private prompt1: Phaser.GameObjects.BitmapText;
   private prompt2: Phaser.GameObjects.BitmapText;
-  private shop: ShopRow[] = [];
-  private upgrLabel: Phaser.GameObjects.BitmapText;
-  private upgrPrice: Phaser.GameObjects.BitmapText;
-  private selfLabels: Phaser.GameObjects.BitmapText[] = [];
-  private selfPrices: Phaser.GameObjects.BitmapText[] = [];
-  private fps: Phaser.GameObjects.BitmapText;
+  private rows: Row[] = [];
+  private rules: number[] = []; // y of each section rule
 
-  // Vertical layout, top to bottom.
-  // One left margin (4) and one line pitch (9) throughout.
-  private static Y = { title: 5, meter: 14, money: 23, round: 32, prompt: 44, shop: 70, shopRow: 26, upgr: 154, self: 172, selfRow: 20, mute: LOGICAL_H - 19, fps: LOGICAL_H - 10 };
-
-  constructor(private scene: Phaser.Scene, atlas: Atlas) {
-    const Y = Hud.Y;
+  constructor(scene: Phaser.Scene, atlas: Atlas) {
     const text = (x: number, y: number, s = '', tint = FRAME) => scene.add.bitmapText(x, y, FONT_KEY, s).setTint(tint).setDepth(2000);
     this.g = scene.add.graphics().setDepth(1999);
     this.dyn = scene.add.graphics().setDepth(2001);
-    this.drawChrome();
 
-    text(4, Y.title, 'STATUE');
-    this.money = text(4, Y.money, '$0', GOLD);
-    this.round = text(4, Y.round, '');
-    this.prompt1 = text(4, Y.prompt, '', GOLD);
-    this.prompt2 = text(4, Y.prompt + 9, '', GOLD);
+    text(X, Y.title, 'STATUE');
+    this.money = text(X, Y.money, '$0', GOLD);
+    this.round = text(X, Y.round, '');
+    this.prompt1 = text(X, Y.prompt, '', GOLD);
+    this.prompt2 = text(X, Y.prompt + LINE, '', GOLD);
 
-    const rows: { kind: TowerKind; key: string }[] = [
-      { kind: 'dig', key: '1' },
-      { kind: 'sprinkler', key: '2' },
-      { kind: 'amp', key: '3' },
+    // Two labeled sections: what you build, and what you buy for the ghost himself.
+    const sections: { label: string; rows: { kind: RowKind; key: string }[] }[] = [
+      {
+        label: 'BUILD',
+        rows: [
+          { kind: { tower: 'dig' }, key: '1' },
+          { kind: { tower: 'sprinkler' }, key: '2' },
+          { kind: { tower: 'amp' }, key: '3' },
+          { kind: { upgrade: true }, key: 'U' },
+        ],
+      },
+      {
+        label: 'GHOST',
+        rows: [
+          { kind: { self: 'shout' }, key: '4' },
+          { kind: { self: 'range' }, key: '5' },
+          { kind: { self: 'speed' }, key: '6' },
+        ],
+      },
     ];
-    rows.forEach((r, i) => {
-      // Key box over the price on the left, the tower itself on the right; nothing
-      // reaches the inner frame at x=45.
-      const y = Y.shop + i * Y.shopRow;
-      const keyText = text(6, y + 3, r.key);
-      let icon: ShopRow['icon'];
-      if (atlas[r.kind]) {
-        const sp = scene.add.sprite(26, y + 24, r.kind, 0).setOrigin(0, 1).setDepth(2000);
-        if ((atlas[r.kind]?.w ?? TILE) > TILE) sp.setCrop(0, 0, TILE, atlas[r.kind]!.h); // the Amp: just the man
-        icon = sp;
-      } else {
-        icon = scene.add.sprite(26, y + 24, '__DEFAULT').setOrigin(0, 1).setDepth(2000).setDisplaySize(TILE - 2, TILE - 2); // no sheet yet: a blank block
+    let y = Y.sections;
+    const flat: { kind: RowKind; key: string; y: number }[] = [];
+    for (const sec of sections) {
+      this.rules.push(y);
+      text(X, y + Y.label, sec.label);
+      y += Y.label + Y.rowsAfterLabel;
+      for (const r of sec.rows) {
+        flat.push({ ...r, y });
+        y += Y.row;
       }
-      const price = text(4, y + 15, `$${TOWERS[r.kind].cost}`);
-      this.shop.push({ kind: r.kind, key: r.key, icon, price, keyText });
+      y += Y.sectionGap;
+    }
+    flat.forEach((k) => {
+      const y = k.y;
+      const row: Row = { kind: k.kind, y, key: text(TX, y + 1, k.key), price: text(TX, y + 1 + LINE, '', GOLD) };
+      if ('tower' in k.kind && atlas[k.kind.tower]) {
+        // The tower sprite in its box; the Amp's sheet is two tiles wide, show the man.
+        const sp = scene.add.sprite(X + 1, y + 1 + (BOX_H - 2), k.kind.tower, 0).setOrigin(0, 1).setDepth(2000);
+        if ((atlas[k.kind.tower]?.w ?? TILE) > TILE) sp.setCrop(0, 0, TILE, atlas[k.kind.tower]!.h);
+        row.icon = sp;
+      }
+      this.rows.push(row);
     });
-
-    this.upgrLabel = text(4, Y.upgr, 'U UPGR', DIM);
-    this.upgrPrice = text(4, Y.upgr + 9, '--', DIM);
-
-    const self = ['4 SERM', '5 RNGE', '6 SPD'];
-    self.forEach((label, i) => {
-      const y = Y.self + i * Y.selfRow;
-      this.selfLabels.push(text(4, y, label));
-      this.selfPrices.push(text(22, y + 9, ''));
-    });
-    text(4, Y.mute, 'M MUTE', DIM);
-    this.fps = text(4, Y.fps, '', DIM);
+    this.drawChrome();
   }
 
   private drawChrome(): void {
-    const Y = Hud.Y;
     const g = this.g;
     g.fillStyle(PALETTE.hud, 1);
     g.fillRect(0, 0, HUD_W, LOGICAL_H);
@@ -105,23 +126,61 @@ export class Hud {
     g.strokeRect(0.5, 0.5, HUD_W - 1, LOGICAL_H - 1);
     g.lineStyle(1, FRAME_IN, 1);
     g.strokeRect(2.5, 2.5, HUD_W - 5, LOGICAL_H - 5);
-    // Section rules.
-    for (const y of [Y.shop - 6, Y.upgr - 4, Y.self - 4]) {
-      g.fillStyle(FRAME_IN, 1);
-      g.fillRect(3, y, HUD_W - 6, 1);
-    }
+    // A rule over each section label.
+    g.fillStyle(FRAME_IN, 1);
+    for (const y of this.rules) g.fillRect(3, y, HUD_W - 6, 1);
     // Meter frame: interior 39x6 = ten 3px segments with 1px gaps, flush all round.
     g.lineStyle(1, FRAME, 1);
-    g.strokeRect(3.5, Y.meter - 0.5, 40, 7);
-    // Key boxes in the shop: 9x10 interior at x=4, the digit centered in it.
-    for (let i = 0; i < 3; i++) {
-      const y = Y.shop + i * Y.shopRow;
-      g.strokeRect(4.5, y + 1.5, 9, 11);
+    g.strokeRect(X - 0.5, Y.meter - 0.5, 40, 7);
+    // Every row's icon box, and the drawn icons for the rows without a sprite.
+    for (const row of this.rows) {
+      g.lineStyle(1, FRAME, 1);
+      g.strokeRect(X + 0.5, row.y + 0.5, BOX_W - 1, BOX_H - 1);
     }
   }
 
-  sync(s: GameState, fpsAvg: number): void {
-    const Y = Hud.Y;
+  // 16x24 white pictograms, NES item-box style.
+  private drawIcon(g: Phaser.GameObjects.Graphics, kind: RowKind, x: number, y: number, color: number): void {
+    g.fillStyle(color, 1);
+    if ('tower' in kind) return; // towers have sprites
+    if ('upgrade' in kind) {
+      // Up arrow.
+      for (let i = 0; i < 5; i++) g.fillRect(x + 7 - i, y + 5 + i, 1 + i * 2, 1);
+      g.fillRect(x + 5, y + 10, 5, 9);
+    } else if (kind.self === 'shout') {
+      // The sermon: an open book with a spine, and a "!" over it.
+      g.fillRect(x + 2, y + 11, 11, 8);
+      g.fillStyle(PALETTE.hud, 1);
+      g.fillRect(x + 7, y + 11, 1, 8);
+      g.fillRect(x + 3, y + 13, 3, 1);
+      g.fillRect(x + 9, y + 13, 3, 1);
+      g.fillRect(x + 3, y + 15, 3, 1);
+      g.fillRect(x + 9, y + 15, 3, 1);
+      g.fillStyle(color, 1);
+      g.fillRect(x + 7, y + 3, 1, 4);
+      g.fillRect(x + 7, y + 8, 1, 1);
+    } else if (kind.self === 'range') {
+      // Three arcs widening to the right.
+      for (let i = 0; i < 3; i++) {
+        const r = 3 + i * 3;
+        for (let k = -r; k <= r; k++) {
+          const dx = Math.round(Math.sqrt(r * r - k * k));
+          if (Math.abs(k) <= r * 0.8) g.fillRect(x + 3 + dx, y + 12 + k, 1, 1);
+        }
+      }
+      g.fillRect(x + 2, y + 11, 2, 3);
+    } else {
+      // Speed: two chevrons.
+      for (let c = 0; c < 2; c++) {
+        for (let i = 0; i < 4; i++) {
+          g.fillRect(x + 3 + c * 5 + i, y + 8 + i, 1, 1);
+          g.fillRect(x + 3 + c * 5 + i, y + 16 - i, 1, 1);
+        }
+      }
+    }
+  }
+
+  sync(s: GameState): void {
     const d = this.dyn;
     d.clear();
 
@@ -133,12 +192,11 @@ export class Hud {
     for (let i = 0; i < segs; i++) {
       const on = i < lit;
       d.fillStyle(on ? (low && blink ? FRAME : RED) : FRAME_IN, 1);
-      d.fillRect(4 + i * 4, Y.meter, 3, 6);
+      d.fillRect(X + i * 4, Y.meter, 3, 6);
     }
 
     this.money.setText(`$${s.money}`);
-    const r = s.wave.index < 0 ? 'R--/' + WAVES.length : `R${s.wave.index + 1}/${WAVES.length}`; // 6 chars max: the column is 48px
-    this.round.setText(r);
+    this.round.setText(s.wave.index < 0 ? `RD -/${WAVES.length}` : `RD ${s.wave.index + 1}/${WAVES.length}`);
 
     if (s.phase !== 'playing') {
       this.prompt1.setText('');
@@ -153,39 +211,33 @@ export class Hud {
     }
 
     const p0 = s.players[0]!;
-    for (const row of this.shop) {
-      const ok = s.money >= TOWERS[row.kind].cost;
-      row.price.setTint(ok ? FRAME : DIM);
-      row.keyText.setTint(ok ? FRAME : DIM);
-      // Flat grey silhouette when unaffordable: a palette color, not an alpha blend.
-      if (ok) row.icon.clearTint();
-      else row.icon.setTintFill(DIM);
-    }
-
     const here = towerAt(s, playerTile(p0));
-    const up = here ? TOWERS[here.kind].levels[here.level]!.upgradeCost : null;
-    if (here) {
-      const okUp = up !== null && s.money >= up;
-      this.upgrPrice.setText(up === null ? 'MAX' : `$${up}`).setTint(okUp ? MINT : DIM);
-      this.upgrLabel.setTint(okUp ? MINT : DIM);
-    } else {
-      this.upgrPrice.setText('--').setTint(DIM);
-      this.upgrLabel.setTint(DIM);
-    }
-
-    const levels = [p0.upgrades.shout, p0.upgrades.range, p0.upgrades.speed];
-    levels.forEach((lvl, i) => {
-      const y = Y.self + i * Y.selfRow;
-      const cost = SELF_UPGRADE.costs[lvl];
-      const ok = cost !== undefined && s.money >= cost;
-      this.selfPrices[i]!.setText(cost === undefined ? 'MAX' : `$${cost}`).setTint(cost === undefined ? MINT : ok ? FRAME : DIM);
-      this.selfLabels[i]!.setTint(cost === undefined ? MINT : ok ? FRAME : DIM);
-      for (let k = 0; k < PIPS; k++) {
-        d.fillStyle(k < lvl ? MINT : FRAME_IN, 1);
-        d.fillRect(5 + k * 5, y + 10, 4, 4);
+    for (const row of this.rows) {
+      let cost: number | null; // null = maxed
+      let active = true;
+      let level = -1;
+      if ('tower' in row.kind) {
+        cost = TOWERS[row.kind.tower].cost;
+      } else if ('upgrade' in row.kind) {
+        cost = here ? TOWERS[here.kind].levels[here.level]!.upgradeCost : 0;
+        active = !!here;
+      } else {
+        level = p0.upgrades[row.kind.self];
+        cost = SELF_UPGRADE.costs[level] ?? null;
       }
-    });
-
-    this.fps.setText(`${fpsAvg.toFixed(0)}FPS`);
+      const maxed = cost === null;
+      const ok = active && cost !== null && s.money >= cost;
+      const tint = !active ? DIM : maxed ? MINT : ok ? FRAME : DIM;
+      row.key.setTint(tint);
+      row.price.setText(!active ? '--' : maxed ? 'MAX' : `$${cost}`).setTint(!active ? DIM : maxed ? MINT : ok ? GOLD : DIM);
+      // Icons stay in full color (Owen); the key and price carry the can't-afford grey.
+      if (!row.icon) this.drawIcon(d, row.kind, X + 1, row.y + 1, FRAME);
+      if (level >= 0) {
+        for (let k = 0; k < SELF_UPGRADE.costs.length; k++) {
+          d.fillStyle(k < level ? MINT : FRAME_IN, 1);
+          d.fillRect(TX + k * 6, row.y + 1 + LINE * 2 + 1, 4, 4);
+        }
+      }
+    }
   }
 }
