@@ -1,5 +1,5 @@
 {
-  "name": "yard-defense",
+  "name": "gahd-collection",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -8,8 +8,11 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "sim": "tsx scripts/sim.ts",
-    "balance": "tsx scripts/balance.ts"
+    "sim": "tsx games/yard/scripts/sim.ts",
+    "balance": "tsx games/yard/scripts/balance.ts",
+    "art": "python3 shared/art/build.py",
+    "font": "python3 shared/art/gen_font.py",
+    "new-game": "node tools/new-game.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"

@@ -1,29 +1,17 @@
-# Yard Defense
+# Gahd The Yahd and friends
 
-Defend the John Harvard statue from drunk frat bros. Herd tourists to its foot to pay for it.
+A collection of small UFO 50-style browser games behind one cart-select menu. Live: https://ocurtis.github.io/HarvardYard/
 
-A top-down pixel-art action tower defense in the browser, modeled on Rock On! Island from UFO 50. See `DESIGN.md`.
-
-## Run it
+- `games/yard/` Gahd The Yahd: defend the John Harvard statue from drunk frat bros; tourists are the money. See its `DESIGN.md`.
+- `games/_template/` what a new game starts from: `npm run new-game -- <slug> "<Title>"`.
+- `shared/` the fixed-step loop, input, atlas/font loading, music/sfx layers, palette, sprite compiler, chip synth, voice crusher.
 
 ```
 npm install
-npm run dev
+npm run dev          # menu at /, a game at /games/<slug>/play.html?seed=123
+npm test             # every game's sim tests
+npm run build        # dist/, which GitHub Pages deploys on push to main
+npm run art yard     # compile a game's text-grid sprites to public/<slug>/sprites
 ```
 
-Open the URL Vite prints. WASD or arrows to move. `?players=2` for a second (keyboard-less, for now) player, `?seed=123` for a fixed seed.
-
-## Test it
-
-```
-npm test        # sim tests: determinism, snapshot round-trip, movement
-npm run sim     # headless runner, no browser
-```
-
-## Ship it
-
-```
-npm run build   # -> dist/
-```
-
-Cloudflare Pages: build command `npm run build`, output directory `dist`.
+Rules for working here are in `CLAUDE.md`.

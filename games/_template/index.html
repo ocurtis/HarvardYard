@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>__TITLE__</title>
+  <style>
+    :root { --bg: #202040; --card: #340058; --ink: #fff; --muted: #c8c8c8; --mint: #58f5b1; --cyan: #27badb; --red: #e03c32; --gold: #e8ea4a; --navy: #202040; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    main { max-width: 720px; margin: 0 auto; padding: 28px 16px 64px; }
+    h1 { font-size: clamp(34px, 8vw, 56px); line-height: 1; margin: 0; color: var(--gold); text-shadow: 3px 3px 0 #000; }
+    .play { display: inline-block; background: var(--red); color: #fff; text-decoration: none; font-size: 20px; padding: 12px 26px; border: 3px solid #fff; box-shadow: 4px 4px 0 #000; margin: 14px 0 28px; }
+    h2 { font-size: 16px; color: var(--cyan); margin: 26px 0 8px; text-transform: uppercase; letter-spacing: .08em; }
+    table { border-collapse: collapse; width: 100%; } td { padding: 5px 8px; border-bottom: 1px solid #4430ba; } td:first-child { white-space: nowrap; color: var(--gold); }
+    kbd { background: #000; border: 1px solid #707070; padding: 1px 6px; border-radius: 3px; font: inherit; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>__TITLE_UPPER__</h1>
+  <a class="play" href="play.html">▶ PLAY</a> <a class="play" style="background:var(--navy)" href="../../">◀ GAME SELECT</a>
+  <p>One sentence about the goal of the game goes here.</p>
+  <h2>Controls</h2>
+  <table>
+    <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</td><td>Move.</td></tr>
+    <tr><td><kbd>J</kbd> / <kbd>X</kbd></td><td>Action.</td></tr>
+  </table>
+</main>
+</body>
+</html>

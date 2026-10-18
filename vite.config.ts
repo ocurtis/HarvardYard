@@ -1,14 +1,14 @@
 import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { defineConfig, type Plugin } from 'vite';
 
 const run = promisify(execFile);
 
-// Dev-only: the voice booth (public/booth.html) talks to this. Takes live in
-// art/audio/voice/<name>.wav; save, rename and delete each commit and push, so a
+// Dev-only: the voice booth (tools/booth.html, served at /booth.html?game=<slug>) talks to
+// this. Takes live in games/<slug>/art/audio/voice/<name>.wav; save, rename and delete each commit and push, so a
 // take goes from the mic to the repo in one tap. Never part of the production build.
 function voiceBooth(): Plugin {
   return {
@@ -16,8 +16,9 @@ function voiceBooth(): Plugin {
     apply: 'serve',
     configureServer(server) {
       const root = server.config.root;
-      const dir = join(root, 'art', 'audio', 'voice');
       const clean = (v: string | null) => (v ?? '').replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
+      // One voice folder per game: games/<slug>/art/audio/voice (the booth passes ?game=).
+      const dirFor = (slug: string | null) => join(root, 'games', clean(slug) || 'yard', 'art', 'audio', 'voice');
       const git = async (args: string[]) => run('git', args, { cwd: root });
       const describe = (e: unknown) => {
         const err = e as { stderr?: string; message?: string };
@@ -31,8 +32,8 @@ function voiceBooth(): Plugin {
       };
       const commitPush = async (msg: string) => {
         try {
-          await git(['add', '-A', 'art/audio/voice']);
-          const status = (await git(['status', '--porcelain', 'art/audio/voice'])).stdout.trim();
+          await git(['add', '-A', 'games/*/art/audio/voice']);
+          const status = (await git(['status', '--porcelain', 'games'])).stdout.trim();
           if (status) await git(['commit', '-m', msg]);
           await push();
           return { pushed: true, error: '' };
@@ -54,10 +55,11 @@ function voiceBooth(): Plugin {
       // The booth page itself lives outside public/ so it never ships in the build.
       server.middlewares.use('/booth.html', (_req, res) => {
         res.setHeader('content-type', 'text/html');
-        res.end(readFileSync(join(root, 'dev', 'booth.html')));
+        res.end(readFileSync(join(root, 'tools', 'booth.html')));
       });
       server.middlewares.use('/__booth', async (req, res) => {
         const url = new URL(req.url ?? '', 'http://x');
+        const dir = dirFor(url.searchParams.get('game'));
         mkdirSync(dir, { recursive: true });
         if (url.pathname === '/list') {
           const names = readdirSync(dir).filter((f) => f.endsWith('.wav')).map((f) => f.slice(0, -4)).sort();
@@ -126,14 +128,26 @@ export default defineConfig({
     target: 'es2022',
     assetsInlineLimit: 0,
     rollupOptions: {
-      input: { index: 'index.html', play: 'play.html', yard: 'yard.html' },
+      // The collection menu plus every game's play page and manual: games/<slug>/{play,index}.html.
+      input: Object.fromEntries([
+        ['index', 'index.html'],
+        ...readdirSync('games')
+          .filter((g) => existsSync(join('games', g, 'play.html')))
+          .flatMap((g) => [
+            [`${g}-play`, `games/${g}/play.html`],
+            [`${g}-manual`, `games/${g}/index.html`],
+          ]),
+      ]),
     },
+  },
+  resolve: {
+    alias: { '@shared': resolve('shared/src') },
   },
   server: {
     port: 5173,
     host: true,
   },
   test: {
-    include: ['tests/**/*.test.ts'],
+    include: ['games/*/tests/**/*.test.ts', 'shared/tests/**/*.test.ts'],
   },
 } as any);

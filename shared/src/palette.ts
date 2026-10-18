@@ -1,0 +1,38 @@
+// The UFO 50 palette (32 colors, lospec.com/palette-list/ufo-50) as Phaser hex
+// numbers, with the names the games use for the ones they lean on. Keep in sync
+// with shared/art/palette.py. Every pixel in every game comes from this list.
+
+export const UFO50 = {
+  white: 0xffffff,
+  rose: 0xa48080,
+  skin: 0xfeb854,
+  gold: 0xe8ea4a,
+  mint: 0x58f5b1,
+  teal: 0x64a4a4,
+  lilac: 0xcc68e4,
+  pink: 0xfe626e,
+  lightGrey: 0xc8c8c8,
+  red: 0xe03c32,
+  orange: 0xfe7000,
+  green: 0x63b31d,
+  lime: 0xa4f022,
+  cyan: 0x27badb,
+  magenta: 0xfe48de,
+  crimson: 0xd10f4c,
+  grey: 0x707070,
+  darkRed: 0x991515,
+  rust: 0xca4a00,
+  olive: 0xa3a324,
+  darkGreen: 0x008456,
+  blue: 0x006ab4,
+  violet: 0x9600dc,
+  plum: 0x861650,
+  black: 0x000000,
+  maroon: 0x4c0000,
+  wine: 0x783450,
+  brown: 0x8a6042,
+  forest: 0x003d10,
+  navy: 0x202040,
+  indigo: 0x340058,
+  royal: 0x4430ba,
+} as const;

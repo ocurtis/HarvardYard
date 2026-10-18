@@ -50,7 +50,7 @@
 <script>
   // The five slots. A slot with no `play` is a dark cartridge: under construction.
   const GAMES = [
-    { title: 'GAHD THE YAHD', blurb: 'TOWER DEFENSE, HAHVAHD YAHD', cover: 'covers/yard.png', play: 'play.html', manual: 'yard.html' },
+    { title: 'GAHD THE YAHD', blurb: 'TOWER DEFENSE, HAHVAHD YAHD', cover: 'covers/yard.png', play: 'games/yard/play.html', manual: 'games/yard/index.html' },
     { title: 'UNDER CONSTRUCTION' },
     { title: 'UNDER CONSTRUCTION' },
     { title: 'UNDER CONSTRUCTION' },
@@ -61,7 +61,7 @@
   // onto a canvas per label and scaled by the screen's integer factor in CSS.
   const CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const font = new Image();
-  font.src = 'sprites/font.png';
+  font.src = 'shared/font.png';
   // If the font image can't load, fall back to real text (the .sr spans become visible).
   const fontReady = new Promise((r) => { font.onload = r; font.onerror = () => { document.body.classList.add('nofont'); r(); }; });
   async function drawText(canvas, text, color = '#ffffff', scale = 1) {

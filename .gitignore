@@ -2,5 +2,6 @@ node_modules/
 dist/
 .DS_Store
 *.log
-art/out/
+__pycache__/
+games/*/art/out/
 public/candidates/
