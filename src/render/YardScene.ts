@@ -237,11 +237,12 @@ export class YardScene extends Phaser.Scene {
     const here = towerAt(s, playerTile(p0));
     const up = here ? TOWERS[here.kind].levels[here.level]!.upgradeCost : null;
     const u = p0.upgrades;
-    const selfCost = (lvl: number) => (SELF_UPGRADE.costs[lvl] !== undefined ? `$${SELF_UPGRADE.costs[lvl]}` : 'max');
+    // Self-upgrades show their level next to the price, so paying for one is visible.
+    const selfLine = (lvl: number) => ` ${lvl}/${SELF_UPGRADE.costs.length}${SELF_UPGRADE.costs[lvl] !== undefined ? '$' + SELF_UPGRADE.costs[lvl] : 'max'}`; // 7 chars: the column is 32px
     const shop =
       `1 Dig\n $${TOWERS.dig.cost}\n2 Sprnk\n $${TOWERS.sprinkler.cost}\n3 Amp\n $${TOWERS.amp.cost}\n` +
       (here ? `U upgr\n ${up === null ? 'max' : '$' + up}\n` : '') +
-      `4 shout\n ${selfCost(u.shout)}\n5 range\n ${selfCost(u.range)}\n6 speed\n ${selfCost(u.speed)}`;
+      `4 shout\n${selfLine(u.shout)}\n5 range\n${selfLine(u.range)}\n6 speed\n${selfLine(u.speed)}`;
     this.hudText.setText(
       `HP ${Math.ceil(s.statueHp)}\n$${s.money}\nWAVE ${waveLabel}\n${prompt}\n${shop}\n\n${(1000 / avg).toFixed(0)}fps`,
     );
@@ -671,17 +672,26 @@ export class YardScene extends Phaser.Scene {
       const range = shoutRange(p);
       const ox = Math.round(p.pos.x);
       const oy = Math.round(p.pos.y) - 4;
-      for (let i = 0; i < SERMON_FX.arcs; i++) {
-        const r = ((tick * SERMON_FX.speedPxPerTick + (i * range) / SERMON_FX.arcs) % range) + 4;
+      // Shout power adds an arc per level and thickens the dashes at the top level;
+      // range shows itself as the arcs reaching further. Paying for an upgrade must be visible.
+      const arcs = SERMON_FX.arcs + p.upgrades.shout;
+      const px = p.upgrades.shout >= SELF_UPGRADE.costs.length ? 3 : 2;
+      for (let i = 0; i < arcs; i++) {
+        const r = ((tick * SERMON_FX.speedPxPerTick + (i * range) / arcs) % range) + 4;
         const fade = 1 - r / (range + 4);
         g.fillStyle(i % 2 === 0 ? 0xffffff : PALETTE.ghostGlow, 0.55 + 0.45 * fade);
         const steps = Math.max(6, Math.round(r * 2 * half));
         for (let k = 0; k <= steps; k++) {
           const t = a - half + (2 * half * k) / steps;
           if (Math.floor((k * (r * 2 * half)) / steps / SERMON_FX.dashPx) % 2 === 1) continue;
-          g.fillRect(Math.round(ox + Math.cos(t) * r) - 1, Math.round(oy + Math.sin(t) * r) - 1, 2, 2);
+          g.fillRect(Math.round(ox + Math.cos(t) * r) - 1, Math.round(oy + Math.sin(t) * r) - 1, px, px);
         }
       }
+      // The cone's edge, faint, so a range upgrade reads as a bigger fan.
+      g.lineStyle(1, PALETTE.ghostGlow, 0.25);
+      g.beginPath();
+      g.arc(ox, oy, range, a - half, a + half, false);
+      g.strokePath();
     }
     // Wind streaks off every Amp: short dashes racing along the cone, dense while it
     // has somebody, sparse while it idles.
