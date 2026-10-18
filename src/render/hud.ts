@@ -24,7 +24,7 @@ const PIPS = 3; // self-upgrade levels
 interface ShopRow {
   kind: TowerKind;
   key: string;
-  icon: Phaser.GameObjects.Sprite | Phaser.GameObjects.Rectangle;
+  icon: Phaser.GameObjects.Sprite;
   price: Phaser.GameObjects.BitmapText;
   keyText: Phaser.GameObjects.BitmapText;
 }
@@ -44,7 +44,8 @@ export class Hud {
   private fps: Phaser.GameObjects.BitmapText;
 
   // Vertical layout, top to bottom.
-  private static Y = { title: 5, meter: 14, money: 24, round: 34, prompt: 46, shop: 70, shopRow: 26, upgr: 150, self: 166, selfRow: 20, fps: LOGICAL_H - 10 };
+  // One left margin (4) and one line pitch (9) throughout.
+  private static Y = { title: 5, meter: 14, money: 23, round: 32, prompt: 44, shop: 70, shopRow: 26, upgr: 154, self: 172, selfRow: 20, mute: LOGICAL_H - 19, fps: LOGICAL_H - 10 };
 
   constructor(private scene: Phaser.Scene, atlas: Atlas) {
     const Y = Hud.Y;
@@ -53,11 +54,11 @@ export class Hud {
     this.dyn = scene.add.graphics().setDepth(2001);
     this.drawChrome();
 
-    text(6, Y.title, 'STATUE');
+    text(4, Y.title, 'STATUE');
     this.money = text(4, Y.money, '$0', GOLD);
     this.round = text(4, Y.round, '');
-    this.prompt1 = text(6, Y.prompt, '', GOLD);
-    this.prompt2 = text(6, Y.prompt + 9, '', GOLD);
+    this.prompt1 = text(4, Y.prompt, '', GOLD);
+    this.prompt2 = text(4, Y.prompt + 9, '', GOLD);
 
     const rows: { kind: TowerKind; key: string }[] = [
       { kind: 'dig', key: '1' },
@@ -65,22 +66,24 @@ export class Hud {
       { kind: 'amp', key: '3' },
     ];
     rows.forEach((r, i) => {
+      // Key box over the price on the left, the tower itself on the right; nothing
+      // reaches the inner frame at x=45.
       const y = Y.shop + i * Y.shopRow;
-      const keyText = text(4, y + 9, r.key);
+      const keyText = text(6, y + 3, r.key);
       let icon: ShopRow['icon'];
       if (atlas[r.kind]) {
-        const sp = scene.add.sprite(12, y + 24, r.kind, 0).setOrigin(0, 1).setDepth(2000);
+        const sp = scene.add.sprite(26, y + 24, r.kind, 0).setOrigin(0, 1).setDepth(2000);
         if ((atlas[r.kind]?.w ?? TILE) > TILE) sp.setCrop(0, 0, TILE, atlas[r.kind]!.h); // the Amp: just the man
         icon = sp;
       } else {
-        icon = scene.add.rectangle(12, y + 24, TILE - 2, TILE - 2, PALETTE[r.kind]).setOrigin(0, 1).setDepth(2000);
+        icon = scene.add.sprite(26, y + 24, '__DEFAULT').setOrigin(0, 1).setDepth(2000).setDisplaySize(TILE - 2, TILE - 2); // no sheet yet: a blank block
       }
-      const price = text(29, y + 9, `$${TOWERS[r.kind].cost}`);
+      const price = text(4, y + 15, `$${TOWERS[r.kind].cost}`);
       this.shop.push({ kind: r.kind, key: r.key, icon, price, keyText });
     });
 
-    this.upgrLabel = text(4, Y.upgr, 'U UPGR', MINT);
-    this.upgrPrice = text(4, Y.upgr + 8, '', MINT);
+    this.upgrLabel = text(4, Y.upgr, 'U UPGR', DIM);
+    this.upgrPrice = text(4, Y.upgr + 9, '--', DIM);
 
     const self = ['4 SERM', '5 RNGE', '6 SPD'];
     self.forEach((label, i) => {
@@ -88,6 +91,7 @@ export class Hud {
       this.selfLabels.push(text(4, y, label));
       this.selfPrices.push(text(22, y + 9, ''));
     });
+    text(4, Y.mute, 'M MUTE', DIM);
     this.fps = text(4, Y.fps, '', DIM);
   }
 
@@ -106,13 +110,13 @@ export class Hud {
       g.fillStyle(FRAME_IN, 1);
       g.fillRect(3, y, HUD_W - 6, 1);
     }
-    // Meter frame.
+    // Meter frame: interior 39x6 = ten 3px segments with 1px gaps, flush all round.
     g.lineStyle(1, FRAME, 1);
-    g.strokeRect(3.5, Y.meter - 0.5, HUD_W - 7, 7);
-    // Key boxes in the shop and the self-upgrade rows.
+    g.strokeRect(3.5, Y.meter - 0.5, 40, 7);
+    // Key boxes in the shop: 9x10 interior at x=4, the digit centered in it.
     for (let i = 0; i < 3; i++) {
       const y = Y.shop + i * Y.shopRow;
-      g.strokeRect(2.5, y + 7.5, 9, 10);
+      g.strokeRect(4.5, y + 1.5, 9, 11);
     }
   }
 
@@ -153,17 +157,20 @@ export class Hud {
       const ok = s.money >= TOWERS[row.kind].cost;
       row.price.setTint(ok ? FRAME : DIM);
       row.keyText.setTint(ok ? FRAME : DIM);
-      row.icon.setAlpha(ok ? 1 : 0.4);
+      // Flat grey silhouette when unaffordable: a palette color, not an alpha blend.
+      if (ok) row.icon.clearTint();
+      else row.icon.setTintFill(DIM);
     }
 
     const here = towerAt(s, playerTile(p0));
     const up = here ? TOWERS[here.kind].levels[here.level]!.upgradeCost : null;
-    this.upgrLabel.setVisible(!!here);
-    this.upgrPrice.setVisible(!!here);
     if (here) {
       const okUp = up !== null && s.money >= up;
       this.upgrPrice.setText(up === null ? 'MAX' : `$${up}`).setTint(okUp ? MINT : DIM);
       this.upgrLabel.setTint(okUp ? MINT : DIM);
+    } else {
+      this.upgrPrice.setText('--').setTint(DIM);
+      this.upgrLabel.setTint(DIM);
     }
 
     const levels = [p0.upgrades.shout, p0.upgrades.range, p0.upgrades.speed];

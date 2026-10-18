@@ -151,7 +151,15 @@ export class YardScene extends Phaser.Scene {
 
     // Win/loss overlay.
     this.overlay = this.add.container(0, 0).setVisible(false).setDepth(9600);
-    this.overlay.add(this.add.rectangle(0, 0, LOGICAL_W, LOGICAL_H, 0x000000, 0.6).setOrigin(0));
+    // A 50% checkerboard dither instead of an alpha fade: every pixel stays on the palette.
+    if (!this.textures.exists('dither')) {
+      const g = this.make.graphics({ x: 0, y: 0 }, false);
+      g.fillStyle(0x000000, 1);
+      for (let y = 0; y < LOGICAL_H; y++) for (let x = y % 2; x < LOGICAL_W; x += 2) g.fillRect(x, y, 1, 1);
+      g.generateTexture('dither', LOGICAL_W, LOGICAL_H); // baked once; a Graphics would replay 60k rects a frame
+      g.destroy();
+    }
+    this.overlay.add(this.add.image(0, 0, 'dither').setOrigin(0));
     this.overlayText = this.add
       .bitmapText(HUD_W + (GRID_W * TILE) / 2, LOGICAL_H / 2, FONT_KEY, '')
       .setOrigin(0.5)
