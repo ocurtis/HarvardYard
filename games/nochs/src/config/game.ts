@@ -27,6 +27,7 @@ export const CONVEYOR = {
 
 export const RACK = {
   slots: 3, // day-old squares you can park; a 4th is a strike
+  sellTicks: 600, // a racked square sells as a day-old slice after this long and frees the slot (no tip)
 };
 
 export const ARRIVAL = {

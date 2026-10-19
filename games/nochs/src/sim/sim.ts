@@ -20,6 +20,7 @@ export function createState(config: SimConfig): GameState {
     nextArrival: ARRIVAL.firstDelayTicks,
     boxes: [],
     rack: [],
+    rackSoldAt: 0,
     tips: 0,
     strikes: 0,
     streak: 0,
@@ -59,11 +60,19 @@ function newBox(s: GameState): Box {
   return { id: s.nextBoxId++, order, cells: [null, null, null, null], closing: 0, result: null };
 }
 
-// What the open orders still need, as a multiset of kinds.
+// What the open orders still need, as a multiset of kinds. In boxOnly mode a box
+// fills in reading order, so only each box's next cell counts: anything else
+// would be a square nobody can place cleanly.
 function needs(s: GameState): Kind[] {
   const out: Kind[] = [];
   for (const b of s.boxes) {
     if (b.closing > 0) continue;
+    if (s.placement === 'boxOnly') {
+      const i = b.cells.indexOf(null);
+      const c = i >= 0 ? b.order[i]! : 'any';
+      if (c !== 'any') out.push(c);
+      continue;
+    }
     b.order.forEach((c, i) => {
       if (b.cells[i] === null && c !== 'any') out.push(c);
     });
@@ -132,11 +141,17 @@ function drop(s: GameState, playerIndex: number): void {
   const k = s.conveyor[0];
   if (k === undefined) return; // nothing in hand
   const b = s.boxes[p.box];
-  if (!b || b.closing > 0) return;
+  if (!b || b.closing > 0) {
+    emit(s, { type: 'blocked', box: p.box }); // the lid's on; nothing happens, but say so
+    return;
+  }
   let cell: number;
   if (s.placement === 'cells') {
     cell = p.cell;
-    if (b.cells[cell] !== null) return; // occupied: the drop does nothing
+    if (b.cells[cell] !== null) {
+      emit(s, { type: 'blocked', box: p.box }); // occupied cell
+      return;
+    }
   } else {
     cell = b.cells.indexOf(null);
     if (cell < 0) return;
@@ -152,9 +167,10 @@ function rack(s: GameState): void {
   if (k === undefined) return;
   s.conveyor.shift();
   if (s.rack.length >= RACK.slots) {
-    strike(s, 'strike');
+    strike(s, 'rackFull');
     return;
   }
+  if (s.rack.length === 0) s.rackSoldAt = s.tick + RACK.sellTicks;
   s.rack.push(k);
   emit(s, { type: 'racked' });
 }
@@ -180,6 +196,13 @@ export function step(state: GameState, commands: Command[]): void {
       if (state.conveyor.length >= CONVEYOR.slots) strike(state, 'floor');
       else state.conveyor.push(pickKind(state));
       state.nextArrival = state.tick + last(ARRIVAL.ticksByWave, state.wave);
+    }
+
+    // Day-old slices sell off the rack one at a time, oldest first, no tip.
+    if (state.rack.length > 0 && state.tick >= state.rackSoldAt) {
+      state.rack.shift();
+      state.rackSoldAt = state.tick + RACK.sellTicks;
+      emit(state, { type: 'rackSold' });
     }
 
     // Closed boxes slide off and a fresh order takes the spot.

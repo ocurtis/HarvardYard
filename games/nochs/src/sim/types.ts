@@ -12,7 +12,7 @@ export interface Box {
   result: 'clean' | 'messy' | 'back' | null; // set when it closes
 }
 
-export type SimEventType = 'drop' | 'close' | 'strike' | 'floor' | 'racked' | 'waveStart' | 'won' | 'lost';
+export type SimEventType = 'drop' | 'blocked' | 'close' | 'strike' | 'floor' | 'racked' | 'rackFull' | 'rackSold' | 'waveStart' | 'won' | 'lost';
 
 export interface SimEvent {
   type: SimEventType;
@@ -42,6 +42,7 @@ export interface GameState {
   nextArrival: number; // tick the next square lands on the conveyor
   boxes: Box[];
   rack: Kind[];
+  rackSoldAt: number; // tick the oldest racked square sells
   tips: number;
   strikes: number;
   streak: number; // clean boxes in a row

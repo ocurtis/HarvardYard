@@ -13,7 +13,7 @@ You work the front counter at Pinocchio's in Harvard Square during a rush. The c
 ## Core loop (one shift)
 - Squares arrive on the conveyor at the cutter's rate. The next three are visible. The one at the front is "in hand".
 - The counter holds 4 open boxes, each a 2x2 of cells with an order card: a 2x2 picture of kinds (cheese, pepperoni, tomato, veggie), or a wildcard cell (any kind).
-- Drop the in-hand square into a cell of a box, or onto the day-old rack (3 slots; a full rack means the next rack drop is a strike).
+- Drop the in-hand square into a cell of a box, or onto the day-old rack (3 slots; a full rack means the next rack drop is a strike). Racked squares sell as day-old slices one at a time on a timer, no tip, freeing the slot.
 - A box closes when its 4th cell fills. Score by cells matching the order: 4/4 clean (tip 3), 3/4 messy (tip 1), 2/4 or worse sent back (strike, no tip). A closed box slides off and a fresh box with a new order takes its place after a short gap.
 - The conveyor has 6 slots. If a square would arrive on a full conveyor it hits the floor: strike.
 - Rush waves: the cutter speeds up and orders get fussier (more distinct kinds per box, fewer wildcards). Lunch rush is the midpoint, bar close the finale.
@@ -33,7 +33,7 @@ You work the front counter at Pinocchio's in Harvard Square during a rush. The c
 
 ## Win / loss
 - Lose: three strikes (floor, rack overflow, sent-back box).
-- Win: survive the last wave (bar close). Score: total tips; clean-box streak multiplier.
+- Win: survive the last wave (bar close). Score: total tips; every third clean box in a row pays +1.
 
 ## Art spec
 Reference: art/reference/counter.jpg (the real counter). The room, top to bottom: the green chalkboard menu with white, red and yellow hand lettering and the red/green/white "Slices" sign (that's the title treatment); the steel kitchen behind the counter with trays of sheet pizza; the speckled brown stone counter with the register; customers in front. The player is the counter guy: white shirt, red cap.
@@ -51,3 +51,4 @@ In the game: the chalkboard is the back wall and carries the shift/wave text in 
 - 2026-10-19: Stamped from games/_template. Reason: start of the game.
 - 2026-10-19: Packing, not match-3. Owen's first idea was shuffling a tray to match three; the mock-up read as Bejeweled in a costume. Owen: "the pizza gets packed rapidly, something about getting 2x2 into a box cleanly." Reason: every action is physical at the real counter and "clean" is a visible outcome.
 - 2026-10-19: Both placement modes built behind a flag for session one. Reason: whether cell-level placement is fun at speed or too fiddly is a feel question only play answers.
+- 2026-10-19: Cold review: boxOnly was near-unwinnable because the rack never drained and arrivals were biased toward cells a box-only player can't reach. Rack sells off on a timer; in boxOnly the arrival bias counts only each box's next cell. No-op drops and rack overflow emit events so the screen says NO ROOM / RACK FULL instead of nothing.

@@ -154,6 +154,8 @@ export class MainScene extends Phaser.Scene {
         this.tipPops.push({ x: bx - 8, y: L.boxY - 30, tick: s.tick, text, color });
       }
       if (e.type === 'floor') this.tipPops.push({ x: cx0 + CONVEYOR.slots * (TILE + 6), y: cy, tick: s.tick, text: 'FLOOR!', color: UFO50.red });
+      if (e.type === 'rackFull') this.tipPops.push({ x: LOGICAL_W - 70, y: cy - 12, tick: s.tick, text: 'RACK FULL!', color: UFO50.red });
+      if (e.type === 'blocked' && e.box !== undefined) this.tipPops.push({ x: L.boxX0 + e.box * L.boxGap - 4, y: L.boxY + 2 * TILE + 16, tick: s.tick, text: 'NO ROOM', color: UFO50.lightGrey });
     }
     this.lastEventTick = s.tick - 1;
     this.tipPops = this.tipPops.filter((t) => s.tick - t.tick < 60);

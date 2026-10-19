@@ -74,4 +74,48 @@ describe("Noch's Rush sim", () => {
     expect(s.rack.length).toBe(RACK.slots);
     expect(s.strikes).toBe(1);
   });
+
+  it('the rack sells off on a timer and frees the slot', () => {
+    const s = createState({ seed: 5, playerCount: 1 });
+    s.conveyor = ['tomato'];
+    step(s, [{ playerId: 0, tick: s.tick, type: 'rack' }]);
+    expect(s.rack.length).toBe(1);
+    run(s, RACK.sellTicks + 1);
+    expect(s.rack.length).toBe(0);
+    expect(s.events.some((e) => e.type === 'rackSold')).toBe(true);
+  });
+
+  it('moveCell walks the 2x2 and clamps at the edges', () => {
+    const s = createState({ seed: 1, playerCount: 1 });
+    const p = s.players[0]!;
+    step(s, [{ playerId: 0, tick: s.tick, type: 'moveCell', dx: 1, dy: 0 }]);
+    expect(p.cell).toBe(1);
+    step(s, [{ playerId: 0, tick: s.tick, type: 'moveCell', dx: 1, dy: 1 }]);
+    expect(p.cell).toBe(3);
+    step(s, [{ playerId: 0, tick: s.tick, type: 'moveCell', dx: 0, dy: 1 }]);
+    expect(p.cell).toBe(3);
+  });
+
+  it('boxOnly fills in reading order, waves advance on closed boxes, bar close wins', () => {
+    const s = createState({ seed: 11, playerCount: 1, placement: 'boxOnly' });
+    // Pack every box perfectly, forever, by feeding exactly what the next cell wants.
+    let t = 0;
+    while (s.phase === 'playing' && t++ < 60 * 60 * 20) {
+      const b = s.boxes[s.players[0]!.box]!;
+      const i = b.cells.indexOf(null);
+      if (b.closing === 0 && i >= 0) {
+        const want = b.order[i]!;
+        s.conveyor = [want === 'any' ? 'cheese' : want];
+        step(s, [{ playerId: 0, tick: s.tick, type: 'drop' }]);
+        if (i === 0) expect(b.cells[0]).not.toBeNull();
+      } else {
+        s.players[0]!.box = (s.players[0]!.box + 1) % BOXES;
+        step(s, []);
+      }
+    }
+    expect(s.phase).toBe('won');
+    expect(s.wave).toBe(SHIFT.boxesPerWave.length - 1);
+    expect(s.strikes).toBe(0);
+    expect(s.closedTotal).toBe(SHIFT.boxesPerWave.reduce((a, b) => a + b, 0));
+  });
 });
