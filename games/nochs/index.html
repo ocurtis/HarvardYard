@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Noch's Rush</title>
+  <meta name="description" content="Noch's Rush: work the counter at Pinocchio's during a rush. Pack Sicilian squares into boxes exactly the way the order says, before the conveyor backs up." />
+  <style>
+    :root { --bg: #003d10; --card: #202040; --ink: #fff; --muted: #c8c8c8; --mint: #58f5b1; --cyan: #27badb; --red: #e03c32; --gold: #e8ea4a; --navy: #202040; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    main { max-width: 720px; margin: 0 auto; padding: 28px 16px 64px; }
+    h1 { font-size: clamp(34px, 8vw, 56px); line-height: 1; margin: 0; color: var(--gold); text-shadow: 3px 3px 0 #000; }
+    .play { display: inline-block; background: var(--red); color: #fff; text-decoration: none; font-size: 20px; padding: 12px 26px; border: 3px solid #fff; box-shadow: 4px 4px 0 #000; margin: 14px 0 28px; }
+    h2 { font-size: 16px; color: var(--cyan); margin: 26px 0 8px; text-transform: uppercase; letter-spacing: .08em; }
+    .goal { font-size: 17px; background: var(--card); border-left: 4px solid var(--gold); padding: 10px 14px; }
+    table { border-collapse: collapse; width: 100%; } td { padding: 5px 8px; border-bottom: 1px solid #008456; vertical-align: top; } td:first-child { white-space: nowrap; color: var(--gold); }
+    kbd { background: #000; border: 1px solid #707070; padding: 1px 6px; border-radius: 3px; font: inherit; }
+    small { color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>NOCH'S RUSH</h1>
+  <a class="play" href="play.html">▶ PLAY</a> <a class="play" style="background:var(--navy)" href="../../">◀ GAME SELECT</a>
+  <p class="goal">You're on the counter at Pinocchio's during a rush. The cutter keeps sliding Sicilian squares at you; four open boxes each have an order card. Pack every box exactly the way the card shows, before the conveyor backs up.</p>
+
+  <h2>Controls</h2>
+  <table>
+    <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td><td>Pick a box.</td></tr>
+    <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</td><td>Pick the cell in that box.</td></tr>
+    <tr><td><kbd>J</kbd> / <kbd>X</kbd> / <kbd>Space</kbd></td><td>Drop the square in your hand into the cell. No undo: the lid closes on mistakes.</td></tr>
+    <tr><td><kbd>R</kbd></td><td>Put the square on the day-old rack instead. Three slots; a fourth is a strike.</td></tr>
+  </table>
+
+  <h2>Scoring</h2>
+  <table>
+    <tr><td>Clean</td><td>All four cells as ordered. $3, and a bonus every third clean box in a row.</td></tr>
+    <tr><td>Messy</td><td>One cell wrong. $1, and the streak resets.</td></tr>
+    <tr><td>Sent back</td><td>Two or more wrong. No tip, one strike.</td></tr>
+    <tr><td>Floor</td><td>A square arriving on a full conveyor hits the floor. One strike.</td></tr>
+  </table>
+  <p><small>Three strikes ends the shift. Survive bar close for a clean shift. A grey cell with a dot on an order card means "any square".</small></p>
+
+  <h2>Trying the other way to pack</h2>
+  <p><small>Add <code>?placement=box</code> to the play URL and squares fill the chosen box in reading order; you only pick the box. <code>?placement=cells</code> is the default.</small></p>
+</main>
+</body>
+</html>
