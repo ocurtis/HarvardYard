@@ -18,6 +18,7 @@ export interface StageDef {
   stage: string; // the place
   short: string; // the map label
   label: 'n' | 's' | 'e' | 'w'; // which side of the beacon the label sits
+  nudge?: { x: number; y: number }; // label pixel nudge for the crowded cluster
   boss: string; // placeholder boss name
   x: number;
   y: number;
@@ -28,10 +29,10 @@ export interface StageDef {
 const at = (k: keyof typeof LANDMARKS) => project(LANDMARKS[k]);
 
 export const STAGES: StageDef[] = [
-  { id: 'felipes', stage: "FELIPE'S TAQUERIA", short: "FELIPE'S", label: 's', boss: 'EL JEFE', ...at('felipes'), color: 0xfe7000, shape: 'wide' },
-  { id: 'science', stage: 'SCIENCE CENTER', short: 'SCIENCE', label: 'w', boss: 'PROF. TESLA', ...at('scienceCenter'), color: 0x27badb, shape: 'spike' },
-  { id: 'annenberg', stage: 'ANNENBERG HALL', short: 'ANNENBERG', label: 'e', boss: 'THE HEADMASTER', ...at('memorialHall'), color: 0xe8ea4a, shape: 'tall' },
-  { id: 'dig', stage: 'THE DIG', short: 'DIG', label: 'n', boss: 'BONES', ...at('peabody'), color: 0x8a6042, shape: 'round' },
+  { id: 'felipes', stage: "FELIPE'S TAQUERIA", short: "FELIPE'S", label: 's', nudge: { x: -8, y: 4 }, boss: 'EL JEFE', ...at('felipes'), color: 0xfe7000, shape: 'wide' },
+  { id: 'science', stage: 'SCIENCE CENTER', short: 'SCIENCE', label: 's', boss: 'PROF. TESLA', ...at('scienceCenter'), color: 0x27badb, shape: 'spike' },
+  { id: 'annenberg', stage: 'ANNENBERG HALL', short: 'ANNENBERG', label: 's', nudge: { x: 0, y: 6 }, boss: 'THE HEADMASTER', ...at('memorialHall'), color: 0xe8ea4a, shape: 'tall' },
+  { id: 'dig', stage: 'THE DIG', short: 'DIG', label: 'e', nudge: { x: 10, y: -8 }, boss: 'BONES', ...at('peabody'), color: 0x8a6042, shape: 'round' },
   { id: 'observatory', stage: 'THE OBSERVATORY', short: 'OBSERVATORY', label: 's', boss: 'STARGAZER', ...at('observatory'), color: 0x9600dc, shape: 'diamond' },
 ];
 

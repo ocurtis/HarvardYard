@@ -1,1 +1,77 @@
-{}
+{
+  "base_annenberg": {
+    "file": "base_annenberg.png",
+    "w": 48,
+    "h": 40,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 2
+      }
+    }
+  },
+  "base_dig": {
+    "file": "base_dig.png",
+    "w": 48,
+    "h": 40,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 2
+      }
+    }
+  },
+  "base_felipes": {
+    "file": "base_felipes.png",
+    "w": 48,
+    "h": 40,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 2
+      }
+    }
+  },
+  "base_observatory": {
+    "file": "base_observatory.png",
+    "w": 48,
+    "h": 40,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 2
+      }
+    }
+  },
+  "base_science": {
+    "file": "base_science.png",
+    "w": 48,
+    "h": 40,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 2
+      }
+    }
+  }
+}

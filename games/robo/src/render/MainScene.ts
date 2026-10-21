@@ -47,7 +47,7 @@ export class MainScene extends Phaser.Scene {
     for (const st of STAGES) {
       const key = `base_${st.id}`;
       if (!this.atlas[key]) continue;
-      const sp = this.add.sprite(st.x, st.y + 6, key, 0).setOrigin(0.5, 1).setDepth(1);
+      const sp = this.add.sprite(st.x, st.y + 6, key, 0).setOrigin(0.5, 1).setDepth(1 + st.y / 1000); // southern buildings in front
       if (this.anims.exists(`${key}:idle`)) sp.play(`${key}:idle`);
       this.bases.set(st.id, sp);
     }
@@ -60,7 +60,9 @@ export class MainScene extends Phaser.Scene {
     for (const s of STAGES) {
       const w = 6 * s.short.length;
       const pos = s.label === 's' ? { x: s.x - w / 2, y: s.y + 10 } : s.label === 'n' ? { x: s.x - w / 2, y: s.y - 20 } : s.label === 'e' ? { x: s.x + 14, y: s.y - 4 } : { x: s.x - 14 - w, y: s.y - 4 };
-      this.labels.push(text(Math.max(1, Math.min(MAP.w - w - 1, pos.x)), pos.y, s.short, UFO50.white));
+      const nx = pos.x + (s.nudge?.x ?? 0);
+      const ny = pos.y + (s.nudge?.y ?? 0);
+      this.labels.push(text(Math.max(1, Math.min(MAP.w - w - 1, nx)), ny, s.short, UFO50.white));
     }
     this.labels.push(text(HOME.x - 12, HOME.y + 8, 'YARD', UFO50.mint));
   }

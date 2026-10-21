@@ -27,10 +27,10 @@ export const PX_PER_KM = SCALE;
 // (d -> d^RADIAL_POWER) so the four stages within 400 m of the Yard spread out and
 // the Observatory, 1.3 km up Garden St, still fits on the panel. A hand-drawn
 // map does the same thing. RADIAL_POWER = 1 is true scale.
-export const RADIAL_POWER = 0.62;
+export const RADIAL_POWER = 0.5;
 const CENTER = { lat: 42.374444, lon: -71.117056 }; // University Hall
-const CENTER_PX = { x: 150, y: 190 }; // where the Yard sits on the panel
-const RADIAL_SCALE = 118; // px per km^RADIAL_POWER
+const CENTER_PX = { x: 146, y: 196 }; // where the Yard sits on the panel
+const RADIAL_SCALE = 138; // px per km^RADIAL_POWER
 
 export function project(p: LatLon): { x: number; y: number } {
   const ex = (p.lon - CENTER.lon) * KM_PER_DEG * COS_LAT; // km east
