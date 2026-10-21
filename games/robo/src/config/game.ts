@@ -9,16 +9,15 @@ export const LOGICAL_W = 384;
 export const LOGICAL_H = 288;
 
 // The stage select: Harvard Square as a map, five stages on it, the cursor walks
-// between spots. Positions are logical pixels on the map panel (the left 256px);
-// the portrait panel is the right 128px. The map is roughly to the real
-// geography: the Square at the bottom, the Yard in the middle, the Science
-// Center and Memorial Hall just north, the dig off Divinity Ave, the
-// Observatory up Garden Street. Boss names and faces are placeholders until the
-// hero is decided.
+// between spots. Positions come from real coordinates (config/map.ts). Boss
+// names and faces are placeholders until the hero is decided.
+import { LANDMARKS, project } from './map';
+
 export interface StageDef {
   id: string;
   stage: string; // the place
   short: string; // the map label
+  label: 'n' | 's' | 'e' | 'w'; // which side of the beacon the label sits
   boss: string; // placeholder boss name
   x: number;
   y: number;
@@ -26,16 +25,18 @@ export interface StageDef {
   shape: 'round' | 'square' | 'spike' | 'tall' | 'wide' | 'diamond';
 }
 
+const at = (k: keyof typeof LANDMARKS) => project(LANDMARKS[k]);
+
 export const STAGES: StageDef[] = [
-  { id: 'felipes', stage: "FELIPE'S TAQUERIA", short: "FELIPE'S", boss: 'EL JEFE', x: 100, y: 236, color: 0xfe7000, shape: 'wide' },
-  { id: 'science', stage: 'SCIENCE CENTER', short: 'SCIENCE', boss: 'PROF. TESLA', x: 104, y: 118, color: 0x27badb, shape: 'spike' },
-  { id: 'annenberg', stage: 'ANNENBERG HALL', short: 'ANNENBERG', boss: 'THE HEADMASTER', x: 176, y: 98, color: 0xe8ea4a, shape: 'tall' },
-  { id: 'dig', stage: 'THE DIG', short: 'DIG', boss: 'BONES', x: 196, y: 54, color: 0x8a6042, shape: 'round' },
-  { id: 'observatory', stage: 'THE OBSERVATORY', short: 'OBSERVATORY', boss: 'STARGAZER', x: 48, y: 42, color: 0x9600dc, shape: 'diamond' },
+  { id: 'felipes', stage: "FELIPE'S TAQUERIA", short: "FELIPE'S", label: 's', boss: 'EL JEFE', ...at('felipes'), color: 0xfe7000, shape: 'wide' },
+  { id: 'science', stage: 'SCIENCE CENTER', short: 'SCIENCE', label: 'w', boss: 'PROF. TESLA', ...at('scienceCenter'), color: 0x27badb, shape: 'spike' },
+  { id: 'annenberg', stage: 'ANNENBERG HALL', short: 'ANNENBERG', label: 'e', boss: 'THE HEADMASTER', ...at('memorialHall'), color: 0xe8ea4a, shape: 'tall' },
+  { id: 'dig', stage: 'THE DIG', short: 'DIG', label: 'n', boss: 'BONES', ...at('peabody'), color: 0x8a6042, shape: 'round' },
+  { id: 'observatory', stage: 'THE OBSERVATORY', short: 'OBSERVATORY', label: 's', boss: 'STARGAZER', ...at('observatory'), color: 0x9600dc, shape: 'diamond' },
 ];
 
 // Home on the map: the statue in the Yard. The cursor starts here; it isn't a stage.
-export const HOME = { x: 132, y: 164 };
+export const HOME = at('universityHall');
 
 export const MAP = {
   w: 256, // map panel width; the portrait panel takes the rest

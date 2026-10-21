@@ -42,12 +42,14 @@ describe('Robo stage select', () => {
     expect(p.spot).toBe(HOME_SPOT);
     step(s, [{ playerId: 0, tick: s.tick, type: 'confirm' }]);
     expect(s.phase).toBe('select');
-    step(s, [{ playerId: 0, tick: s.tick, type: 'move', dx: 0, dy: 1 }]); // down to Felipe's
+    // Whichever direction reaches a stage from home (the map is real geography).
+    const dir = ([[0, 1], [1, 0], [0, -1], [-1, 0]] as const).find(([dx, dy]) => spotToward(HOME_SPOT, dx, dy) >= 0)!;
+    step(s, [{ playerId: 0, tick: s.tick, type: 'move', dx: dir[0], dy: dir[1] }]);
     expect(p.walking).toBe(true);
     let t = 0;
     while (p.walking && t++ < 600) step(s, []);
     expect(p.pos).toEqual(spotPos(p.spot));
-    expect(STAGES[p.spot]!.id).toBe('felipes');
+    expect(p.spot).toBeGreaterThanOrEqual(0);
     step(s, [{ playerId: 0, tick: s.tick, type: 'confirm' }]);
     expect(s.phase).toBe('starting');
     expect(s.chosen).toBe(p.spot);
@@ -58,12 +60,17 @@ describe('Robo stage select', () => {
   it('ignores moves while walking and presses with nothing that way', () => {
     const s = createState({ seed: 1, playerCount: 1 });
     const p = s.players[0]!;
-    step(s, [{ playerId: 0, tick: 0, type: 'move', dx: 0, dy: 1 }]);
+    const dir = ([[0, 1], [1, 0], [0, -1], [-1, 0]] as const).find(([dx, dy]) => spotToward(HOME_SPOT, dx, dy) >= 0)!;
+    step(s, [{ playerId: 0, tick: 0, type: 'move', dx: dir[0], dy: dir[1] }]);
     const spot = p.spot;
-    step(s, [{ playerId: 0, tick: 1, type: 'move', dx: 0, dy: -1 }]); // mid-walk: ignored
+    step(s, [{ playerId: 0, tick: 1, type: 'move', dx: -dir[0] as -1 | 0 | 1, dy: -dir[1] as -1 | 0 | 1 }]); // mid-walk: ignored
     expect(p.spot).toBe(spot);
     while (p.walking) step(s, []);
-    step(s, [{ playerId: 0, tick: s.tick, type: 'move', dx: 0, dy: 1 }]); // nothing south of Felipe's
+    // From the southernmost stage, south goes nowhere.
+    const south = STAGES.reduce((a, b, i) => (STAGES[a]!.y > b.y ? a : i), 0);
+    p.spot = south;
+    p.pos = spotPos(south);
+    step(s, [{ playerId: 0, tick: s.tick, type: 'move', dx: 0, dy: 1 }]);
     expect(p.walking).toBe(false);
     expect(s.events.some((e) => e.type === 'nope')).toBe(true);
   });

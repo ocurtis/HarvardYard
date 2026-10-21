@@ -8,28 +8,20 @@ import { FONT_KEY, type Atlas } from '@shared/assets';
 import type { GameLoop } from '@shared/loop';
 import { UFO50 } from '@shared/palette';
 import { HOME, LOGICAL_H, LOGICAL_W, MAP, STAGES, type StageDef } from '../config/game';
+import { COMMON, LANDMARKS, project, RIVER, STREETS, YARD, type LatLon } from '../config/map';
 import { HOME_SPOT } from '../sim/sim';
 import type { Command, GameState } from '../sim/types';
 
-// Placeholder map: streets as lines, the Yard as a green block, buildings as
-// blocks near their spots, the river at the bottom. Logical pixels on the map panel.
-const STREETS: [number, number, number, number][] = [
-  [100, 256, 100, 20], // Garden St / Mass Ave going north
-  [0, 236, 256, 236], // Mt Auburn / the Square
-  [0, 160, 256, 160], // the Yard's south edge (Mass Ave bend)
-  [60, 20, 60, 236], // Garden St
-  [196, 20, 196, 236], // Oxford St / Divinity Ave
-  [60, 54, 256, 54], // Kirkland
-  [100, 118, 196, 118], // between the Science Center and Memorial Hall
-];
-const YARD = { x: 84, y: 128, w: 96, h: 60 };
-const BUILDINGS: { x: number; y: number; w: number; h: number; c: number }[] = [
-  { x: 84, y: 100, w: 40, h: 20, c: UFO50.lightGrey }, // Science Center
-  { x: 156, y: 84, w: 40, h: 26, c: UFO50.darkRed }, // Memorial Hall
-  { x: 180, y: 40, w: 36, h: 18, c: UFO50.brown }, // the Peabody / the dig
-  { x: 30, y: 30, w: 36, h: 20, c: UFO50.indigo }, // the Observatory
-  { x: 80, y: 222, w: 44, h: 16, c: UFO50.orange }, // Felipe's
-];
+// The map is projected from real coordinates (config/map.ts). Buildings are small
+// blocks at each landmark; streets are the traced polylines; the Yard, the Common
+// and the river are polygons.
+const px = (pts: LatLon[]) => pts.map((p) => project(p));
+const STREET_PX = STREETS.map((s) => ({ ...s, pts: px(s.pts) }));
+const YARD_PX = px(YARD);
+const COMMON_PX = px(COMMON);
+const RIVER_PX = px(RIVER);
+const BUILDING_W = 22;
+const BUILDING_H = 12;
 
 export class MainScene extends Phaser.Scene {
   private atlas: Atlas = {};
@@ -54,7 +46,11 @@ export class MainScene extends Phaser.Scene {
     this.stage = text(MAP.w + 8, 106, '', UFO50.lightGrey);
     this.prompt = text(MAP.w + 8, LOGICAL_H - 20, '', UFO50.gold);
     // Spot labels on the map, short, under each beacon.
-    for (const s of STAGES) this.labels.push(text(s.x - 3 * s.short.length, s.y + 9, s.short, UFO50.white));
+    for (const s of STAGES) {
+      const w = 6 * s.short.length;
+      const pos = s.label === 's' ? { x: s.x - w / 2, y: s.y + 10 } : s.label === 'n' ? { x: s.x - w / 2, y: s.y - 20 } : s.label === 'e' ? { x: s.x + 14, y: s.y - 4 } : { x: s.x - 14 - w, y: s.y - 4 };
+      this.labels.push(text(Math.max(1, Math.min(MAP.w - w - 1, pos.x)), pos.y, s.short, UFO50.white));
+    }
     this.labels.push(text(HOME.x - 12, HOME.y + 8, 'YARD', UFO50.mint));
   }
 
@@ -66,21 +62,32 @@ export class MainScene extends Phaser.Scene {
     const blink = Math.floor(s.tick / 10) % 2 === 0;
     g.clear();
 
-    // Map panel.
+    // Map panel: ground, the river, the Common, the Yard, streets, then a block per landmark.
     g.fillStyle(UFO50.navy, 1);
     g.fillRect(0, 0, MAP.w, LOGICAL_H);
     g.fillStyle(UFO50.blue, 1);
-    g.fillRect(0, LOGICAL_H - 16, MAP.w, 16); // the river
+    g.fillPoints([...RIVER_PX, { x: MAP.w, y: LOGICAL_H }, { x: 0, y: LOGICAL_H }], true);
+    g.fillStyle(UFO50.darkGreen, 1);
+    g.fillPoints(COMMON_PX, true);
     g.fillStyle(UFO50.green, 1);
-    g.fillRect(YARD.x, YARD.y, YARD.w, YARD.h);
-    g.lineStyle(3, UFO50.grey, 1);
-    for (const [x1, y1, x2, y2] of STREETS) g.lineBetween(x1, y1, x2, y2);
-    for (const b of BUILDINGS) {
-      g.fillStyle(b.c, 1);
-      g.fillRect(b.x, b.y, b.w, b.h);
-      g.lineStyle(1, UFO50.black, 1);
-      g.strokeRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
+    g.fillPoints(YARD_PX, true);
+    for (const st of STREET_PX) {
+      g.lineStyle(st.major ? 3 : 2, st.major ? UFO50.lightGrey : UFO50.grey, 1);
+      g.beginPath();
+      st.pts.forEach((pt, i) => (i === 0 ? g.moveTo(pt.x, pt.y) : g.lineTo(pt.x, pt.y)));
+      g.strokePath();
     }
+    for (const st of STAGES) {
+      g.fillStyle(st.color, 1);
+      g.fillRect(st.x - BUILDING_W / 2, st.y - BUILDING_H / 2 - 4, BUILDING_W, BUILDING_H);
+      g.lineStyle(1, UFO50.black, 1);
+      g.strokeRect(st.x - BUILDING_W / 2 + 0.5, st.y - BUILDING_H / 2 - 3.5, BUILDING_W - 1, BUILDING_H - 1);
+    }
+    // The Square itself: the T entrance, a small marker.
+    const sq = project(LANDMARKS.harvardSquare);
+    g.fillStyle(UFO50.red, 1);
+    g.fillRect(sq.x - 2, sq.y - 2, 5, 5);
+
     // The statue at home.
     g.fillStyle(UFO50.brown, 1);
     g.fillRect(HOME.x - 3, HOME.y - 6, 6, 8);
