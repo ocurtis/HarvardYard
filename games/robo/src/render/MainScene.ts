@@ -26,10 +26,12 @@ const BUILDING_H = 12;
 export class MainScene extends Phaser.Scene {
   private atlas: Atlas = {};
   private g!: Phaser.GameObjects.Graphics;
+  private top!: Phaser.GameObjects.Graphics; // cursor and selection, above the base sprites
   private name!: Phaser.GameObjects.BitmapText;
   private stage!: Phaser.GameObjects.BitmapText;
   private prompt!: Phaser.GameObjects.BitmapText;
   private labels: Phaser.GameObjects.BitmapText[] = [];
+  private bases = new Map<string, Phaser.GameObjects.Sprite>(); // base icons, when the sheets exist
   private title!: Phaser.GameObjects.BitmapText;
 
   constructor(private readonly loop: GameLoop<GameState, Command>) {
@@ -38,8 +40,17 @@ export class MainScene extends Phaser.Scene {
 
   create(): void {
     this.atlas = (this.registry.get('atlas') as Atlas | undefined) ?? {};
-    void this.atlas;
     this.g = this.add.graphics();
+    this.top = this.add.graphics().setDepth(5);
+    // Base icons: a 48x40 sheet per stage (art/sprites/base_<id>.txt), anchored bottom-center
+    // a little below the spot so the beacon point is the building's door. Lights blink via `idle`.
+    for (const st of STAGES) {
+      const key = `base_${st.id}`;
+      if (!this.atlas[key]) continue;
+      const sp = this.add.sprite(st.x, st.y + 6, key, 0).setOrigin(0.5, 1).setDepth(1);
+      if (this.anims.exists(`${key}:idle`)) sp.play(`${key}:idle`);
+      this.bases.set(st.id, sp);
+    }
     const text = (x: number, y: number, s = '', tint: number = UFO50.white) => this.add.bitmapText(x, y, FONT_KEY, s).setTint(tint).setDepth(10);
     this.title = text(MAP.w + 8, 6, 'SELECT STAGE', UFO50.gold);
     this.name = text(MAP.w + 8, 96, '');
@@ -78,6 +89,7 @@ export class MainScene extends Phaser.Scene {
       g.strokePath();
     }
     for (const st of STAGES) {
+      if (this.bases.has(st.id)) continue; // drawn as a sprite
       g.fillStyle(st.color, 1);
       g.fillRect(st.x - BUILDING_W / 2, st.y - BUILDING_H / 2 - 4, BUILDING_W, BUILDING_H);
       g.lineStyle(1, UFO50.black, 1);
@@ -94,8 +106,9 @@ export class MainScene extends Phaser.Scene {
     g.fillStyle(UFO50.lightGrey, 1);
     g.fillRect(HOME.x - 5, HOME.y + 2, 10, 3);
 
-    // Beacons: a diamond per stage, the boss color, dimmed if cleared.
+    // Beacons: a diamond per stage where there's no base sprite yet; the boss color, dimmed if cleared.
     STAGES.forEach((st, i) => {
+      if (this.bases.has(st.id)) return;
       const c = s.cleared[i] ? UFO50.grey : st.color;
       g.fillStyle(UFO50.black, 1);
       g.fillPoints([{ x: st.x, y: st.y - 7 }, { x: st.x + 7, y: st.y }, { x: st.x, y: st.y + 7 }, { x: st.x - 7, y: st.y }], true);
@@ -103,20 +116,29 @@ export class MainScene extends Phaser.Scene {
       g.fillPoints([{ x: st.x, y: st.y - 5 }, { x: st.x + 5, y: st.y }, { x: st.x, y: st.y + 5 }, { x: st.x - 5, y: st.y }], true);
     });
 
-    // The cursor: a little figure (the hero, TBD) walking the map; blinks when parked.
+    // Cleared stages go grey.
+    STAGES.forEach((st, i) => {
+      const sp = this.bases.get(st.id);
+      if (sp) s.cleared[i] ? sp.setTintFill(UFO50.grey) : sp.clearTint();
+    });
+
+    // The cursor: a little figure (the hero, TBD) walking the map; blinks when parked. Drawn on
+    // the top layer so it walks in front of the bases.
+    const t = this.top;
+    t.clear();
     const cx = Math.round(p.pos.x);
     const cy = Math.round(p.pos.y) - 10;
     const bob = p.walking ? (Math.floor(s.tick / 6) % 2) : 0;
-    g.fillStyle(UFO50.black, 1);
-    g.fillRect(cx - 4, cy - 9 - bob, 8, 12);
-    g.fillStyle(p.walking || blink ? UFO50.cyan : UFO50.white, 1);
-    g.fillRect(cx - 3, cy - 8 - bob, 6, 10);
-    g.fillStyle(UFO50.skin, 1);
-    g.fillRect(cx - 2, cy - 7 - bob, 4, 3);
+    t.fillStyle(UFO50.black, 1);
+    t.fillRect(cx - 4, cy - 9 - bob, 8, 12);
+    t.fillStyle(p.walking || blink ? UFO50.cyan : UFO50.white, 1);
+    t.fillRect(cx - 3, cy - 8 - bob, 6, 10);
+    t.fillStyle(UFO50.skin, 1);
+    t.fillRect(cx - 2, cy - 7 - bob, 4, 3);
     if (!p.walking) {
-      g.lineStyle(1, blink ? UFO50.white : UFO50.gold, 1);
+      t.lineStyle(1, blink ? UFO50.white : UFO50.gold, 1);
       const sp = p.spot === HOME_SPOT ? HOME : STAGES[p.spot]!;
-      g.strokeRect(sp.x - 9.5, sp.y - 9.5, 19, 19);
+      t.strokeRect(sp.x - 9.5, sp.y - 9.5, 19, 19);
     }
 
     // Portrait panel.
