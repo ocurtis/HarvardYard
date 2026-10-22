@@ -62,11 +62,11 @@ export interface StageDef {
 // above it, Annenberg up and to the right, Felipe's down-left by the Square,
 // the Kong down-right along Mass Ave, the river along the bottom.
 export const STAGES: StageDef[] = [
-  { id: 'science', stage: 'SCIENCE CENTER', boss: 'PIPETTE', portrait: 'pipette', short: 'SCIENCE', map: { x: 70, y: 62 }, color: 0x27badb, shape: 'spike' },
+  { id: 'science', stage: 'SCIENCE CENTER', boss: 'PIPETTE', portrait: 'pipette', short: 'SCIENCE', map: { x: 64, y: 56 }, color: 0x27badb, shape: 'spike' },
   { id: 'annenberg', stage: 'ANNENBERG HALL', boss: 'CHOWDER', portrait: 'chowder', short: 'MEM HALL', map: { x: 134, y: 58 }, color: 0xe8ea4a, shape: 'tall' },
-  { id: 'kong', stage: 'THE KONG', boss: 'RANGOON', portrait: 'rangoon', short: 'THE KONG', map: { x: 138, y: 128 }, color: 0xe03c32, shape: 'square' },
-  { id: 'felipes', stage: "FELIPE'S TAQUERIA", boss: 'REFRIED', portrait: 'refried', short: "FELIPE'S", map: { x: 34, y: 130 }, color: 0xfe7000, shape: 'wide' },
-  { id: 'yard', stage: 'THE YARD DIG', boss: 'DIG MAN', portrait: 'dig', short: 'THE YARD', map: { x: 84, y: 82 }, color: 0x8a6042, shape: 'round' }, // the pit is painted into the map; no base sprite
+  { id: 'kong', stage: 'THE KONG', boss: 'RANGOON', portrait: 'rangoon', short: 'THE KONG', map: { x: 138, y: 120 }, color: 0xe03c32, shape: 'square' },
+  { id: 'felipes', stage: "FELIPE'S TAQUERIA", boss: 'REFRIED', portrait: 'refried', short: "FELIPE'S", map: { x: 34, y: 122 }, color: 0xfe7000, shape: 'wide' },
+  { id: 'yard', stage: 'THE YARD DIG', boss: 'DIG MAN', portrait: 'dig', short: 'THE YARD', map: { x: 84, y: 99 }, color: 0x8a6042, shape: 'round' }, // the pit is painted into the map; no base sprite
 ];
 
 export const MAP = {
