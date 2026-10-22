@@ -28,6 +28,7 @@ export class MainScene extends Phaser.Scene {
   private top!: Phaser.GameObjects.Graphics; // cursor above the sprites
   private texts = new Map<string, Phaser.GameObjects.BitmapText>();
   private bases = new Map<string, Phaser.GameObjects.Sprite>();
+  private portraits = new Map<string, Phaser.GameObjects.Sprite>(); // boss_<id> sheets, when drawn
   private mapImage?: Phaser.GameObjects.Image;
 
   constructor(private readonly loop: GameLoop<GameState, Command>) {
@@ -62,6 +63,18 @@ export class MainScene extends Phaser.Scene {
     }
 
     this.drawChrome();
+
+    // Boss portraits as sprites where a sheet exists; shapes otherwise (drawn in update).
+    for (const slot of SLOTS) {
+      if (slot.kind !== 'boss') continue;
+      const st = STAGES[stageOfSlot(SLOTS.indexOf(slot))]!;
+      const key = `boss_${st.id}`;
+      if (!this.atlas[key]) continue;
+      const r = cellRect(slot);
+      const sp = this.add.sprite(r.x + r.w / 2, r.y + r.h / 2, key, 0).setOrigin(0.5).setDepth(4);
+      if (this.anims.exists(`${key}:idle`)) sp.play(`${key}:idle`);
+      this.portraits.set(st.id, sp);
+    }
 
     // Panel text and the logo.
     for (const s of SLOTS) {
@@ -145,7 +158,13 @@ export class MainScene extends Phaser.Scene {
       if (slot.kind !== 'boss') continue;
       const r = cellRect(slot);
       const st = STAGES[stageOfSlot(SLOTS.indexOf(slot))]!;
-      this.portrait(g, st, r.x + r.w / 2, r.y + r.h / 2 - 2, s.phase === 'starting' && blink && STAGES.indexOf(st) === s.chosen);
+      const flash = s.phase === 'starting' && blink && STAGES.indexOf(st) === s.chosen;
+      const sp = this.portraits.get(st.id);
+      if (sp) {
+        flash ? sp.setTintFill(UFO50.white) : sp.clearTint();
+        continue;
+      }
+      this.portrait(g, st, r.x + r.w / 2, r.y + r.h / 2 - 2, flash);
     }
 
     // Cursor: a gold frame on the selected portrait, blinking white; a marker on the map base.
