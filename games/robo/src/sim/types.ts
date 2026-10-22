@@ -1,11 +1,6 @@
 // Plain data only. serialize -> restore must round-trip exactly.
 
-export interface Vec {
-  x: number;
-  y: number;
-}
-
-export type SimEventType = 'move' | 'arrive' | 'select' | 'nope';
+export type SimEventType = 'move' | 'select' | 'nope';
 
 export interface SimEvent {
   type: SimEventType;
@@ -14,12 +9,9 @@ export interface SimEvent {
 
 export type GamePhase = 'select' | 'starting';
 
-// Spot -1 is home (the statue); 0.. are STAGES.
 export interface PlayerState {
   id: number;
-  spot: number;
-  pos: Vec; // where the cursor is drawn; walks toward its spot
-  walking: boolean;
+  slot: number; // index into SLOTS; always a boss slot
 }
 
 export interface GameState {
