@@ -87,7 +87,7 @@ export class MainScene extends Phaser.Scene {
         text('logo3', r.x + 10, r.y + 39, 'TITLE', UFO50.lightGrey);
       }
     }
-    // The STAGE panel names the selection; the MAP panel names the place; SPEC the prompt.
+    // The STAGE panel names the place; the MAP panel names its boss; SPEC the prompt.
     text('stageName', GRID.x0 + 4, GRID.y0 + 26, '', UFO50.white);
     text('placeName', GRID.x0 + 4 * GRID.cell + 4, GRID.y0 + 26, '', UFO50.white);
     text('prompt', GRID.x0 + 4, GRID.y0 + 4 * GRID.cell + 26, '', UFO50.gold);
@@ -98,19 +98,44 @@ export class MainScene extends Phaser.Scene {
     const c = this.chrome;
     c.fillStyle(UFO50.black, 1);
     c.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
-    // Side rails off the grid, like the mousepad: horizontal bars with a hub.
-    c.fillStyle(BEZEL_D, 1);
+    // Side rails off the grid, like the mousepad: horizontal pipes that end in a
+    // 14x14 hub where they meet the plate.
+    const hub = 14;
     for (let y = 30; y < LOGICAL_H; y += 48) {
-      c.fillRect(0, y, GRID.x0, 10);
-      c.fillRect(LOGICAL_W - GRID.x0, y, GRID.x0, 10);
-      c.fillStyle(BEZEL, 1);
-      c.fillRect(0, y + 2, GRID.x0 - 6, 6);
-      c.fillRect(LOGICAL_W - GRID.x0 + 6, y + 2, GRID.x0 - 6, 6);
-      c.fillStyle(BEZEL_D, 1);
+      for (const side of [0, 1]) {
+        const px = side === 0 ? 0 : LOGICAL_W - GRID.x0 + hub;
+        const pw = GRID.x0 - hub;
+        c.fillStyle(BEZEL_D, 1);
+        c.fillRect(px, y, pw, 10);
+        c.fillStyle(BEZEL, 1);
+        c.fillRect(px, y + 2, pw, 6);
+        c.fillStyle(BEZEL_L, 1);
+        c.fillRect(px, y + 2, pw, 1);
+        const hx = side === 0 ? GRID.x0 - hub : LOGICAL_W - GRID.x0;
+        const hy = y + 5 - hub / 2;
+        c.fillStyle(BEZEL_D, 1);
+        c.fillRect(hx, hy, hub, hub);
+        c.fillStyle(BEZEL, 1);
+        c.fillRect(hx + 1, hy + 1, hub - 2, hub - 2);
+        c.fillStyle(BEZEL_L, 1);
+        c.fillRect(hx + 1, hy + 1, hub - 2, 1);
+        c.fillRect(hx + 1, hy + 1, 1, hub - 2);
+        c.fillStyle(BOLT, 1);
+        c.fillRect(hx + 4, hy + 4, hub - 8, hub - 8);
+        c.fillStyle(UFO50.white, 1);
+        c.fillRect(hx + 5, hy + 5, 2, 2);
+      }
     }
-    // Grid plate.
+    // Grid plate with a lit top/left edge and a dark bottom/right edge.
+    const plate = { x: GRID.x0 - 4, y: GRID.y0 - 4, w: GRID.n * GRID.cell + 8, h: GRID.n * GRID.cell + 8 };
     c.fillStyle(BEZEL, 1);
-    c.fillRect(GRID.x0 - 4, GRID.y0 - 4, GRID.n * GRID.cell + 8, GRID.n * GRID.cell + 8);
+    c.fillRect(plate.x, plate.y, plate.w, plate.h);
+    c.fillStyle(BEZEL_L, 1);
+    c.fillRect(plate.x, plate.y, plate.w, 1);
+    c.fillRect(plate.x, plate.y, 1, plate.h);
+    c.fillStyle(UFO50.black, 1);
+    c.fillRect(plate.x, plate.y + plate.h - 1, plate.w, 1);
+    c.fillRect(plate.x + plate.w - 1, plate.y, 1, plate.h);
     for (const s of SLOTS.concat([{ col: 1, row: 1, kind: 'panel' }])) {
       const r = s.col === 1 && s.row === 1 ? { x: GRID.x0 + GRID.cell, y: GRID.y0 + GRID.cell, w: 3 * GRID.cell, h: 3 * GRID.cell } : cellRect(s);
       // Bezel: light top/left, dark bottom/right, 3px, then a 1px dark inner line.
@@ -122,15 +147,24 @@ export class MainScene extends Phaser.Scene {
       c.fillRect(r.x + r.w - 3, r.y, 3, r.h);
       c.fillRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6);
       // Cell face.
-      const face = s.kind === 'boss' ? UFO50.indigo : s.kind === 'locked' ? UFO50.black : UFO50.navy;
+      const face = s.kind === 'boss' ? UFO50.indigo : s.kind === 'locked' ? BEZEL_D : UFO50.navy;
       if (!(s.col === 1 && s.row === 1)) {
         c.fillStyle(face, 1);
         c.fillRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8);
       }
-      // Bolts.
-      c.fillStyle(BOLT, 1);
-      const bolts: [number, number][] = [[r.x + 1, r.y + 1], [r.x + r.w - 3, r.y + 1], [r.x + 1, r.y + r.h - 3], [r.x + r.w - 3, r.y + r.h - 3]];
-      for (const [bx, by] of bolts) c.fillRect(bx, by, 2, 2);
+      if (s.kind === 'locked') {
+        // A dim, unpowered lamp: the slot exists but nothing's in it yet.
+        c.fillStyle(BOLT, 1);
+        c.fillRect(r.x + r.w / 2 - 3, r.y + r.h - 14, 6, 6);
+      }
+      // Bolts: 3x3 with a light catch pixel.
+      const bolts: [number, number][] = [[r.x + 1, r.y + 1], [r.x + r.w - 4, r.y + 1], [r.x + 1, r.y + r.h - 4], [r.x + r.w - 4, r.y + r.h - 4]];
+      for (const [bx, by] of bolts) {
+        c.fillStyle(BOLT, 1);
+        c.fillRect(bx, by, 3, 3);
+        c.fillStyle(BEZEL_L, 1);
+        c.fillRect(bx, by, 1, 1);
+      }
       if (s.kind === 'panel') {
         // Three red lamps along the bottom of info panels, like the X screen.
         for (let i = 0; i < 3; i++) {
@@ -186,8 +220,8 @@ export class MainScene extends Phaser.Scene {
       if (sp) s.cleared[i] ? sp.setTintFill(UFO50.grey) : sp.clearTint();
     });
 
-    this.texts.get('stageName')!.setText(st.boss).setTint(st.color);
-    this.texts.get('placeName')!.setText(st.short);
+    this.texts.get('stageName')!.setText(st.short).setTint(UFO50.white);
+    this.texts.get('placeName')!.setText(st.boss).setTint(st.color);
     this.texts.get('prompt')!.setText(s.phase === 'starting' ? (blink ? 'READY' : '') : 'J: GO');
     void this.mapImage;
   }
