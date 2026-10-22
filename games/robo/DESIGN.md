@@ -45,9 +45,16 @@ UFO 50 palette (shared/art/palette.py), 16px tiles, sprites as text grids in art
 4. Weapons, weakness order, the other four stages.
 5. Art pass per stage; music and SFX; cover.
 
+## Direction (Owen, 2026-10-22)
+- Tone: serious. The bosses are robots (robot masters), not creatures or costumes. Each boss's BODY is the concept.
+- Hero: campus dorm security.
+- Bosses are full-body sprites, not portraits; the stage select shows the same sprite that stands in the boss room.
+- Art reference: Vainger (UFO 50). Dark industrial metal, chunky forms, few saturated accents, selective outlines.
+- Pipette Man: a plastic pipette body, standing vertical (bulb up, tip down), with robotics built around it to protect and support it. His head is the bulb, half filled, with expressive Mega Man-style eyes.
+
 ## Open
-- The hero: who is it, what does it shoot, what is its traversal verb (Mega Man 2 slide vs X dash/wall-kick).
-- 3/4-view portraits (X style) vs the current frontal set.
+- The hero's verb (Mega Man 2 slide vs X dash/wall-kick) and what he shoots.
+- The other four bosses' bodies (Owen's concept per boss, then five attempts each as with Pipette Man).
 
 ## Decisions log
 - 2026-10-21: Stamped from games/_template. Reason: start of the game.
@@ -59,4 +66,7 @@ UFO 50 palette (shared/art/palette.py), 16px tiles, sprites as text grids in art
 - 2026-10-22: The dig is painted into the map (no base sprite) as a 3/4-view hole with a derrick, ramp, planks and a tipping statue, after an art-director review called the boxed version "a target with a face in it". Reason: Owen: "it should be a big interesting hole in the ground".
 - 2026-10-22: Map repaint per review: clustered grass instead of single flecks (the "ellipsis" noise), ribbon roads with shadows, river bank and railed bridge, three tree species hand-placed, jittered Common with obelisk, checkered plaza with T kiosk, base drop shadows, recessed-screen inset. Mass Ave moved south of the lowered pit and Garden St to the west edge so no road crosses a base; Quincy St and the Oxford St stub south of the Science Center removed. Reason: fewer, bolder landmarks read better at 168px; roads through building footprints looked like errors.
 - 2026-10-22: STAGE panel names the place, MAP panel names the boss; locked slots are dark navy with an unpowered lamp. Reason: review; the boss name under the portrait side matches X.
+- 2026-10-22: The five boss portraits are scrapped. Owen: "the bosses are awful. Archaeological dig, a crab?" They read as people in costumes holding props; a Mega Man boss's body is the concept. Reason: direction, not pixels.
+- 2026-10-22: Boss art process: silhouette first at UFO 50 scale with <=7 colors, whole-sprite redraws (never row patches), five parallel attempts per boss from one written brief, Owen picks. Reason: three review passes on the old portraits did not converge; the text-grid-editing method was the problem.
+- 2026-10-22: Pipette Man final direction picked over four rounds (horizontal concepts rejected: Owen meant vertical; vertical round: mech-harness body A; re-armor round: variant E, inverted-trapezoid pauldrons, wedge boots, cyan accent lines). Note from Owen on E: arms must not differ in size; the 3/4 turn is carried by shoulder offset only. Reason: Owen's picks.
 - 2026-10-22: Nothing gets a pipeline until Owen has played the verb (day-one throwaway prototypes). Reason: Noch's Rush was built full-pipeline and failed its playtest; the feel question has to be answered first.
