@@ -59,10 +59,10 @@
       }
     }
   },
-  "base_yard": {
-    "file": "base_yard.png",
+  "boss_chowder": {
+    "file": "boss_chowder.png",
     "w": 48,
-    "h": 40,
+    "h": 48,
     "frames": 2,
     "anims": {
       "idle": {
@@ -70,7 +70,67 @@
           0,
           1
         ],
-        "fps": 2
+        "fps": 1
+      }
+    }
+  },
+  "boss_dig": {
+    "file": "boss_dig.png",
+    "w": 48,
+    "h": 48,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 1
+      }
+    }
+  },
+  "boss_pipette": {
+    "file": "boss_pipette.png",
+    "w": 48,
+    "h": 48,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 1
+      }
+    }
+  },
+  "boss_rangoon": {
+    "file": "boss_rangoon.png",
+    "w": 48,
+    "h": 48,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 1
+      }
+    }
+  },
+  "boss_refried": {
+    "file": "boss_refried.png",
+    "w": 48,
+    "h": 48,
+    "frames": 2,
+    "anims": {
+      "idle": {
+        "frames": [
+          0,
+          1
+        ],
+        "fps": 1
       }
     }
   }

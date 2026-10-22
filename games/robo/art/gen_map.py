@@ -86,6 +86,68 @@ def main():
     d.line([(int(40*K), int(58*K)), (int(88*K), int(82*K))], fill=P["sand"], width=1)
     d.line([(int(88*K), int(58*K)), (int(40*K), int(82*K))], fill=P["sand"], width=1)
 
+
+    # THE DIG, painted into the Yard: a big irregular hole with earth strata, a ramp
+    # down one side, a ladder, planks across a corner, bones and a half-uncovered skull
+    # at the bottom, spoil heaps on the rim, and the John Harvard statue perched at the
+    # edge. The game overlays only a small blinking lamp sprite here, nothing boxed.
+    import math
+    cx, cy = int(64 * K), int(72 * K)  # center of the Yard
+    rx, ry = int(22 * K), int(13 * K)
+    def rim(t, k=1.0):
+        r = 1 + 0.12 * math.sin(3 * t) + 0.08 * math.cos(5 * t + 1)
+        return (cx + int(rx * r * k * math.cos(t)), cy + int(ry * r * k * math.sin(t)))
+    outer = [rim(i / 40 * 2 * math.pi) for i in range(40)]
+    # spoil heaps around the rim first (so the pit overdraws their inner edge)
+    for (hx, hy, hw) in [(cx - rx - 6, cy - 4, 9), (cx + rx + 2, cy + 2, 10), (cx + 4, cy - ry - 7, 12)]:
+        d.ellipse((hx, hy, hx + hw, hy + 5), fill=P["brickD"])
+        d.ellipse((hx + 1, hy, hx + hw - 1, hy + 3), fill=(138, 96, 66))
+    # strata: earth rim, then darker bands stepping down, then the black floor
+    d.polygon(outer, fill=(138, 96, 66))
+    d.polygon([rim(i / 40 * 2 * math.pi, 0.84) for i in range(40)], fill=P["brickD"])
+    d.polygon([rim(i / 40 * 2 * math.pi, 0.66) for i in range(40)], fill=(76, 0, 0))
+    d.polygon([rim(i / 40 * 2 * math.pi, 0.48) for i in range(40)], fill=P["black"])
+    # a stratum of grey stone showing in the far wall
+    for t in range(14, 27):
+        x, y = rim(t / 40 * 2 * math.pi, 0.75)
+        px[x, y] = P["stoneD"] + (255,)
+    # the ramp: a lighter earth wedge from the left rim down to the floor
+    d.polygon([(cx - rx + 2, cy + 2), (cx - rx + 10, cy - 1), (cx - 6, cy + 3), (cx - 10, cy + 6)], fill=(138, 96, 66))
+    d.line([(cx - rx + 2, cy + 2), (cx - 10, cy + 6)], fill=P["brickD"])
+    # ladder on the right wall
+    lx = cx + int(rx * 0.55)
+    for y in range(cy - 3, cy + 7):
+        px[lx, y] = P["sand"] + (255,)
+        px[lx + 3, y] = P["sand"] + (255,)
+        if (y - cy) % 3 == 0:
+            d.line((lx, y, lx + 3, y), fill=P["sand"])
+    # planks across the top-right corner of the pit
+    for i in range(3):
+        d.line([(cx + 2 + i * 3, cy - ry + 1), (cx + 10 + i * 3, cy - ry - 5)], fill=(138, 96, 66))
+    # bones and the skull on the floor
+    sk = (cx - 2, cy + 1)
+    d.rectangle((sk[0], sk[1], sk[0] + 5, sk[1] + 4), fill=P["stone"])
+    px[sk[0] + 1, sk[1] + 2] = P["black"] + (255,)
+    px[sk[0] + 4, sk[1] + 2] = P["black"] + (255,)
+    px[sk[0] + 2, sk[1] + 4] = P["black"] + (255,)
+    d.line([(cx + 4, cy + 5), (cx + 10, cy + 3)], fill=P["stone"])
+    d.line([(cx - 9, cy - 2), (cx - 4, cy - 4)], fill=P["stone"])
+    px[cx - 9, cy - 2] = P["stone"] + (255,)
+    # the derrick: two legs and a beam over the pit, a cable down to the lamp (the lamp is a sprite)
+    dx0, dy0 = cx + 6, cy - ry - 2
+    d.line([(dx0 - 6, cy - 2), (dx0, dy0 - 10)], fill=P["black"], width=2)
+    d.line([(dx0 + 6, cy - 2), (dx0, dy0 - 10)], fill=P["black"], width=2)
+    d.line([(dx0 - 5, cy - 2), (dx0, dy0 - 9)], fill=(138, 96, 66))
+    d.line([(dx0 + 5, cy - 2), (dx0, dy0 - 9)], fill=(138, 96, 66))
+    d.line([(dx0, dy0 - 10), (dx0 - 10, dy0 - 10)], fill=P["black"], width=2)
+    d.line([(dx0, dy0 - 11), (dx0 - 10, dy0 - 11)], fill=(138, 96, 66))
+    d.line([(dx0 - 9, dy0 - 9), (dx0 - 9, cy - 4)], fill=P["stone"])  # the cable
+    # the statue at the south-east rim: plinth and seated bronze
+    sx, sy = cx + rx - 4, cy + ry - 2
+    d.rectangle((sx - 4, sy, sx + 4, sy + 4), fill=P["stone"], outline=P["stoneD"])
+    d.rectangle((sx - 2, sy - 7, sx + 2, sy - 1), fill=(138, 96, 66), outline=P["black"])
+    d.rectangle((sx - 1, sy - 10, sx + 1, sy - 8), fill=(138, 96, 66), outline=P["black"])
+
     # The Common: a darker green wedge up-left, with trees.
     d.polygon([(int(8*K), int(40*K)), (int(26*K), int(46*K)), (int(34*K), int(62*K)), (int(10*K), int(66*K))], fill=P["grassD"])
 
@@ -111,14 +173,6 @@ def main():
         if y > 84 * K and 14 * K <= x <= 48 * K:
             continue  # the Square
         tree(x, y, rng.choice((2, 3)))
-
-    # A few background buildings as small brick blocks so the city reads (no landmarks: the bases do that).
-    for (x, y, w, h) in [(8, 76, 8, 6), (98, 70, 8, 6), (112, 60, 10, 6), (6, 10, 8, 7), (100, 12, 8, 6), (116, 80, 8, 5), (46, 96, 7, 5), (70, 98, 8, 5)]:
-        x, y = int(x * K), int(y * K)
-        d.rectangle((x, y, x + w, y + h), fill=P["brick"], outline=P["black"])
-        d.line((x + 1, y + h - 1, x + w - 1, y + h - 1), fill=P["brickD"])
-        for wx in range(x + 2, x + w - 1, 3):
-            px[wx, y + 2] = P["sand"] + (255,)
 
     # Frame edge: a 1px dark border so the map sits in its bezel.
     d.rectangle((0, 0, S - 1, S - 1), outline=P["roadD"])

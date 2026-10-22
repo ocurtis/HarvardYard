@@ -68,7 +68,7 @@ export class MainScene extends Phaser.Scene {
     for (const slot of SLOTS) {
       if (slot.kind !== 'boss') continue;
       const st = STAGES[stageOfSlot(SLOTS.indexOf(slot))]!;
-      const key = `boss_${st.id}`;
+      const key = `boss_${st.portrait}`;
       if (!this.atlas[key]) continue;
       const r = cellRect(slot);
       const sp = this.add.sprite(r.x + r.w / 2, r.y + r.h / 2, key, 0).setOrigin(0.5).setDepth(4);
@@ -174,9 +174,9 @@ export class MainScene extends Phaser.Scene {
     t.strokeRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8);
     const st = STAGES[stageOfSlot(p.slot)]!;
     const base = this.bases.get(st.id);
-    if (base) {
-      const bx = base.x;
-      const by = base.y - base.height - 4 - (blink ? 0 : 2);
+    {
+      const bx = base ? base.x : GRID.x0 + GRID.cell + st.map.x;
+      const by = (base ? base.y - base.height - 4 : GRID.y0 + GRID.cell + st.map.y - 30) - (blink ? 0 : 2);
       t.fillStyle(UFO50.gold, 1);
       t.fillPoints([{ x: bx, y: by + 6 }, { x: bx - 4, y: by }, { x: bx + 4, y: by }], true);
     }
